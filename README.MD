@@ -53,7 +53,7 @@ examples/
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
-## 📽️ [Arduino IDE Video steps](https://www.baodi.com)
+## 📽️ [Arduino IDE Video steps](https://youtu.be/WQIH7FD0yuU)
 
 
 
