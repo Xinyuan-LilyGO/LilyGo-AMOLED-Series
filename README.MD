@@ -46,9 +46,9 @@ examples/
 2. Install [Arduino ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
 3. Download `T-Display-AMOLED-Lite` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
-5. Open ArduinoIDE  , `File` -> `Examples` -> `T-Display-AMOLED-Lite` -> `Any Examples`
-6. `Tools` , Look at the picture to choose
+5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
    ![setting](images/ArduinoIDE.jpg)
+6. `File` -> `Examples` -> `T-Display-AMOLED-Lite` -> `Any Examples`
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
