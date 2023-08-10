@@ -1,0 +1,35 @@
+#######################################
+# Syntax Coloring Map For SensorLib By lewis He
+# github:https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+LilyGo_AMOLED	KEYWORD1
+
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+beginLvglHelper	KEYWORD2
+beginAMOLED_191	KEYWORD2
+beginAMOLED_147	KEYWORD2
+
+setBrightness	KEYWORD2
+getBrightness	KEYWORD2
+setRotation	KEYWORD2
+setAddrWindow	KEYWORD2
+pushColors	KEYWORD2
+readCoreTemp	KEYWORD2
+beginCore	KEYWORD2
+width	KEYWORD2
+height	KEYWORD2
+getPoint	KEYWORD2
+getBoarsdConfigure	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+amoled	KEYWORD3

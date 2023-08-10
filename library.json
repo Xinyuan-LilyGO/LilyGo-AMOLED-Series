@@ -1,0 +1,67 @@
+{
+  "name": "T-Display-AMOLED-Lite",
+  "version": "1.0.0",
+  "description": "LilyGo AMOLED Arduino library",
+  "keywords": "lilygo,amoled",
+  "authors": [
+    {
+      "name": "Xinyuan-LilyGO",
+      "url": "https://github.com/Xinyuan-LilyGO"
+    },
+    {
+      "name": "LewisHe",
+      "url": "https://github.com/lewisxhe",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite.git"
+  },
+  "homepage": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite",
+  "export": {
+    "include": [
+      "LICENSE",
+      "library.json",
+      "library.properties",
+      "README.md",
+      "keywords.txt",
+      "src/*",
+      "examples/*"
+    ]
+  },
+  "dependencies": [
+    {
+      "owner": "mikalhart",
+      "name": "TinyGPSPlus",
+      "version": "^1.0.3"
+    },
+    {
+      "owner": "adafruit",
+      "name": "Adafruit NeoPixel",
+      "version": "^1.11.0"
+    },
+    {
+      "owner": "bxparks",
+      "name": "AceButton",
+      "version": "^1.10.1"
+    },
+    {
+      "owner": "lvgl",
+      "name": "lvgl",
+      "version": "^8.3.7"
+    },
+    {
+      "name": "XPowersLib",
+      "version": "https://github.com/lewisxhe/XPowersLib.git#7da0aab811002dee2e113977f98f118e85e294ef"
+    },
+    {
+      "name": "SensorLib",
+      "version": "https://github.com/lewisxhe/SensorsLib.git#b3ad77af6e100801c7125aaf45fea61f0d358b5a"
+    }
+  ],
+  "examples": ["examples/*/*.ino"],
+  "frameworks": ["arduino"],
+  "platforms": "esp32",
+  "headers": "LilyGo_AMOLED.h"
+}
