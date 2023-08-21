@@ -58,10 +58,10 @@ void inline LilyGo_AMOLED::clrCS()
 
 uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 {
-    int16_t tmpX, tmpY;
+    int16_t tmpX = 0, tmpY = 0;
     uint8_t point =  TouchDrvCHSC5816::getPoint(&tmpX, &tmpY);
     *x = tmpY;
-    *y = height() - tmpX;
+    *y = width() - tmpX;
     return point;
 }
 

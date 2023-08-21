@@ -33,9 +33,8 @@ static void touchpad_read( lv_indev_drv_t *indev_driver, lv_indev_data_t *data )
     static int16_t x, y;
     uint8_t touched = amoled.getPoint(&x, &y);
     if ( touched ) {
-        data->point.x = y;
-        // data->point.y = amoled.width() - x;
-        data->point.y = amoled.width() - x;
+        data->point.x = x;
+        data->point.y = y;
         data->state = LV_INDEV_STATE_PR;
         return;
 
