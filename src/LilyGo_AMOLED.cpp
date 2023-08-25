@@ -175,13 +175,16 @@ bool LilyGo_AMOLED::initBUS()
         log_e("spi_bus_add_device fail!");
         return false;
     }
-
-    lcd_cmd_t *t = boards->display.initSequence;
-    for (uint32_t i = 0; i < boards->display.initSize; i++) {
-        writeCommand(t[i].addr, t[i].param, t[i].len & 0x7F);
-        if (t[i].len & 0x80) {
-            delay(120);
+    // prevent initialization failure
+    for (int i = 0; i < 2; ++i) {
+        lcd_cmd_t *t = boards->display.initSequence;
+        for (uint32_t i = 0; i < boards->display.initSize; i++) {
+            writeCommand(t[i].addr, t[i].param, t[i].len & 0x7F);
+            if (t[i].len & 0x80) {
+                delay(120);
+            }
         }
+        delay(20);
     }
     return true;
 }
