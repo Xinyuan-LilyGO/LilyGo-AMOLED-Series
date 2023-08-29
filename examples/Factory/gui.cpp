@@ -437,7 +437,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
 
     label = lv_label_create(cont);
     lv_obj_add_style(label, &font_style, 0);
-    lv_label_set_text_fmt(label, "%u mV", 0);
+    lv_label_set_text(label, "N/A");
     lv_obj_align_to(label, img_battery, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
     pdat[0] = label;
 
@@ -448,7 +448,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
 
     label = lv_label_create(cont);
     lv_obj_add_style(label, &font_style, 0);
-    lv_label_set_text_fmt(label, "%u mV", 0);
+    lv_label_set_text(label, "N/A");
     lv_obj_align_to(label, img_usb, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
     pdat[1] = label;
 
@@ -459,7 +459,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
 
     label = lv_label_create(cont);
     lv_obj_add_style(label, &font_style, 0);
-    lv_label_set_text_fmt(label, "%.1f lux", 0);
+    lv_label_set_text(label, "N/A");
     lv_obj_align_to(label, img_sensor, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
     pdat[2] = label;
 
@@ -470,11 +470,14 @@ void createDeviceInfoUI(lv_obj_t *parent)
         uint16_t vol =   amoled.getBattVoltage();
         lv_label_set_text_fmt(p[0], "%u mV", vol);
 
-        vol =   amoled.getVbusVoltage();
-        lv_label_set_text_fmt(p[1], "%u mV", vol);
+        const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+        if (boards->hasPMU) {
+            vol =   amoled.getVbusVoltage();
+            lv_label_set_text_fmt(p[1], "%u mV", vol);
 
-        float lux = amoled.getLux();
-        lv_label_set_text_fmt(p[2], "%.1f lux", lux);
+            float lux = amoled.getLux();
+            lv_label_set_text_fmt(p[2], "%.1f lux", lux);
+        }
 
     }, 1000, pdat);
 
@@ -805,7 +808,14 @@ void factoryGUI(void)
     createWeatherUI(t2);
     createDeviceInfoUI(t3);
     createBrightnessUI(t4);
-    createPixelsUI(t5);
-    createWiFiConfigUI(t6);
+
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    if (boards->pixelsPins != -1) {
+        createPixelsUI(t5);
+        createWiFiConfigUI(t6);
+    } else {
+        createWiFiConfigUI(t5);
+        lv_obj_del(t6);
+    }
 
 }

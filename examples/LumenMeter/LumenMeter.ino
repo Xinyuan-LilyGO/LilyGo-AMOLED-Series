@@ -25,7 +25,7 @@ void setup(void)
 {
     Serial.begin(115200);
 
-    // Begin LilyGo amoled board class
+    // Begin LilyGo amoled board class , only 1.47 inch amoled has sensor
     amoled.beginAMOLED_147();
 
     // Register lvgl helper

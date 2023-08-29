@@ -20,9 +20,15 @@ void setup()
 {
     Serial.begin(115200);
 
-    // Begin LilyGo amoled board class
-    amoled.beginAMOLED_147();
+    // Begin LilyGo  1.47 Inch AMOLED board class
+    // amoled.beginAMOLED_147();
+
+
+    // Begin LilyGo  1.91 Inch AMOLED board class
     // amoled.beginAMOLED_191();
+
+    // Automatically determine the access device
+    amoled.beginAutomatic();
 
     beginLvglHelper();
 

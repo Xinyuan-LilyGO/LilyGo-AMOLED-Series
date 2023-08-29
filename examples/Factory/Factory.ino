@@ -139,35 +139,55 @@ void setup()
     // Register WiFi event
     WiFi.onEvent(WiFiEvent);
 
-    pixels.begin(); // This initializes the NeoPixel library.
-    pixels.setBrightness(15);
-
-    // Test pixels color
-    pixels.setPixelColor(0, pixels.Color(255, 0, 0)); pixels.show(); delay(500);
-    pixels.setPixelColor(0, pixels.Color(0, 255, 0)); pixels.show(); delay(500);
-    pixels.setPixelColor(0, pixels.Color(0, 0, 255)); pixels.show(); delay(500);
-    pixels.clear();
-    pixels.show();
-
-    //Set button on/off charge led , just for test button
-    pinMode(BOARD_BUTTON1_PIN, INPUT_PULLUP);
-    pinMode(BOARD_BUTTON2_PIN, INPUT_PULLUP);
+    // Begin LilyGo  1.47 Inch AMOLED board class
+    // amoled.beginAMOLED_147();
 
 
-    ButtonConfig *buttonConfig = button1.getButtonConfig();
-    buttonConfig->setFeature(ButtonConfig::kFeatureClick);
-    buttonConfig->setEventHandler(buttonHandleEvent);
+    // Begin LilyGo  1.91 Inch AMOLED board class
+    // amoled.beginAMOLED_191();
 
-    button2.init(BOARD_BUTTON2_PIN);
-    buttonConfig = button2.getButtonConfig();
-    buttonConfig->setFeature(ButtonConfig::kFeatureClick);
-    buttonConfig->setEventHandler(buttonHandleEvent);
+    // Automatically determine the access device
+    amoled.beginAutomatic();
 
-    // begin LilyGo amoled board class
-    amoled.beginAMOLED_147();
 
     // Register lvgl helper
     beginLvglHelper();
+
+
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+
+    //Set button on/off charge led , just for test button ,only 1.47 inch amoled available
+    if (boards->buttonNum) {
+
+        ButtonConfig *buttonConfig;
+
+        if (boards->pButtons[0] != -1) {
+            pinMode(boards->pButtons[0], INPUT_PULLUP);
+            buttonConfig = button1.getButtonConfig();
+            buttonConfig->setFeature(ButtonConfig::kFeatureClick);
+            buttonConfig->setEventHandler(buttonHandleEvent);
+        }
+        if (boards->pButtons[1] != -1) {
+            pinMode(boards->pButtons[1], INPUT_PULLUP);
+            button2.init(boards->pButtons[1]);
+            buttonConfig = button2.getButtonConfig();
+            buttonConfig->setFeature(ButtonConfig::kFeatureClick);
+            buttonConfig->setEventHandler(buttonHandleEvent);
+        }
+
+
+        pixels.begin(); // This initializes the NeoPixel library.
+        pixels.setBrightness(15);
+
+        // Test pixels color
+        pixels.setPixelColor(0, pixels.Color(255, 0, 0)); pixels.show(); delay(500);
+        pixels.setPixelColor(0, pixels.Color(0, 255, 0)); pixels.show(); delay(500);
+        pixels.setPixelColor(0, pixels.Color(0, 0, 255)); pixels.show(); delay(500);
+        pixels.clear();
+        pixels.show();
+    }
+
+
 
     // Draw Factory GUI
     factoryGUI();
@@ -191,7 +211,9 @@ void setup()
     // Enable Watchdog
     enableLoopWDT();
 
-    xTaskCreate(buttonHandlerTask, "btn", 5 * 1024, NULL, 12, NULL);
+    if (boards->buttonNum) {
+        xTaskCreate(buttonHandlerTask, "btn", 5 * 1024, NULL, 12, NULL);
+    }
 
 }
 

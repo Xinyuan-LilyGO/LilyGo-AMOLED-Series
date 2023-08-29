@@ -17,9 +17,15 @@ LV_IMG_DECLARE(ellipse80);
 
 void setup()
 {
-    // Begin LilyGo amoled board class
-    amoled.beginAMOLED_147();
+    // Begin LilyGo  1.47 Inch AMOLED board class
+    // amoled.beginAMOLED_147();
+
+
+    // Begin LilyGo  1.91 Inch AMOLED board class
     // amoled.beginAMOLED_191();
+
+    // Automatically determine the access device
+    amoled.beginAutomatic();
 
     beginLvglHelper();
 

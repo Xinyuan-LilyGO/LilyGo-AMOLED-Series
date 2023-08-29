@@ -30,8 +30,15 @@ void setup()
     // Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use tft.xxxx function
     Serial.begin(115200);
 
-    amoled.beginAMOLED_147();
+    // Begin LilyGo  1.47 Inch AMOLED board class
+    // amoled.beginAMOLED_147();
+
+
+    // Begin LilyGo  1.91 Inch AMOLED board class
     // amoled.beginAMOLED_191();
+
+    // Automatically determine the access device
+    amoled.beginAutomatic();
 
     spr.createSprite(WIDTH, HEIGHT);
 
