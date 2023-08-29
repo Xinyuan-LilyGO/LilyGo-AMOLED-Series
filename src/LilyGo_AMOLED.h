@@ -14,8 +14,10 @@
 #include "XPowersLib.h"
 #include "initSequence.h"
 #include "TouchDrvCHSC5816.hpp"
+#include "TouchDrvCSTXXX.hpp"
 #include "SensorCM32181.hpp"
-
+#include <FS.h>
+#include <SPIFFS.h>
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -67,14 +69,29 @@ typedef struct __DisplayConfigure {
     uint32_t frameBufferSize;
 } DisplayConfigure_t;
 
+typedef struct __BoardTouchPins {
+    int sda;
+    int scl;
+    int irq;
+    int rst;
+} BoardTouchPins_t;
+
 typedef struct __BoardsConfigure {
     DisplayConfigure_t display;
+    BoardTouchPins_t touch;
+    const int *pButtons;
+    const int buttonNum;
+    int pixelsPins;
+    int adcPins;
     bool hasPMU;
     bool hasSensor;
     bool framebuffer;
     bool hasTouch;
 } BoardsConfigure_t;
 
+
+// LILYGO 1.47 Inch AMOLED(SH8501) S3R8
+//
 static const DisplayConfigure_t SH8501_AMOLED  = {
     7, //BOARD_DISP_DATA0,
     10,//BOARD_DISP_DATA1,
@@ -95,7 +112,11 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
     SH8501_WIDTH *SH8501_HEIGHT * sizeof(uint16_t) //frameBufferSize
 };
 
+static const int AMOLED_147_BUTTONTS[2] = {0, 21};
 
+
+// LILYGO 1.91 Inch AMOLED(RM67162) S3R8
+// https://www.lilygo.cc/products/t-display-s3-amoled
 static const DisplayConfigure_t RM67162_AMOLED  = {
     18,//BOARD_DISP_DATA0,
     7,//BOARD_DISP_DATA1,
@@ -117,22 +138,41 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
 };
 
 static const  BoardsConfigure_t BOARD_AMOLED_191 = {
+    // RM67162 Driver
     RM67162_AMOLED,
-    false, false, false, false
+    //CST816T
+    {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/},
+    NULL,//Button Pins
+    0, //Button Number
+    -1,//pixelsPins
+    4, //adcPins
+    false, false, false, true
 };
+
 
 static const  BoardsConfigure_t BOARD_AMOLED_147 = {
     SH8501_AMOLED,
+    {1/*SDA*/, 2/*SCL*/, 13/*IRQ*/, 14/*RST*/},
+    AMOLED_147_BUTTONTS, //Button Pins
+    2,  //Button Number
+    18, // pixelsPins
+    -1, //adcPins
     true, true, true, true
 };
 
 
-class LilyGo_AMOLED: public XPowersAXP2101, public TouchDrvCHSC5816, public SensorCM32181
+class LilyGo_AMOLED:
+    public XPowersAXP2101,
+    public TouchDrvCHSC5816,
+    public SensorCM32181,
+    public TouchDrvCSTXXX
 {
 public:
     LilyGo_AMOLED();
 
     ~LilyGo_AMOLED();
+
+    bool beginAutomatic();
 
     // LILYGO 1.91 Inc AMOLED(RM67162) S3R8
     // https://www.lilygo.cc/products/t-display-s3-amoled
@@ -154,9 +194,15 @@ public:
 
     uint16_t  width();
     uint16_t  height();
+
+    // override
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1) override;
+    bool isPressed() override;
+    uint16_t getBattVoltage(void) override;
+
 
     const BoardsConfigure_t *getBoarsdConfigure();
+
 private:
     bool initBUS();
     bool initPMU();

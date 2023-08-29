@@ -13,6 +13,7 @@
 #else
 #include <driver/temperature_sensor.h>
 #endif
+#include <esp_adc_cal.h>
 
 #define SEND_BUF_SIZE           (16384)
 #define TFT_SPI_MODE            SPI_MODE0
@@ -56,16 +57,50 @@ void inline LilyGo_AMOLED::clrCS()
     digitalWrite(boards->display.cs, HIGH);
 }
 
+bool LilyGo_AMOLED::isPressed()
+{
+    if (boards == &BOARD_AMOLED_147) {
+        return TouchDrvCHSC5816::isPressed();
+    } else if (boards == &BOARD_AMOLED_191) {
+        return TouchDrvCSTXXX::isPressed();
+    }
+    return false;
+}
+
 uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 {
+    uint8_t point = 0;
     int16_t tmpX = 0, tmpY = 0;
-    uint8_t point =  TouchDrvCHSC5816::getPoint(&tmpX, &tmpY);
-    *x = tmpY;
-    *y = width() - tmpX;
+    if (boards == &BOARD_AMOLED_147) {
+        point =  TouchDrvCHSC5816::getPoint(&tmpX, &tmpY);
+        *x = tmpY;
+        *y = width() - tmpX;
+    } else if (boards == &BOARD_AMOLED_191) {
+        point =  TouchDrvCSTXXX::getPoint(&tmpX, &tmpY);
+        *x = tmpY;
+        *y = width() - tmpX;
+    }
     return point;
 }
 
-void deviceScan(TwoWire *_port, Stream *stream)
+uint16_t LilyGo_AMOLED::getBattVoltage(void)
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            return XPowersAXP2101::getBattVoltage();
+        } else if (boards->adcPins != -1) {
+            esp_adc_cal_characteristics_t adc_chars;
+            esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+            uint32_t v1 = 0, v2 = 0, raw = 0;
+            raw = analogRead(boards->adcPins);
+            v1 = esp_adc_cal_raw_to_voltage(raw, &adc_chars) * 2;
+            return v1;
+        }
+    }
+    return 0;
+}
+
+uint32_t deviceScan(TwoWire *_port, Stream *stream)
 {
     uint8_t err, addr;
     int nDevices = 0;
@@ -90,11 +125,12 @@ void deviceScan(TwoWire *_port, Stream *stream)
         stream->println("No I2C devices found\n");
     else
         stream->println("Done\n");
+    return nDevices;
 }
 
 bool LilyGo_AMOLED::initPMU()
 {
-    bool res = XPowersAXP2101::init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, AXP2101_SLAVE_ADDRESS);
+    bool res = XPowersAXP2101::init(Wire, boards->touch.sda, boards->touch.scl, AXP2101_SLAVE_ADDRESS);
     if (!res) {
         return false;
     }
@@ -190,12 +226,51 @@ bool LilyGo_AMOLED::initBUS()
 }
 
 
+bool LilyGo_AMOLED::beginAutomatic()
+{
+    //Try find 1.47 inch i2c devices
+    Wire.begin(1, 2);
+    Wire.beginTransmission(AXP2101_SLAVE_ADDRESS);
+    if (Wire.endTransmission() == 0) {
+        return beginAMOLED_147();
+    }
+
+    Wire.end();
+
+    delay(10);
+
+    // Try find 1.91 inch i2c devices
+    Wire.begin(3, 2);
+    Wire.beginTransmission(CSTXXX_SLAVE_ADDRESS);
+    if (Wire.endTransmission() == 0) {
+        return beginAMOLED_191();
+    }
+
+    return false;
+}
+
 bool LilyGo_AMOLED::beginAMOLED_191()
 {
     boards = &BOARD_AMOLED_191;
+
+    if (boards->touch.sda != -1 && boards->touch.scl != -1) {
+        Wire.begin(boards->touch.sda, boards->touch.scl);
+        deviceScan(&Wire, &Serial);
+
+        // Try to find touch device
+        Wire.beginTransmission(CSTXXX_SLAVE_ADDRESS);
+        if (Wire.endTransmission() == 0) {
+            Serial.println("Touchpad is online !");
+            TouchDrvCSTXXX::setPins(boards->touch.rst, boards->touch.irq);
+            bool res = TouchDrvCSTXXX::init(Wire, boards->touch.sda, boards->touch.scl, CSTXXX_SLAVE_ADDRESS);
+            if (!res) {
+                log_e("Failed to find CST816S - check your wiring!");
+                return false;
+            }
+        }
+    }
     return initBUS();
 }
-
 
 bool LilyGo_AMOLED::beginAMOLED_147()
 {
@@ -224,14 +299,15 @@ bool LilyGo_AMOLED::beginAMOLED_147()
         assert(pBuffer);
     }
 
-    TouchDrvCHSC5816::setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
-    bool res = TouchDrvCHSC5816::begin(Wire, CHSC5816_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
+    TouchDrvCHSC5816::setPins(boards->touch.rst, boards->touch.irq);
+    bool res = TouchDrvCHSC5816::begin(Wire, CHSC5816_SLAVE_ADDRESS, boards->touch.sda, boards->touch.scl);
     if (!res) {
         log_e("Failed to find CHSC5816 - check your wiring!");
         return false;
     }
 
-    res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
+    // Share I2C Bus
+    res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->touch.sda, boards->touch.scl);
     if (!res) {
         log_e("Failed to find CM32181 - check your wiring!");
         return false;
