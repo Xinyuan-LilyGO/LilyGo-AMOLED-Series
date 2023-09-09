@@ -9,6 +9,11 @@
 
 #pragma once
 #include <Arduino.h>
+
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2,0,5)
+#error "Please update Arduino Core ESP32 to the latest version, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
+#endif
+
 #include <driver/spi_master.h>
 #include <SPI.h>
 #include "XPowersLib.h"
