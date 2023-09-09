@@ -483,6 +483,52 @@ float LilyGo_AMOLED::readCoreTemp()
 }
 
 
+void LilyGo_AMOLED::attachPMU(void(*cb)(void))
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            pinMode(BOARD_PMU_IRQ, INPUT_PULLUP);
+            attachInterrupt(BOARD_PMU_IRQ, cb, FALLING);
+        }
+    }
+}
+
+uint64_t LilyGo_AMOLED::readPMU()
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            return XPowersAXP2101::getIrqStatus();
+        }
+    }
+}
+
+void LilyGo_AMOLED::clearPMU()
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            XPowersAXP2101::clearIrqStatus();
+        }
+    }
+}
+
+void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            XPowersAXP2101::enableIRQ(params);
+        }
+    }
+}
+void LilyGo_AMOLED::diablePMUInterrupt(uint32_t params)
+{
+    if (boards) {
+        if (boards->hasPMU) {
+            XPowersAXP2101::disableIRQ(params);
+        }
+    }
+}
+
+
 LilyGo_AMOLED amoled;
 
 

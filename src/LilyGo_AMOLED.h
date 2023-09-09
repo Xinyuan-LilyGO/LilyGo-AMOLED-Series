@@ -201,6 +201,13 @@ public:
     uint16_t getBattVoltage(void) override;
 
 
+    // PMU Function , only 1.47' inches support
+    void attachPMU(void(*cb)(void));
+    uint64_t readPMU();
+    void clearPMU();
+    void enablePMUInterrupt(uint32_t params);
+    void diablePMUInterrupt(uint32_t params);
+
     const BoardsConfigure_t *getBoarsdConfigure();
 
 private:
