@@ -57,7 +57,7 @@ examples/
 * It is recommended to use platformio without cumbersome steps
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
+2. Install [Arduino ESP32 2.0.5 or above](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
 3. Download `T-Display-AMOLED-Lite` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
