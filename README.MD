@@ -14,13 +14,27 @@
 
 ```txt
 examples/
-├── Factory                 # Factory example
-├── GPS_Shield              # Extern GPS Shield example,use Serial communication
-├── HP303BSensor            # Extern Temperature Pressure Sensor example,use Wire communication
-├── LumenMeter              # AMOLED internal light sensor example
-├── TFT_eSPI_Sprite         # Use TFT_eSPI Sprite example
-├── Touchpad                # Touchpad example
-└── lvgl                    # LVGL examples
+├── Factory                # Factory example
+├── LumenMeter             # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── PMU_ADC                # PMU Voltage detection example , only support 1.47-inch AMOLED
+├── PMU_Interrupt          # PMU interrupt example , only support 1.47-inch AMOLED
+├── QWIIC_GPS_Shield       # Extern GPS Shield example,use Serial communication
+├── QWIIC_HP303BSensor     # Extern Temperature Pressure Sensor example,use Wire communication
+├── TFT_eSPI_Sprite        # Use TFT_eSPI Sprite example
+├── Touchpad               # Touchpad example
+└── lvgl                   # LVGL examples
+    ├── event
+    ├── get_started
+    ├── layouts
+    │   ├── flex
+    │   └── grid
+    ├── scroll
+    ├── style
+    ├── third_party
+    │   ├── ImageDecoder
+    │   └── gif
+    └── widgets
+        └── ...
 ```
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
@@ -77,6 +91,8 @@ Please enter the upload mode manually.
    5. Upload sketch
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
+3. AMOLED does not support hardware screen rotation function
+
 
 # 7️⃣ Resource
 
