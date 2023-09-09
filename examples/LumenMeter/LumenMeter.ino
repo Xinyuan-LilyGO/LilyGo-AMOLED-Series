@@ -4,7 +4,7 @@
  * @license   MIT
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
  * @date      2023-08-09
- *
+ * @note      Sketch only for 1.47" screen with built-in ambient light sensor
  */
 
 #include <LilyGo_AMOLED.h>

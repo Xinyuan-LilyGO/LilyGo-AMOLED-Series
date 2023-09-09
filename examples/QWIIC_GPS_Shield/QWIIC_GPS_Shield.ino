@@ -1,5 +1,5 @@
 /**
- * @file      GPS_Shield.ino
+ * @file      QWIIC_GPS_Shield.ino
  * @author    Lewis He (lewishe@outlook.com)
  * @license   MIT
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd

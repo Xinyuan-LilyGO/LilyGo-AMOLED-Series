@@ -1,5 +1,5 @@
 /**
- * @file      HP303BSensor.ino
+ * @file      QWIIC_HP303BSensor.ino
  * @author    Lewis He (lewishe@outlook.com)
  * @license   MIT
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
