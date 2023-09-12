@@ -102,6 +102,7 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
 
 uint32_t deviceScan(TwoWire *_port, Stream *stream)
 {
+    stream->println("Devices Scan start.");
     uint8_t err, addr;
     int nDevices = 0;
     for (addr = 1; addr < 127; addr++) {
@@ -166,6 +167,7 @@ bool LilyGo_AMOLED::initPMU()
 
 bool LilyGo_AMOLED::initBUS()
 {
+    assert(boards);
     pinMode(boards->display.rst, OUTPUT);
     pinMode(boards->display.cs, OUTPUT);
     pinMode(boards->display.te, INPUT);
@@ -235,6 +237,9 @@ bool LilyGo_AMOLED::beginAutomatic()
         return beginAMOLED_147();
     }
 
+    log_e("Unable to detect 1.47-inch board model!");
+
+
     Wire.end();
 
     delay(10);
@@ -243,29 +248,35 @@ bool LilyGo_AMOLED::beginAutomatic()
     Wire.begin(3, 2);
     Wire.beginTransmission(CSTXXX_SLAVE_ADDRESS);
     if (Wire.endTransmission() == 0) {
-        return beginAMOLED_191();
+        return beginAMOLED_191(true);
     }
+    log_e("Unable to detect 1.91-inch touch board model!");
 
-    return false;
+    Wire.end();
+
+    log_e("Begin 1.91-inch no touch board model");
+
+    return beginAMOLED_191(false);
 }
 
-bool LilyGo_AMOLED::beginAMOLED_191()
+bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
 {
     boards = &BOARD_AMOLED_191;
 
-    if (boards->touch.sda != -1 && boards->touch.scl != -1) {
-        Wire.begin(boards->touch.sda, boards->touch.scl);
-        deviceScan(&Wire, &Serial);
+    if (touchFunc) {
+        if (boards->touch.sda != -1 && boards->touch.scl != -1) {
+            Wire.begin(boards->touch.sda, boards->touch.scl);
+            deviceScan(&Wire, &Serial);
 
-        // Try to find touch device
-        Wire.beginTransmission(CSTXXX_SLAVE_ADDRESS);
-        if (Wire.endTransmission() == 0) {
-            Serial.println("Touchpad is online !");
-            TouchDrvCSTXXX::setPins(boards->touch.rst, boards->touch.irq);
-            bool res = TouchDrvCSTXXX::init(Wire, boards->touch.sda, boards->touch.scl, CSTXXX_SLAVE_ADDRESS);
-            if (!res) {
-                log_e("Failed to find CST816S - check your wiring!");
-                return false;
+            // Try to find touch device
+            Wire.beginTransmission(CST816T_SLAVE_ADDRESS);
+            if (Wire.endTransmission() == 0) {
+                TouchDrvCSTXXX::setPins(boards->touch.rst, boards->touch.irq);
+                bool res = TouchDrvCSTXXX::init(Wire, boards->touch.sda, boards->touch.scl, CST816T_SLAVE_ADDRESS);
+                if (!res) {
+                    log_e("Failed to find CST816T - check your wiring!");
+                    return false;
+                }
             }
         }
     }
@@ -279,7 +290,7 @@ bool LilyGo_AMOLED::beginAMOLED_147()
     boards = &BOARD_AMOLED_147;
 
     if (!initPMU()) {
-        Serial.println("PMU is not online...");
+        log_e("Failed to find AXP2101 - check your wiring!");
         return false;
     }
 
@@ -396,6 +407,8 @@ void LilyGo_AMOLED::pushColors(uint16_t *data, uint32_t len)
 {
     bool first_send = true;
     uint16_t *p = data;
+    assert(p);
+    assert(spi);
     setCS();
     do {
         size_t chunk_size = len;
@@ -500,6 +513,7 @@ uint64_t LilyGo_AMOLED::readPMU()
             return XPowersAXP2101::getIrqStatus();
         }
     }
+    return 0;
 }
 
 void LilyGo_AMOLED::clearPMU()

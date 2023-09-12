@@ -118,6 +118,7 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
 };
 
 static const int AMOLED_147_BUTTONTS[2] = {0, 21};
+static const int AMOLED_191_BUTTONTS[1] = {0};
 
 
 // LILYGO 1.91 Inch AMOLED(RM67162) S3R8
@@ -147,8 +148,8 @@ static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     RM67162_AMOLED,
     //CST816T
     {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/},
-    NULL,//Button Pins
-    0, //Button Number
+    AMOLED_191_BUTTONTS,//Button Pins
+    1, //Button Number
     -1,//pixelsPins
     4, //adcPins
     false, false, false, true
@@ -181,7 +182,7 @@ public:
 
     // LILYGO 1.91 Inc AMOLED(RM67162) S3R8
     // https://www.lilygo.cc/products/t-display-s3-amoled
-    bool beginAMOLED_191();
+    bool beginAMOLED_191(bool touchFunc = true);
 
     // LILYGO 1.47 Inc AMOLED(SH8501) S3R8
     bool beginAMOLED_147();
