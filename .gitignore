@@ -6,3 +6,4 @@
 *.pyc
 build
 script
+platformio.ini.self
