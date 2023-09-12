@@ -23,15 +23,24 @@ void setup()
 {
     Serial.begin(115200);
 
+    bool rslt = false;
+
     // Begin LilyGo  1.47 Inch AMOLED board class
-    // amoled.beginAMOLED_147();
+    //rslt = amoled.beginAMOLED_147();
 
 
     // Begin LilyGo  1.91 Inch AMOLED board class
-    // amoled.beginAMOLED_191();
+    //rslt =  amoled.beginAMOLED_191();
 
     // Automatically determine the access device
-    amoled.beginAutomatic();
+    rslt = amoled.beginAutomatic();
+
+    if (!rslt) {
+        while (1) {
+            Serial.println("The board model cannot be detected, please raise the Core Debug Level to an error");
+            delay(1000);
+        }
+    }
 
     beginLvglHelper();
 

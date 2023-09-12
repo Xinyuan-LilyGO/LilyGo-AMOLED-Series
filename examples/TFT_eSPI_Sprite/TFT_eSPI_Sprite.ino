@@ -38,7 +38,11 @@ void setup()
     // amoled.beginAMOLED_191();
 
     // Automatically determine the access device
-    amoled.beginAutomatic();
+    if (!amoled.beginAutomatic()) {
+        while (1) {
+            Serial.println("There is a problem with the device!~"); delay(1000);
+        }
+    }
 
     spr.createSprite(WIDTH, HEIGHT);
 
