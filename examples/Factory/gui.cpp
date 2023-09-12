@@ -819,3 +819,12 @@ void factoryGUI(void)
     }
 
 }
+
+
+void selectNextItem()
+{
+    static int id = 0;
+    id++;
+    id %= 6;
+    lv_obj_set_tile_id(tileview, id, 0, LV_ANIM_ON);
+}

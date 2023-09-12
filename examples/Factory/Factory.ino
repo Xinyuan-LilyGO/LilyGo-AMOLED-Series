@@ -85,8 +85,7 @@ void datetimeSyncTask(void *ptr);
 void updateCoin360Task(void *ptr);
 WiFiClientSecure client ;
 HTTPClient https;
-AceButton button1;
-AceButton button2;
+AceButton *button = NULL;
 
 double latitude;
 double longitude;
@@ -106,12 +105,25 @@ void buttonHandleEvent(AceButton *button,
                        uint8_t eventType,
                        uint8_t buttonState)
 {
+    // Print out a message for all events.
+    // Serial.print(F("handleEvent(): eventType: "));
+    // Serial.print(AceButton::eventName(eventType));
+    // Serial.print(F("; buttonState: "));
+    // Serial.println(buttonState);
+
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
     switch (eventType) {
     case AceButton::kEventClicked:
-        // Toggle CHG led
-        amoled.setChargingLedMode(
-            amoled.getChargingLedMode() != XPOWERS_CHG_LED_OFF ?
-            XPOWERS_CHG_LED_OFF : XPOWERS_CHG_LED_ON);
+        if (boards) {
+            if (boards->hasPMU) {
+                // Toggle CHG led
+                amoled.setChargingLedMode(
+                    amoled.getChargingLedMode() != XPOWERS_CHG_LED_OFF ?
+                    XPOWERS_CHG_LED_OFF : XPOWERS_CHG_LED_ON);
+            } else {
+                selectNextItem();
+            }
+        }
         break;
     default:
         break;
@@ -120,9 +132,11 @@ void buttonHandleEvent(AceButton *button,
 
 void buttonHandlerTask(void *ptr)
 {
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
     while (1) {
-        button1.check();
-        button2.check();
+        for (int i = 0; i < boards->buttonNum; ++i) {
+            button[i].check();
+        }
         delay(5);
     }
     vTaskDelete(NULL);
@@ -131,6 +145,7 @@ void buttonHandlerTask(void *ptr)
 
 void setup()
 {
+
     Serial.begin(115200);
 
     xWiFiLock =  xSemaphoreCreateBinary();
@@ -139,20 +154,29 @@ void setup()
     // Register WiFi event
     WiFi.onEvent(WiFiEvent);
 
+
+    bool rslt = false;
+
     // Begin LilyGo  1.47 Inch AMOLED board class
-    // amoled.beginAMOLED_147();
+    //rslt = amoled.beginAMOLED_147();
 
 
     // Begin LilyGo  1.91 Inch AMOLED board class
-    // amoled.beginAMOLED_191();
+    //rslt =  amoled.beginAMOLED_191();
 
     // Automatically determine the access device
-    amoled.beginAutomatic();
+    rslt = amoled.beginAutomatic();
+
+    if (!rslt) {
+        while (1) {
+            Serial.println("The board model cannot be detected, please raise the Core Debug Level to an error");
+            delay(1000);
+        }
+    }
 
 
     // Register lvgl helper
     beginLvglHelper();
-
 
     const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
 
@@ -160,31 +184,27 @@ void setup()
     if (boards->buttonNum) {
 
         ButtonConfig *buttonConfig;
-
-        if (boards->pButtons[0] != -1) {
-            pinMode(boards->pButtons[0], INPUT_PULLUP);
-            buttonConfig = button1.getButtonConfig();
-            buttonConfig->setFeature(ButtonConfig::kFeatureClick);
-            buttonConfig->setEventHandler(buttonHandleEvent);
-        }
-        if (boards->pButtons[1] != -1) {
-            pinMode(boards->pButtons[1], INPUT_PULLUP);
-            button2.init(boards->pButtons[1]);
-            buttonConfig = button2.getButtonConfig();
+        button = new AceButton [boards->buttonNum];
+        for (int i = 0; i < boards->buttonNum; ++i) {
+            Serial.print("init button : "); Serial.println(i);
+            pinMode(boards->pButtons[i], INPUT_PULLUP);
+            button[i].init(boards->pButtons[i], HIGH, i);
+            buttonConfig = button[i].getButtonConfig();
             buttonConfig->setFeature(ButtonConfig::kFeatureClick);
             buttonConfig->setEventHandler(buttonHandleEvent);
         }
 
+        if (boards->pixelsPins != -1) {
+            pixels.begin(); // This initializes the NeoPixel library.
+            pixels.setBrightness(15);
 
-        pixels.begin(); // This initializes the NeoPixel library.
-        pixels.setBrightness(15);
-
-        // Test pixels color
-        pixels.setPixelColor(0, pixels.Color(255, 0, 0)); pixels.show(); delay(500);
-        pixels.setPixelColor(0, pixels.Color(0, 255, 0)); pixels.show(); delay(500);
-        pixels.setPixelColor(0, pixels.Color(0, 0, 255)); pixels.show(); delay(500);
-        pixels.clear();
-        pixels.show();
+            // Test pixels color
+            pixels.setPixelColor(0, pixels.Color(255, 0, 0)); pixels.show(); delay(500);
+            pixels.setPixelColor(0, pixels.Color(0, 255, 0)); pixels.show(); delay(500);
+            pixels.setPixelColor(0, pixels.Color(0, 0, 255)); pixels.show(); delay(500);
+            pixels.clear();
+            pixels.show();
+        }
     }
 
 
@@ -200,7 +220,14 @@ void setup()
     esp_wifi_get_config(WIFI_IF_STA, &current_conf);
     if (strlen((const char *)current_conf.sta.ssid) == 0) {
         // Just for factory testing.
-        Serial.println("Use default WiFi SSID & PASSWORD!!");
+        Serial.print("Use default WiFi SSID & PASSWORD!!");
+        Serial.print("SSID:"); Serial.println(WIFI_SSID);
+        Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
+        if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        }
         WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     } else {
         Serial.println("Begin WiFi");
@@ -211,9 +238,24 @@ void setup()
     // Enable Watchdog
     enableLoopWDT();
 
-    if (boards->buttonNum) {
+    if (boards->buttonNum && button) {
         xTaskCreate(buttonHandlerTask, "btn", 5 * 1024, NULL, 12, NULL);
     }
+
+    amoled.setHomeButtonCallback([](void *ptr) {
+        Serial.println("Home key pressed!");
+        static uint32_t checkMs = 0;
+        static uint8_t lastBri = 0;
+        if (millis() > checkMs) {
+            if (amoled.getBrightness()) {
+                lastBri = amoled.getBrightness();
+                amoled.setBrightness(0);
+            } else {
+                amoled.setBrightness(lastBri);
+            }
+        }
+        checkMs = millis() + 200;
+    }, NULL);
 
 }
 

@@ -47,3 +47,4 @@ typedef struct  __OpenWeatherMapApi {
 } OpenWeatherMapApi;
 
 
+void selectNextItem();
