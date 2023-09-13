@@ -2,7 +2,7 @@
  *
  * @license MIT License
  *
- * Copyright (c) 2022 lewis he
+ * Copyright (c) 2023 lewis he
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @file      CM32181_LightSensor.ino
+ * @file      CM32181_LightSensorInterrupt.ino
  * @author    Lewis He (lewishe@outlook.com)
- * @date      2023-04-14
+ * @date      2023-09-13
  *
  */
 #include <Wire.h>
@@ -73,24 +73,61 @@ void setup()
             SAMPLING_X1_8
             SAMPLING_X1_4
     */
-    light.setSampling(SensorCM32181::SAMPLING_X2);
+    light.setSampling(SensorCM32181::SAMPLING_X2,
+                      SensorCM32181::INTEGRATION_TIME_400MS
+                     );
+
+    // Set high and low thresholds. If the threshold is higher or lower than the set threshold, an interrupt will be triggered.
+    uint16_t lowThresholdRaw = 100;
+    uint16_t highThresholdRaw = 250;
+    light.setIntThreshold(lowThresholdRaw, highThresholdRaw);
 
     //Power On sensor
     light.powerOn();
 
+    // Turn on interrupt
+    light.enableINT();
 }
 
 
 void loop()
 {
-    // Get raw data
-    uint16_t raw = light.getRaw();
+    int pinVal = digitalRead(SENSOR_IRQ) ;
+    if (pinVal == LOW) {
 
-    // Get conversion data , The manual does not provide information on how to obtain the
-    //  calibration value, now use the calibration value 0.28 provided by the manual
-    float lux = light.getLux();
-    Serial.printf("RAW:%u Lux:%.2f\n", raw, lux);
-    delay(500);
+        // After triggering the interrupt, the interrupt status must be read
+        SensorCM32181::InterruptEvent event =  light.getIrqStatus();
+
+        // Turn off interrupts
+        light.disableINT();
+
+        // Get Status
+        switch (event) {
+        case SensorCM32181::ALS_EVENT_LOW_TRIGGER:
+            Serial.println("Low interrupt event");
+            break;
+        case SensorCM32181::ALS_EVENT_HIGH_TRIGGER:
+            Serial.println("High interrupt event");
+            break;
+        default:
+            Serial.println("This is an impossible place to reach");
+            break;
+        }
+
+        // Get raw data
+        uint16_t raw = light.getRaw();
+
+        // Get conversion data , The manual does not provide information on how to obtain the
+        //  calibration value, now use the calibration value 0.28 provided by the manual
+        float lux = light.getLux();
+        Serial.printf("IRQ:%d RAW:%u Lux:%.2f\n", pinVal, raw, lux);
+
+
+        // Turn on interrupts
+        light.enableINT();
+    }
+
+    delay(800);
 }
 
 

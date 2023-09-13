@@ -56,11 +56,25 @@
 #define LOG_BIN(x)
 #endif
 
+#ifndef ESP32
+#define lowByte(w) ((uint8_t) ((w) & 0xff))
+#define highByte(w) ((uint8_t) ((w) >> 8))
+#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+#define bitSet(value, bit) ((value) |= (1UL << (bit)))
+#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
+#define bitToggle(value, bit) ((value) ^= (1UL << (bit)))
+#define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet(value, bit) : bitClear(value, bit))
+#endif
 
 #define SENSORLIB_ATTR_NOT_IMPLEMENTED    __attribute__((error("Not implemented")))
 
 #if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
 #define SPI_DATA_ORDER  MSBFIRST
+#define DEFAULT_SDA     (0xFF)
+#define DEFAULT_SCL     (0xFF)
+#define DEFAULT_SPISETTING  SPISettings()
+#elif defined(ARDUINO_ARCH_RP2040)
+#define SPI_DATA_ORDER  SPI_MSB_FIRST
 #define DEFAULT_SDA     (0xFF)
 #define DEFAULT_SCL     (0xFF)
 #define DEFAULT_SPISETTING  SPISettings()
@@ -72,9 +86,15 @@
 #endif
 
 #ifndef ESP32
-#define log_e(...)
-#define log_i(...)
-#define log_d(...)
+#ifndef log_e
+#define log_e(...)          Serial.printf(__VA_ARGS__)
+#endif
+#ifndef log_i
+#define log_i(...)          Serial.printf(__VA_ARGS__)
+#endif
+#ifndef log_d
+#define log_d(...)          Serial.printf(__VA_ARGS__)
+#endif
 #endif
 
 #ifndef INPUT
@@ -93,14 +113,13 @@
 #define FALLING               (0x02)
 #endif
 
-#ifndef LSBFIRST
-#define LSBFIRST 0
-#endif
-
-#ifndef MSBFIRST
-#define MSBFIRST 1
-#endif
-
+typedef union  {
+    struct {
+        uint8_t low;
+        uint8_t high;
+    } bits;
+    uint16_t full;
+} RegData_t;
 
 template <class chipType>
 class SensorCommon
@@ -137,6 +156,11 @@ public:
         __scl = scl;
 #if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
         __wire->begin();
+#elif defined(ARDUINO_ARCH_RP2040)
+        __wire->end();
+        __wire->setSDA(__sda);
+        __wire->setSCL(__scl);
+        __wire->begin();
 #else
         __wire->begin(__sda, __scl);
 #endif
@@ -148,7 +172,13 @@ public:
         return __has_init;
     }
 
-    bool begin(int cs, int mosi = -1, int miso = -1, int sck = -1, SPIClass &spi = SPI)
+    bool begin(int cs, int mosi = -1, int miso = -1, int sck = -1,
+#if defined(ARDUINO_ARCH_RP2040)
+               SPIClassRP2040 &spi = SPI
+#else
+               SPIClass &spi = SPI
+#endif
+              )
     {
         LOG("Using SPI interface.\n");
         if (__has_init)return thisChip().initImpl();
@@ -162,6 +192,11 @@ public:
         }
         if (mosi != -1 && miso != -1 && sck != -1) {
 #if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
+            __spi->begin();
+#elif defined(ARDUINO_ARCH_RP2040)
+            __spi->setSCK(sck);
+            __spi->setRX(miso);
+            __spi->setTX(mosi);
             __spi->begin();
 #else
             __spi->begin(sck, miso, mosi);
@@ -272,10 +307,15 @@ protected:
         return DEV_WIRE_ERR;
     }
 
-    int writeRegister(int reg, uint8_t *buf, uint8_t lenght)
+    int writeRegister(int reg, RegData_t data)
+    {
+        return writeRegister(reg, (uint8_t *)&data.full, 2);
+    }
+
+    int writeRegister(int reg, uint8_t *buf, uint8_t length)
     {
         if (thisWriteRegCallback) {
-            return thisWriteRegCallback(__addr, reg, buf, lenght);
+            return thisWriteRegCallback(__addr, reg, buf, length);
         }
 #if defined(ARDUINO)
         if (__wire) {
@@ -287,7 +327,7 @@ protected:
                     __wire->write(reg >> (8 * ((__reg_addr_len - 1) - i)));
                 }
             }
-            __wire->write(buf, lenght);
+            __wire->write(buf, length);
             return (__wire->endTransmission() == 0) ? 0 : DEV_WIRE_ERR;
         }
         if (__spi) {
@@ -300,7 +340,7 @@ protected:
                     __spi->transfer(reg >> (8 * ((__reg_addr_len - 1) - i)));
                 }
             }
-            __spi->transfer(buf, lenght);
+            __spi->transfer(buf, length);
             digitalWrite(__cs, HIGH);
             __spi->endTransaction();
             return DEV_WIRE_NONE;
@@ -334,7 +374,7 @@ protected:
                 LOG("I2C Transfer Error!\n");
                 return DEV_WIRE_ERR;
             }
-            __wire->requestFrom(__addr, 1U);
+            __wire->requestFrom(__addr, 1U, false);
             return __wire->read();
         }
         if (__spi) {
@@ -359,10 +399,15 @@ protected:
         return DEV_WIRE_ERR;
     }
 
-    int readRegister(int reg, uint8_t *buf, uint8_t lenght)
+    int readRegister(int reg, RegData_t *data)
+    {
+        return readRegister(reg, (uint8_t *)data, 2);
+    }
+
+    int readRegister(int reg, uint8_t *buf, uint8_t length)
     {
         if (thisReadRegCallback) {
-            return thisReadRegCallback(__addr, reg, buf, lenght);
+            return thisReadRegCallback(__addr, reg, buf, length);
         }
 #if defined(ARDUINO)
         if (__wire) {
@@ -377,8 +422,8 @@ protected:
             if (__wire->endTransmission(__sendStop) != 0) {
                 return DEV_WIRE_ERR;
             }
-            __wire->requestFrom(__addr, lenght);
-            return __wire->readBytes(buf, lenght) == lenght ? DEV_WIRE_NONE : DEV_WIRE_ERR;
+            __wire->requestFrom(__addr, length);
+            return __wire->readBytes(buf, length) == length ? DEV_WIRE_NONE : DEV_WIRE_ERR;
         }
         if (__spi) {
             __spi->beginTransaction(*__spiSetting);
@@ -392,7 +437,7 @@ protected:
                     __spi->transfer(reg >> (8 * ((__reg_addr_len - 1) - i)));
                 }
             }
-            for (size_t i = 0; i < lenght; i++) {
+            for (size_t i = 0; i < length; i++) {
                 buf[i] = __spi->transfer(0x00);
             }
             digitalWrite(__cs, HIGH);
@@ -490,6 +535,11 @@ protected:
             log_i("SDA:%d SCL:%d", __sda, __scl);
 #if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
             __wire->begin();
+#elif defined(ARDUINO_ARCH_RP2040)
+            __wire->end();
+            __wire->setSDA(__sda);
+            __wire->setSCL(__scl);
+            __wire->begin();
 #else
             __wire->begin(__sda, __scl);
 #endif
@@ -531,8 +581,13 @@ protected:
     bool                __has_init              = false;
 #if defined(ARDUINO)
     TwoWire             *__wire                 = NULL;
+#if defined(ARDUINO_ARCH_RP2040)
+    SPIClassRP2040      *__spi                  = NULL;
+#else
     SPIClass            *__spi                  = NULL;
-    SPISettings         *__spiSetting           = NULL;
+#endif
+
+    SPISettings          *__spiSetting           = NULL;
 #endif
     uint32_t            __freq                  = 1000000;
     uint8_t             __dataOrder             = SPI_DATA_ORDER;

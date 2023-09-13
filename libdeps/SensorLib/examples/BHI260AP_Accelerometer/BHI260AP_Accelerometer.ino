@@ -2,7 +2,7 @@
  *
  * @license MIT License
  *
- * Copyright (c) 2022 lewis he
+ * Copyright (c) 2023 lewis he
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,75 +22,67 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @file      CM32181_LightSensor.ino
+ * @file      BHI260AP_Accelerometer.ino
  * @author    Lewis He (lewishe@outlook.com)
- * @date      2023-04-14
+ * @date      2023-09-06
  *
  */
 #include <Wire.h>
 #include <SPI.h>
 #include <Arduino.h>
-#include "SensorCM32181.hpp"
+#include "SensorBHI260AP.hpp"
 
-#ifndef SENSOR_SDA
-#define SENSOR_SDA  39
+#ifdef BHY2_USE_I2C
+#define BHI260AP_SDA          21
+#define BHI260AP_SCL          22
+#define BHI260AP_IRQ          39
+#else
+#define BHI260AP_MOSI         33
+#define BHI260AP_MISO         34
+#define BHI260AP_SCK          35
+#define BHI260AP_CS           36
+#define BHI260AP_INT          37
+#define BHI260AP_RST          -1
 #endif
 
-#ifndef SENSOR_SCL
-#define SENSOR_SCL  40
-#endif
 
-#ifndef SENSOR_IRQ
-#define SENSOR_IRQ  1
-#endif
-
-SensorCM32181 light;
-
+SensorBHI260AP bhy;
 
 void setup()
 {
     Serial.begin(115200);
     while (!Serial);
 
-    pinMode(SENSOR_IRQ, INPUT_PULLUP);
+    bhy.setPins(BHI260AP_RST, BHI260AP_INT);
 
-    if (!light.begin(Wire, CM32181_SLAVE_ADDRESS, SENSOR_SDA, SENSOR_SCL)) {
-        Serial.println("Failed to find CM32181 - check your wiring!");
+#ifdef BHY2_USE_I2C
+    if (!bhy.init(Wire, BHI260AP_SLAVE_ADDRESS, BHI260AP_SDA, BHI260AP_SCL)) {
+        Serial.println("Failed to find BHI260AP - check your wiring!");
         while (1) {
             delay(1000);
         }
     }
+#else
+    if (!bhy.init(SPI, BHI260AP_CS, BHI260AP_MOSI, BHI260AP_MISO, BHI260AP_SCK)) {
+        Serial.println("Failed to find BHI260AP - check your wiring!");
+        while (1) {
+            delay(1000);
+        }
+    }
+#endif
 
-    Serial.println("Init CM32181 Sensor success!");
+    Serial.println("Init BHI260AP Sensor success!");
 
-    int id =  light.getChipID();
-    Serial.print("CM32181 ID = "); Serial.println(id);
 
-    /*
-        Sensitivity mode selection
-            SAMPLING_X1
-            SAMPLING_X2
-            SAMPLING_X1_8
-            SAMPLING_X1_4
-    */
-    light.setSampling(SensorCM32181::SAMPLING_X2);
+    bhy.printSensors(Serial);
 
-    //Power On sensor
-    light.powerOn();
-
+    //TODO:
 }
 
 
 void loop()
 {
-    // Get raw data
-    uint16_t raw = light.getRaw();
-
-    // Get conversion data , The manual does not provide information on how to obtain the
-    //  calibration value, now use the calibration value 0.28 provided by the manual
-    float lux = light.getLux();
-    Serial.printf("RAW:%u Lux:%.2f\n", raw, lux);
-    delay(500);
+    delay(50);
 }
 
 
