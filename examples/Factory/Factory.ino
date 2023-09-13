@@ -114,16 +114,60 @@ void buttonHandleEvent(AceButton *button,
     const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
     switch (eventType) {
     case AceButton::kEventClicked:
-        if (boards) {
-            if (boards->hasPMU) {
+        if (button->getId() == 0) {
+            selectNextItem();
+        } else {
+            if (boards->pmu) {
                 // Toggle CHG led
                 amoled.setChargingLedMode(
                     amoled.getChargingLedMode() != XPOWERS_CHG_LED_OFF ?
                     XPOWERS_CHG_LED_OFF : XPOWERS_CHG_LED_ON);
-            } else {
-                selectNextItem();
             }
         }
+        break;
+    case AceButton::kEventLongPressed:
+
+        Serial.println("Enter sleep !");
+
+        if (vUpdateDateTimeTaskHandler) {
+            vTaskDelete(vUpdateDateTimeTaskHandler);
+        }
+        if (vUpdateCoin360TaskHandler) {
+            vTaskDelete(vUpdateCoin360TaskHandler);
+        }
+        if (vUpdateWeatherTaskHandler) {
+            vTaskDelete(vUpdateWeatherTaskHandler);
+        }
+
+        WiFi.disconnect();
+        WiFi.removeEvent(WiFiEvent);
+        WiFi.mode(WIFI_OFF);
+
+        Serial.println();
+
+        amoled.sleep();
+
+        if (boards->pixelsPins != -1) {
+            pixels.clear();
+            pixels.show();
+        }
+        if (boards->pmu) {
+
+            // Set PMU Sleep mode
+            amoled.enableSleep();
+            amoled.clearPMU();
+            amoled.enableWakeup();
+
+            // Set PMU interrupt as wake-up source
+            esp_sleep_enable_ext1_wakeup(BIT(boards->pmu->irq), ESP_EXT1_WAKEUP_ALL_LOW);
+
+        } else {
+            esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ALL_LOW);
+        }
+        Serial.println("Sleep Start!");
+        delay(3000);
+        esp_deep_sleep_start();
+        Serial.println("This place will never print!");
         break;
     default:
         break;
@@ -191,6 +235,7 @@ void setup()
             button[i].init(boards->pButtons[i], HIGH, i);
             buttonConfig = button[i].getButtonConfig();
             buttonConfig->setFeature(ButtonConfig::kFeatureClick);
+            buttonConfig->setFeature(ButtonConfig::kFeatureLongPress);
             buttonConfig->setEventHandler(buttonHandleEvent);
         }
 

@@ -471,7 +471,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
         lv_label_set_text_fmt(p[0], "%u mV", vol);
 
         const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             vol =   amoled.getVbusVoltage();
             lv_label_set_text_fmt(p[1], "%u mV", vol);
 
