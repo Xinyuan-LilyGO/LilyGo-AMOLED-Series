@@ -10,7 +10,7 @@
 | [T-Display-S3 AMOLED][2] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled
-[1]: https://www.lilygo.cc/products/t-display-s3-amoled
+[2]: https://www.lilygo.cc/products/t-display-s3-amoled
 
 ## 2️⃣Examples
 
@@ -94,7 +94,6 @@ Please enter the upload mode manually.
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
 3. AMOLED does not support hardware screen rotation function
-
 
 # 7️⃣ Resource
 
