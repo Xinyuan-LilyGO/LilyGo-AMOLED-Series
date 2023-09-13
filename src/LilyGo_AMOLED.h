@@ -81,22 +81,35 @@ typedef struct __BoardTouchPins {
     int rst;
 } BoardTouchPins_t;
 
+typedef struct __BoardPmuPins {
+    int sda;
+    int scl;
+    int irq;
+} BoardPmuPins_t;
+
+typedef struct __BoardSensorPins {
+    int sda;
+    int scl;
+    int irq;
+} BoardSensorPins_t;
+
 typedef struct __BoardsConfigure {
     DisplayConfigure_t display;
-    BoardTouchPins_t touch;
+    const BoardTouchPins_t touch;
+    const BoardPmuPins_t *pmu;
+    const BoardSensorPins_t *sensor;
     const int *pButtons;
     const int buttonNum;
     int pixelsPins;
     int adcPins;
-    bool hasPMU;
-    bool hasSensor;
+    int PMICEnPins;
     bool framebuffer;
     bool hasTouch;
 } BoardsConfigure_t;
 
 
 // LILYGO 1.47 Inch AMOLED(SH8501) S3R8
-//
+// https://www.lilygo.cc/products/t-display-amoled
 static const DisplayConfigure_t SH8501_AMOLED  = {
     7, //BOARD_DISP_DATA0,
     10,//BOARD_DISP_DATA1,
@@ -118,6 +131,9 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
 };
 
 static const int AMOLED_147_BUTTONTS[2] = {0, 21};
+static const BoardPmuPins_t AMOLED_147_PMU_PINS =  {1/*SDA*/, 2/*SCL*/, 3/*IRQ*/};
+static const BoardSensorPins_t AMOLED_147_SENSOR_PINS =  {1/*SDA*/, 2/*SCL*/, 8/*IRQ*/};
+
 static const int AMOLED_191_BUTTONTS[1] = {0};
 
 
@@ -148,22 +164,29 @@ static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     RM67162_AMOLED,
     //CST816T
     {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/},
+    NULL,//PMU
+    NULL,//SENSOR
     AMOLED_191_BUTTONTS,//Button Pins
     1, //Button Number
     -1,//pixelsPins
     4, //adcPins
-    false, false, false, true
+    38,//PMICEnPins
+    false, true
 };
 
-
+// T-Display AMOLED H593
+// https://www.lilygo.cc/products/t-display-amoled
 static const  BoardsConfigure_t BOARD_AMOLED_147 = {
     SH8501_AMOLED,
     {1/*SDA*/, 2/*SCL*/, 13/*IRQ*/, 14/*RST*/},
+    &AMOLED_147_PMU_PINS,       //PMU
+    &AMOLED_147_SENSOR_PINS,    //SENSOR
     AMOLED_147_BUTTONTS, //Button Pins
     2,  //Button Number
     18, // pixelsPins
     -1, //adcPins
-    true, true, true, true
+    -1,//PMICEnPins
+    true, true
 };
 
 
@@ -185,6 +208,7 @@ public:
     bool beginAMOLED_191(bool touchFunc = true);
 
     // LILYGO 1.47 Inc AMOLED(SH8501) S3R8
+    // https://www.lilygo.cc/products/t-display-amoled
     bool beginAMOLED_147();
 
     void setBrightness(uint8_t level);
@@ -215,6 +239,9 @@ public:
     void diablePMUInterrupt(uint32_t params);
 
     const BoardsConfigure_t *getBoarsdConfigure();
+
+    void sleep();
+    void wakeup();
 
 private:
     bool initBUS();

@@ -23,6 +23,18 @@ LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL)
 {
     pBuffer = NULL;
     _brightness = AMOLED_DEFAULT_BRIGHTNESS;
+    // Prevent previously set hold
+    switch (esp_sleep_get_wakeup_cause()) {
+    case ESP_SLEEP_WAKEUP_EXT0 :
+    case ESP_SLEEP_WAKEUP_EXT1 :
+    case ESP_SLEEP_WAKEUP_TIMER:
+    case ESP_SLEEP_WAKEUP_ULP :
+        gpio_hold_dis(GPIO_NUM_14);
+        gpio_deep_sleep_hold_dis();
+        break;
+    default :
+        break;
+    }
 }
 
 LilyGo_AMOLED::~LilyGo_AMOLED()
@@ -86,7 +98,7 @@ uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 uint16_t LilyGo_AMOLED::getBattVoltage(void)
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             return XPowersAXP2101::getBattVoltage();
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
@@ -131,10 +143,12 @@ uint32_t deviceScan(TwoWire *_port, Stream *stream)
 
 bool LilyGo_AMOLED::initPMU()
 {
-    bool res = XPowersAXP2101::init(Wire, boards->touch.sda, boards->touch.scl, AXP2101_SLAVE_ADDRESS);
+    bool res = XPowersAXP2101::init(Wire, boards->pmu->sda, boards->pmu->scl, AXP2101_SLAVE_ADDRESS);
     if (!res) {
         return false;
     }
+
+    clearPMU();
 
     setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
 
@@ -171,6 +185,11 @@ bool LilyGo_AMOLED::initBUS()
     pinMode(boards->display.rst, OUTPUT);
     pinMode(boards->display.cs, OUTPUT);
     pinMode(boards->display.te, INPUT);
+
+    if (boards->PMICEnPins != -1) {
+        pinMode(boards->PMICEnPins, OUTPUT);
+        digitalWrite(boards->PMICEnPins, HIGH);
+    }
 
     //reset display
     digitalWrite(boards->display.rst, HIGH);
@@ -318,7 +337,7 @@ bool LilyGo_AMOLED::beginAMOLED_147()
     }
 
     // Share I2C Bus
-    res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->touch.sda, boards->touch.scl);
+    res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
     if (!res) {
         log_e("Failed to find CM32181 - check your wiring!");
         return false;
@@ -330,7 +349,7 @@ bool LilyGo_AMOLED::beginAMOLED_147()
             SAMPLING_X1_8
             SAMPLING_X1_4
     */
-    SensorCM32181::setSampling(SAMPLING_X2),
+    SensorCM32181::setSampling(SensorCM32181::SAMPLING_X2),
                   powerOn();
 
 
@@ -499,7 +518,7 @@ float LilyGo_AMOLED::readCoreTemp()
 void LilyGo_AMOLED::attachPMU(void(*cb)(void))
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             pinMode(BOARD_PMU_IRQ, INPUT_PULLUP);
             attachInterrupt(BOARD_PMU_IRQ, cb, FALLING);
         }
@@ -509,7 +528,7 @@ void LilyGo_AMOLED::attachPMU(void(*cb)(void))
 uint64_t LilyGo_AMOLED::readPMU()
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             return XPowersAXP2101::getIrqStatus();
         }
     }
@@ -519,7 +538,8 @@ uint64_t LilyGo_AMOLED::readPMU()
 void LilyGo_AMOLED::clearPMU()
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
+            log_i("clearPMU");
             XPowersAXP2101::clearIrqStatus();
         }
     }
@@ -528,7 +548,7 @@ void LilyGo_AMOLED::clearPMU()
 void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             XPowersAXP2101::enableIRQ(params);
         }
     }
@@ -536,10 +556,61 @@ void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
 void LilyGo_AMOLED::diablePMUInterrupt(uint32_t params)
 {
     if (boards) {
-        if (boards->hasPMU) {
+        if (boards->pmu) {
             XPowersAXP2101::disableIRQ(params);
         }
     }
+}
+
+
+void LilyGo_AMOLED::sleep()
+{
+    //Wire amoled to sleep mode
+    lcd_cmd_t t = {0x1000, {0x00}, 1}; //Sleep in
+    writeCommand(t.addr, t.param, t.len);
+
+    if (boards) {
+        if (boards->pmu) {
+            Serial.println("PMU Disbale AMOLED Power");
+
+            // Turn off Sensor
+            SensorCM32181::powerDown();
+
+            // Turn off ADC data monitoring to save power
+            disableTemperatureMeasure();
+            disableBattDetection();
+            disableVbusVoltageMeasure();
+            disableBattVoltageMeasure();
+            disableSystemVoltageMeasure();
+            setChargingLedMode(XPOWERS_CHG_LED_OFF);
+
+            // Disbale amoled power
+            disableBLDO1();
+            disableALDO3();
+
+            // Don't turn off ALDO1
+            // disableALDO1();
+
+            // Keep touch reset to HIGH
+            digitalWrite(boards->touch.rst, HIGH);
+            gpio_hold_en((gpio_num_t )boards->touch.rst);
+            gpio_deep_sleep_hold_en();
+            // Enter sleep mode
+            TouchDrvCHSC5816::sleep();
+
+        } else {
+            if (boards->PMICEnPins != -1) {
+                // Disable amoled power
+                digitalWrite(boards->PMICEnPins, LOW);
+            }
+        }
+    }
+}
+
+void LilyGo_AMOLED::wakeup()
+{
+    lcd_cmd_t t = {0x1100, {0x00}, 1};// Sleep Out
+    writeCommand(t.addr, t.param, t.len);
 }
 
 
