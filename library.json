@@ -1,5 +1,5 @@
 {
-  "name": "T-Display-AMOLED-Lite",
+  "name": "T-Display-AMOLED",
   "version": "1.0.0",
   "description": "LilyGo AMOLED Arduino library",
   "keywords": "lilygo,amoled",
@@ -16,9 +16,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite.git"
+    "url": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED.git"
   },
-  "homepage": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite",
+  "homepage": "https://github.com/Xinyuan-LilyGO/T-Display-AMOLED",
   "export": {
     "include": [
       "LICENSE",

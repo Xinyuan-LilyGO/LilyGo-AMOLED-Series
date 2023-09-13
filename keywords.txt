@@ -1,6 +1,6 @@
 #######################################
 # Syntax Coloring Map For SensorLib By lewis He
-# github:https://github.com/Xinyuan-LilyGO/T-Display-AMOLED-Lite
+# github:https://github.com/Xinyuan-LilyGO/T-Display-AMOLED
 #######################################
 
 #######################################

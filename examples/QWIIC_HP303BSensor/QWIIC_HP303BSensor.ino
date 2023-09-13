@@ -5,7 +5,7 @@
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
  * @date      2023-08-09
  * @note      Use Qwiic to connect wemos hp303b temperature and pressure sensor,
- *            the sensor is not included in T-Display-AMOLED-Lite, the sketch only demonstrates how to use Wire\
+ *            the sensor is not included in T-Display-AMOLED, the sketch only demonstrates how to use Wire\
  * !!         Note that the wemos hp303b module is inconsistent with the standard Qwiic line sequence, and jumpers are required
  * !!         See ConnectionDiagram.jpg
  */
