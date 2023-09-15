@@ -262,23 +262,31 @@ void setup()
     WiFi.mode(WIFI_STA);
 
     // Connect to the Internet after initializing the UI.
+
+    // Uncomment will use WIFI configured with SmartConfig
+    /*
     esp_wifi_get_config(WIFI_IF_STA, &current_conf);
     if (strlen((const char *)current_conf.sta.ssid) == 0) {
-        // Just for factory testing.
-        Serial.print("Use default WiFi SSID & PASSWORD!!");
-        Serial.print("SSID:"); Serial.println(WIFI_SSID);
-        Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
-        if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
-            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-        }
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    } else {
-        Serial.println("Begin WiFi");
-        WiFi.begin();
-    }
+    */
 
+    // Just for factory testing.
+    Serial.print("Use default WiFi SSID & PASSWORD!!");
+    Serial.print("SSID:"); Serial.println(WIFI_SSID);
+    Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
+    if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+    }
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+    // Uncomment will use WIFI configured with SmartConfig
+    /*
+    } else {
+    Serial.println("Begin WiFi");
+    WiFi.begin();
+    }
+    */
 
     // Enable Watchdog
     enableLoopWDT();
