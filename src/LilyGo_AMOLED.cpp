@@ -602,6 +602,7 @@ void LilyGo_AMOLED::sleep()
             if (boards->PMICEnPins != -1) {
                 // Disable amoled power
                 digitalWrite(boards->PMICEnPins, LOW);
+                TouchDrvCSTXXX::sleep();
             }
         }
     }
