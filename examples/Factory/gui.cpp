@@ -475,8 +475,10 @@ void createDeviceInfoUI(lv_obj_t *parent)
             vol =   amoled.getVbusVoltage();
             lv_label_set_text_fmt(p[1], "%u mV", vol);
 
-            float lux = amoled.getLux();
-            lv_label_set_text_fmt(p[2], "%.1f lux", lux);
+            if (boards->sensor) {
+                float lux = amoled.getLux();
+                lv_label_set_text_fmt(p[2], "%.1f lux", lux);
+            }
         }
 
     }, 1000, pdat);
