@@ -2220,10 +2220,10 @@ public:
         return clrRegisterBit(XPOWERS_AXP2101_ADC_CHANNEL_CTRL, 4);
     }
 
-    uint16_t getTemperature(void)
+    float getTemperature(void)
     {
-        //!FIXME
-        return readRegisterH6L8(XPOWERS_AXP2101_ADC_DATA_RELUST8, XPOWERS_AXP2101_ADC_DATA_RELUST9);
+        uint16_t raw = readRegisterH6L8(XPOWERS_AXP2101_ADC_DATA_RELUST8, XPOWERS_AXP2101_ADC_DATA_RELUST9);
+        return XPOWERS_AXP2101_CONVERSION(raw);
     }
 
     bool enableSystemVoltageMeasure(void)

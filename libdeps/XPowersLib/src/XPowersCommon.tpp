@@ -47,6 +47,8 @@
 #define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 #endif
 
+#define XPOWERS_CHECK_RANGE(VAR, MIN, MAX, ERR) { if(!(((VAR) >= (MIN)) && ((VAR) <= (MAX)))) { return(ERR); } }
+
 
 #define XPOWERS_ATTR_NOT_IMPLEMENTED    __attribute__((error("Not implemented")))
 #define IS_BIT_SET(val,mask)            (((val)&(mask)) == (mask))
@@ -69,8 +71,20 @@
 
 #define RISING              0x01
 #define FALLING             0x02
-
 #endif
+
+#ifndef ESP32
+#ifndef log_e
+#define log_e(...)          Serial.printf(__VA_ARGS__)
+#endif
+#ifndef log_i
+#define log_i(...)          Serial.printf(__VA_ARGS__)
+#endif
+#ifndef log_d
+#define log_d(...)          Serial.printf(__VA_ARGS__)
+#endif
+#endif
+
 
 template <class chipType>
 class XPowersCommon
@@ -84,8 +98,17 @@ public:
     {
         if (__has_init)return thisChip().initImpl();
         __has_init = true;
+        __sda = sda;
+        __scl = scl;
         __wire = &w;
+#if defined(ARDUINO_ARCH_RP2040)
+        __wire->end();
+        __wire->setSDA(__sda);
+        __wire->setSCL(__scl);
+        __wire->begin();
+#else
         __wire->begin(sda, scl);
+#endif
         __addr = addr;
         return thisChip().initImpl();
     }
@@ -246,7 +269,14 @@ protected:
         if (__has_init) return thisChip().initImpl();
         __has_init = true;
         log_i("SDA:%d SCL:%d", __sda, __scl);
+#if defined(ARDUINO_ARCH_RP2040)
+        __wire->end();
+        __wire->setSDA(__sda);
+        __wire->setSCL(__scl);
+        __wire->begin();
+#else
         __wire->begin(__sda, __scl);
+#endif
 #endif  /*ARDUINO*/
         return thisChip().initImpl();
     }

@@ -236,3 +236,7 @@
 #define XPOWERS_AXP2101_DLDO2_VOL_MIN                  (500)
 #define XPOWERS_AXP2101_DLDO2_VOL_MAX                  (3400)
 #define XPOWERS_AXP2101_DLDO2_VOL_STEPS                (100u)
+
+
+#define XPOWERS_AXP2101_CONVERSION(raw)                 (22.0 + (7274 - raw) / 20.0)
+
