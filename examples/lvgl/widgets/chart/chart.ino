@@ -34,6 +34,9 @@ void setup()
     // Begin LilyGo  1.91 Inch AMOLED board class
     //rslt =  amoled.beginAMOLED_191();
 
+    // Begin LilyGo  2.41 Inch AMOLED board class
+    //rslt =  amoled.beginAMOLED_241();
+
     // Automatically determine the access device
     rslt = amoled.beginAutomatic();
 
