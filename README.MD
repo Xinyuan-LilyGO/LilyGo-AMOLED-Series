@@ -8,9 +8,11 @@
 | ------------------------ | ---------- | ----- | -------- | ---------- |
 | [T-Display-AMOLED][1]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    |
 | [T-Display-S3 AMOLED][2] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    |
+| [T-Display AMOLED][3]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
+[3]: https://www.lilygo.cc
 
 ## 2️⃣Examples
 
