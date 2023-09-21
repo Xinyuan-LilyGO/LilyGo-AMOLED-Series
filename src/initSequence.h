@@ -29,7 +29,10 @@ extern const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT];
 #define RM67162_WIDTH                            240
 #define RM67162_HEIGHT                           536
 
-
+#define RM690B0_INIT_SEQUENCE_LENGHT             13
+extern const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT];
+#define RM690B0_WIDTH                            600
+#define RM690B0_HEIGHT                           450
 
 
 

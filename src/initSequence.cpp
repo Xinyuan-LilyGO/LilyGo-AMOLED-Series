@@ -519,3 +519,18 @@ const lcd_cmd_t rm67162_cmd[] = {
 };
 
 
+const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT] = {
+    {0xFE00, {0x20}, 0x01},           //SET PAGE
+    {0x2600, {0x0A}, 0x01},           //MIPI OFF
+    {0x2400, {0x80}, 0x01},           //SPI write RAM
+    {0x5A00, {0x51}, 0x01},           //! 230918:SWIRE FOR BV6804
+    {0x5B00, {0x2E}, 0x01},           //! 230918:SWIRE FOR BV6804
+    {0xFE00, {0x00}, 0x01},           //SET PAGE
+    {0x3A00, {0x55}, 0x01},           //Interface Pixel Format    16bit/pixel
+    {0xC200, {0x00}, 0x21},           //delay_ms(10);
+    {0x3500, {0x00}, 0x01},           //TE ON
+    {0x5100, {0x00}, 0x01},           //Write Display Brightness  MAX_VAL=0XFF
+    {0x1100, {0x00}, 0x80},           //Sleep Out delay_ms(120);
+    {0x2900, {0x00}, 0x20},           //Display on delay_ms(10);
+    {0x5100, {0xFF}, 0x01},           //Write Display Brightness  MAX_VAL=0XFF
+};

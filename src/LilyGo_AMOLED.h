@@ -95,7 +95,7 @@ typedef struct __BoardSensorPins {
 
 typedef struct __BoardsConfigure {
     DisplayConfigure_t display;
-    const BoardTouchPins_t touch;
+    const BoardTouchPins_t *touch;
     const BoardPmuPins_t *pmu;
     const BoardSensorPins_t *sensor;
     const int *pButtons;
@@ -104,7 +104,6 @@ typedef struct __BoardsConfigure {
     int adcPins;
     int PMICEnPins;
     bool framebuffer;
-    bool hasTouch;
 } BoardsConfigure_t;
 
 
@@ -131,10 +130,12 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
 };
 
 static const int AMOLED_147_BUTTONTS[2] = {0, 21};
+static const BoardTouchPins_t AMOLED_147_TOUCH_PINS = {1/*SDA*/, 2/*SCL*/, 13/*IRQ*/, 14/*RST*/};
 static const BoardPmuPins_t AMOLED_147_PMU_PINS =  {1/*SDA*/, 2/*SCL*/, 3/*IRQ*/};
 static const BoardSensorPins_t AMOLED_147_SENSOR_PINS =  {1/*SDA*/, 2/*SCL*/, 8/*IRQ*/};
 
 static const int AMOLED_191_BUTTONTS[1] = {0};
+static const BoardTouchPins_t AMOLED_191_TOUCH_PINS = {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/};
 
 
 // LILYGO 1.91 Inch AMOLED(RM67162) S3R8
@@ -159,11 +160,38 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     0//frameBufferSize
 };
 
+
+
+// LILYGO 2.41 Inch AMOLED(RM690B0) S3R8
+// https://www.lilygo.cc
+static const DisplayConfigure_t RM690B0_AMOLED  = {
+    14,//BOARD_DISP_DATA0,
+    10,//BOARD_DISP_DATA1,
+    16,//BOARD_DISP_DATA2,
+    12,//BOARD_DISP_DATA3,
+    15,//BOARD_DISP_SCK,
+    11,//BOARD_DISP_CS,
+    BOARD_NONE_PIN,//DC
+    13,//BOARD_DISP_RESET,
+    -1, //BOARD_DISP_TE,
+    8, //command bit
+    24,//address bit
+    36000000,
+    (lcd_cmd_t *)rm690b0_cmd,
+    RM690B0_INIT_SEQUENCE_LENGHT,
+    RM690B0_WIDTH,//width
+    RM690B0_HEIGHT,//height
+    0//frameBufferSize
+};
+static const int AMOLED_241_BUTTONTS[1] = {0};
+static const BoardPmuPins_t AMOLED_241_PMU_PINS =  {6/*SDA*/, 7/*SCL*/, 5/*IRQ*/};
+static const BoardTouchPins_t AMOLED_241_TOUCH_PINS =  {6/*SDA*/, 7/*SCL*/, 8/*IRQ*/, -1/*RST*/};
+
+
 static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     // RM67162 Driver
     RM67162_AMOLED,
-    //CST816T
-    {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/},
+    &AMOLED_191_TOUCH_PINS,     //Touch CST816T
     NULL,//PMU
     NULL,//SENSOR
     AMOLED_191_BUTTONTS,//Button Pins
@@ -171,14 +199,14 @@ static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     -1,//pixelsPins
     4, //adcPins
     38,//PMICEnPins
-    false, true
+    false,//framebuffer
 };
 
 // T-Display AMOLED H593
 // https://www.lilygo.cc/products/t-display-amoled
 static const  BoardsConfigure_t BOARD_AMOLED_147 = {
     SH8501_AMOLED,
-    {1/*SDA*/, 2/*SCL*/, 13/*IRQ*/, 14/*RST*/},
+    &AMOLED_147_TOUCH_PINS,     //Touch
     &AMOLED_147_PMU_PINS,       //PMU
     &AMOLED_147_SENSOR_PINS,    //SENSOR
     AMOLED_147_BUTTONTS, //Button Pins
@@ -186,7 +214,23 @@ static const  BoardsConfigure_t BOARD_AMOLED_147 = {
     18, // pixelsPins
     -1, //adcPins
     -1,//PMICEnPins
-    true, true
+    true,//framebuffer
+};
+
+
+// T-Display AMOLED 2.41 Inch
+// https://www.lilygo.cc/
+static const  BoardsConfigure_t BOARD_AMOLED_241 = {
+    RM690B0_AMOLED,
+    &AMOLED_241_TOUCH_PINS, //Touch CS226SE
+    &AMOLED_241_PMU_PINS,    //PMU
+    NULL,    //SENSOR
+    AMOLED_241_BUTTONTS, //Button Pins
+    1,  //Button Number
+    -1, // pixelsPins
+    -1, //adcPins
+    9,  //PMICEnPins
+    false,//framebuffer
 };
 
 
@@ -194,7 +238,8 @@ class LilyGo_AMOLED:
     public XPowersAXP2101,
     public TouchDrvCHSC5816,
     public SensorCM32181,
-    public TouchDrvCSTXXX
+    public TouchDrvCSTXXX,
+    public PowersSY6970
 {
 public:
     LilyGo_AMOLED();
@@ -210,6 +255,10 @@ public:
     // LILYGO 1.47 Inc AMOLED(SH8501) S3R8
     // https://www.lilygo.cc/products/t-display-amoled
     bool beginAMOLED_147();
+
+
+    bool beginAMOLED_241();
+
 
     void setBrightness(uint8_t level);
     uint8_t getBrightness();
@@ -229,6 +278,7 @@ public:
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1) override;
     bool isPressed() override;
     uint16_t getBattVoltage(void) override;
+    uint16_t getVbusVoltage(void) override;
 
 
     // PMU Function , only 1.47' inches support
@@ -239,6 +289,7 @@ public:
     void diablePMUInterrupt(uint32_t params);
 
     const BoardsConfigure_t *getBoarsdConfigure();
+    const char *getName();
 
     void sleep();
     void wakeup();

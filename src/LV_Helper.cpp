@@ -111,7 +111,7 @@ void beginLvglHelper(bool debug)
     lv_disp_drv_register( &disp_drv );
 
     if (amoled.getBoarsdConfigure()) {
-        if (amoled.getBoarsdConfigure()->hasTouch) {
+        if (amoled.getBoarsdConfigure()->touch) {
             lv_indev_drv_init( &indev_drv );
             indev_drv.type = LV_INDEV_TYPE_POINTER;
             indev_drv.read_cb = touchpad_read;
