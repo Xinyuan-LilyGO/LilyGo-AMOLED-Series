@@ -30,6 +30,7 @@ LV_IMG_DECLARE(icon_flash);
 LV_IMG_DECLARE(icon_ram);
 LV_IMG_DECLARE(icon_light_sensor);
 LV_IMG_DECLARE(icon_usb);
+LV_IMG_DECLARE(icon_micro_sd);
 
 LV_IMG_DECLARE(ico_ethereum);
 LV_IMG_DECLARE(icon_tether);
@@ -93,7 +94,12 @@ void createTimeUI(lv_obj_t *parent)
     lv_obj_set_style_text_color(time_label, lv_color_black(), 0);
     lv_obj_set_style_text_font(time_label, &font_ali_70, 0);
     lv_obj_set_style_pad_top(time_label, 15, 0);
-    lv_obj_align(time_label, LV_ALIGN_TOP_MID, 0, 20);
+
+    if (lv_disp_get_ver_res(NULL) > 300) {
+        lv_obj_align(time_label, LV_ALIGN_CENTER, 0, 0);
+    } else {
+        lv_obj_align(time_label, LV_ALIGN_TOP_MID, 0, 20);
+    }
 
     week_label = lv_label_create(time_cont);
     lv_obj_set_style_text_color(week_label, lv_color_black(), 0);
@@ -237,6 +243,19 @@ void createBrightnessUI(lv_obj_t *parent)
         lv_label_set_text_fmt(label, "Temperature:%.2f°C",  amoled.readCoreTemp());
     }, LV_EVENT_MSG_RECEIVED, NULL);
 
+
+    //SDCard
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    if (boards->sd) {
+        label = lv_label_create(cont);
+        if (SD.cardType() != CARD_NONE) {
+            lv_label_set_text_fmt(label, "SDCard: %u MBytes", SD.cardSize() / 1024 / 1024);
+        } else {
+            lv_label_set_text(label, "SDCard: NULL");
+        }
+        lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
+        lv_msg_subsribe_obj(TEMPERATURE_MSG_ID, label, NULL);
+    }
 
     // BRIGHTNESS
     label = lv_label_create(cont);
@@ -464,6 +483,23 @@ void createDeviceInfoUI(lv_obj_t *parent)
     pdat[2] = label;
 
 
+    //SDCard
+    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    if (boards->sd) {
+        lv_obj_t *img_sd = lv_img_create(cont);
+        lv_img_set_src(img_sd, &icon_micro_sd);
+        lv_obj_align_to(img_sd, img_ram, LV_ALIGN_OUT_RIGHT_MID, 40, 0);
+
+        label = lv_label_create(cont);
+        lv_obj_add_style(label, &font_style, 0);
+        if (SD.cardType() != CARD_NONE) {
+            lv_label_set_text_fmt(label, "%.2fG", SD.cardSize() / 1024 / 1024 / 1024.0);
+        } else {
+            lv_label_set_text(label, "N/A");
+        }
+        lv_obj_align_to(label, img_sd, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+    }
+
     lv_timer_create([](lv_timer_t *t) {
 
         lv_obj_t **p = (lv_obj_t **)t->user_data;
@@ -536,7 +572,11 @@ void createWeatherUI(lv_obj_t *parent)
 
     lv_obj_t *cont = lv_obj_create(parent);
     lv_obj_add_style(cont, &cont_style, 0);
-    lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL));
+    if (lv_disp_get_ver_res(NULL) > 300) {
+        lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) / 2);
+    } else {
+        lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL));
+    }
     lv_obj_remove_style(cont, 0, LV_PART_SCROLLBAR);
     lv_obj_center(cont);
     lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
@@ -608,7 +648,13 @@ void createWeatherUI(lv_obj_t *parent)
     lv_obj_t *forecast = lv_obj_create(parent);
     lv_obj_set_style_border_width(forecast, 0, 0);
     lv_obj_set_style_bg_color(forecast, lv_color_black(), 0);
-    lv_obj_set_size(forecast, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) - 20);
+
+    if (lv_disp_get_ver_res(NULL) > 300) {
+        lv_obj_set_size(forecast, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) / 2);
+    } else {
+        lv_obj_set_size(forecast, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) - 20);
+    }
+
     lv_obj_remove_style(forecast, 0, LV_PART_SCROLLBAR);
     lv_obj_set_flex_flow(forecast, LV_FLEX_FLOW_ROW);
     lv_obj_align_to(forecast, cont, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
@@ -700,7 +746,13 @@ void createWiFiConfigUI(lv_obj_t *parent)
     lv_obj_t *cont = lv_obj_create(parent);
     lv_obj_set_style_border_width(cont, 0, 0);
     lv_obj_set_style_bg_color(cont, lv_color_black(), 0);
-    lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) * 2 + 20);
+
+    if (lv_disp_get_ver_res(NULL) > 300) {
+        lv_obj_set_size(cont, lv_disp_get_hor_res(NULL), lv_disp_get_ver_res(NULL));
+    } else {
+        lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) * 2 + 20);
+    }
+
     lv_obj_remove_style(cont, 0, LV_PART_SCROLLBAR);
     lv_obj_set_style_border_width(cont, 0, 0);
     lv_obj_set_style_pad_all(cont, 0, 0);
@@ -765,7 +817,12 @@ void createWiFiConfigUI(lv_obj_t *parent)
     lv_obj_align_to(label, btn, LV_ALIGN_CENTER, 0, 0);
     lv_obj_add_event_cb(btn, wifi_config_event_handler, LV_EVENT_CLICKED, label);
     lv_obj_center(btn);
-    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    if (lv_disp_get_ver_res(NULL) > 300) {
+        lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -30);
+    } else {
+        lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, 0);
+    }
 
 }
 
