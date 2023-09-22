@@ -4,11 +4,11 @@
 
 ## 1️⃣Product
 
-| Product(PinMap)          | SOC        | Flash | PSRAM    | Resolution |
-| ------------------------ | ---------- | ----- | -------- | ---------- |
-| [T-Display-AMOLED][1]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    |
-| [T-Display-S3 AMOLED][2] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    |
-| [T-Display AMOLED][3]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    |
+| Product(PinMap)          | SOC        | Flash | PSRAM    | Resolution | Size      |
+| ------------------------ | ---------- | ----- | -------- | ---------- | --------- |
+| [T-Display-AMOLED][1]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    | 1.47 Inch |
+| [T-Display-S3 AMOLED][2] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
+| [T-Display AMOLED][3]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
