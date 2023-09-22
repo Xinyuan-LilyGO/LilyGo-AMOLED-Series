@@ -194,7 +194,7 @@ static const DisplayConfigure_t RM690B0_AMOLED  = {
 };
 static const int AMOLED_241_BUTTONTS[1] = {0};
 static const BoardPmuPins_t AMOLED_241_PMU_PINS =  {6/*SDA*/, 7/*SCL*/, 5/*IRQ*/};
-static const BoardTouchPins_t AMOLED_241_TOUCH_PINS =  {6/*SDA*/, 7/*SCL*/, 8/*IRQ*/, -1/*RST*/};
+static const BoardTouchPins_t AMOLED_241_TOUCH_PINS =  {6/*SDA*/, 7/*SCL*/, 8/*IRQ*/, 17/*RST*/};
 static const BoardSDCardPins_t AMOLED_241_SD_PINS =  {4/*MISO*/, 2/*MOSI*/, 3/*SCK*/, 1/*CS*/};
 
 
