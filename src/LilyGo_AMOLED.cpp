@@ -17,7 +17,7 @@
 
 #define SEND_BUF_SIZE           (16384)
 #define TFT_SPI_MODE            SPI_MODE0
-#define DEFAULT_SPI_HANDLER    (SPI2_HOST)
+#define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
 LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL)
 {
@@ -407,6 +407,16 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         }
     }
 
+    if (boards->sd) {
+        SPI.begin(boards->sd->sck, boards->sd->miso, boards->sd->mosi);
+        if (!SD.begin(boards->sd->cs)) {
+            log_e("Failed to dected SDCard!");
+        }
+        if (SD.cardType() != CARD_NONE) {
+            uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+            log_i("SD Card Size: %llu MB\n", cardSize);
+        }
+    }
     return true;
 }
 

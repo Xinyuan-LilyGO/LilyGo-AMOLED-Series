@@ -23,6 +23,7 @@
 #include "SensorCM32181.hpp"
 #include <FS.h>
 #include <SPIFFS.h>
+#include <SD.h>
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -93,11 +94,19 @@ typedef struct __BoardSensorPins {
     int irq;
 } BoardSensorPins_t;
 
+typedef struct __BoardSDCardPins {
+    int miso;
+    int mosi;
+    int sck;
+    int cs;
+} BoardSDCardPins_t;
+
 typedef struct __BoardsConfigure {
     DisplayConfigure_t display;
     const BoardTouchPins_t *touch;
     const BoardPmuPins_t *pmu;
     const BoardSensorPins_t *sensor;
+    const BoardSDCardPins_t *sd;
     const int *pButtons;
     const int buttonNum;
     int pixelsPins;
@@ -186,6 +195,7 @@ static const DisplayConfigure_t RM690B0_AMOLED  = {
 static const int AMOLED_241_BUTTONTS[1] = {0};
 static const BoardPmuPins_t AMOLED_241_PMU_PINS =  {6/*SDA*/, 7/*SCL*/, 5/*IRQ*/};
 static const BoardTouchPins_t AMOLED_241_TOUCH_PINS =  {6/*SDA*/, 7/*SCL*/, 8/*IRQ*/, -1/*RST*/};
+static const BoardSDCardPins_t AMOLED_241_SD_PINS =  {4/*MISO*/, 2/*MOSI*/, 3/*SCK*/, 1/*CS*/};
 
 
 static const  BoardsConfigure_t BOARD_AMOLED_191 = {
@@ -194,6 +204,7 @@ static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     &AMOLED_191_TOUCH_PINS,     //Touch CST816T
     NULL,//PMU
     NULL,//SENSOR
+    NULL,//SDCard
     AMOLED_191_BUTTONTS,//Button Pins
     1, //Button Number
     -1,//pixelsPins
@@ -209,6 +220,7 @@ static const  BoardsConfigure_t BOARD_AMOLED_147 = {
     &AMOLED_147_TOUCH_PINS,     //Touch
     &AMOLED_147_PMU_PINS,       //PMU
     &AMOLED_147_SENSOR_PINS,    //SENSOR
+    NULL,//SDCard
     AMOLED_147_BUTTONTS, //Button Pins
     2,  //Button Number
     18, // pixelsPins
@@ -225,6 +237,7 @@ static const  BoardsConfigure_t BOARD_AMOLED_241 = {
     &AMOLED_241_TOUCH_PINS, //Touch CS226SE
     &AMOLED_241_PMU_PINS,    //PMU
     NULL,    //SENSOR
+    &AMOLED_241_SD_PINS,//SDCard
     AMOLED_241_BUTTONTS, //Button Pins
     1,  //Button Number
     -1, // pixelsPins
