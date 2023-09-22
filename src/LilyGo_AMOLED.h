@@ -299,7 +299,10 @@ public:
     bool isPressed() override;
     uint16_t getBattVoltage(void) override;
     uint16_t getVbusVoltage(void) override;
-
+    bool isBatteryConnect(void) override;
+    uint16_t getSystemVoltage(void) override;
+    bool isCharging(void) override;
+    bool isVbusIn(void) override;
 
     // PMU Function , only 1.47' inches support
     void attachPMU(void(*cb)(void));

@@ -153,6 +153,63 @@ uint16_t LilyGo_AMOLED::getVbusVoltage(void)
     return 0;
 }
 
+bool LilyGo_AMOLED::isBatteryConnect(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                return XPowersAXP2101::isBatteryConnect();
+            } else  if (boards == &BOARD_AMOLED_241) {
+                return PowersSY6970::isBatteryConnect();
+            }
+        }
+    }
+    return false;
+}
+
+uint16_t LilyGo_AMOLED::getSystemVoltage(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                return XPowersAXP2101::getSystemVoltage();
+            } else  if (boards == &BOARD_AMOLED_241) {
+                return PowersSY6970::getSystemVoltage();
+            }
+        }
+    }
+    return 0;
+}
+
+bool LilyGo_AMOLED::isCharging(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                return XPowersAXP2101::isCharging();
+            } else  if (boards == &BOARD_AMOLED_241) {
+                return PowersSY6970::isCharging();
+            }
+        }
+    }
+    return false;
+}
+
+bool LilyGo_AMOLED::isVbusIn(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                return XPowersAXP2101::isVbusIn();
+            } else  if (boards == &BOARD_AMOLED_241) {
+                return PowersSY6970::isVbusIn();
+            }
+        }
+    }
+    return false;
+}
+
+
 uint32_t deviceScan(TwoWire *_port, Stream *stream)
 {
     stream->println("Devices Scan start.");
