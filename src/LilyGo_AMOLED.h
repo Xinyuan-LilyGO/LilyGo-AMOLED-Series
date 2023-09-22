@@ -234,6 +234,13 @@ static const  BoardsConfigure_t BOARD_AMOLED_241 = {
 };
 
 
+enum AmoledBoardID {
+    LILYGO_AMOLED_147 = 0x01,
+    LILYGO_AMOLED_191,
+    LILYGO_AMOLED_241,
+    LILYGO_AMOLED_UNKOWN,
+};
+
 class LilyGo_AMOLED:
     public XPowersAXP2101,
     public TouchDrvCHSC5816,
@@ -290,6 +297,7 @@ public:
 
     const BoardsConfigure_t *getBoarsdConfigure();
     const char *getName();
+    const uint8_t getBoardID();
 
     void sleep();
     void wakeup();

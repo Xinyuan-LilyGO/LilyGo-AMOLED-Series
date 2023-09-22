@@ -105,6 +105,7 @@ void buttonHandleEvent(AceButton *button,
                        uint8_t eventType,
                        uint8_t buttonState)
 {
+    uint8_t id ;
     // Print out a message for all events.
     // Serial.print(F("handleEvent(): eventType: "));
     // Serial.print(AceButton::eventName(eventType));
@@ -151,7 +152,10 @@ void buttonHandleEvent(AceButton *button,
             pixels.clear();
             pixels.show();
         }
-        if (boards->pmu) {
+
+        id = amoled.getBoardID();
+
+        if (boards->pmu && id == LILYGO_AMOLED_147) {
 
             // Set PMU Sleep mode
             amoled.enableSleep();
@@ -164,8 +168,12 @@ void buttonHandleEvent(AceButton *button,
         } else {
             esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ALL_LOW);
         }
+
+        Wire.end();
+
+
         Serial.println("Sleep Start!");
-        delay(3000);
+        delay(5000);
         esp_deep_sleep_start();
         Serial.println("This place will never print!");
         break;

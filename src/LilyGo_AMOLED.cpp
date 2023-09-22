@@ -57,6 +57,18 @@ const char *LilyGo_AMOLED::getName()
     return "Unkonw";
 }
 
+const uint8_t LilyGo_AMOLED::getBoardID()
+{
+    if (boards == &BOARD_AMOLED_147) {
+        return LILYGO_AMOLED_147;
+    } else if (boards == &BOARD_AMOLED_191 ) {
+        return LILYGO_AMOLED_191;
+    } else if (boards == &BOARD_AMOLED_241) {
+        return LILYGO_AMOLED_241;
+    }
+    return LILYGO_AMOLED_UNKOWN;
+}
+
 const BoardsConfigure_t *LilyGo_AMOLED::getBoarsdConfigure()
 {
     return boards;
@@ -97,9 +109,7 @@ uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
     uint8_t point = 0;
     int16_t tmpX = 0, tmpY = 0;
     if (boards == &BOARD_AMOLED_147) {
-        point =  TouchDrvCHSC5816::getPoint(&tmpX, &tmpY);
-        *x = tmpY;
-        *y = width() - tmpX;
+        point =  TouchDrvCHSC5816::getPoint(x, y);
     } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241) {
         point =  TouchDrvCSTXXX::getPoint(x, y);
     }
@@ -380,6 +390,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         PowersSY6970::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
         PowersSY6970::enableADCMeasure();
         PowersSY6970::disableBattLoad();
+        PowersSY6970::disableOTG();
     }
 
     if (boards->touch) {
@@ -431,6 +442,9 @@ bool LilyGo_AMOLED::beginAMOLED_147()
         log_e("Failed to find CHSC5816 - check your wiring!");
         return false;
     }
+    TouchDrvCHSC5816::setMaxCoordinates(SH8501_HEIGHT, SH8501_WIDTH);
+    TouchDrvCHSC5816::setSwapXY(true);
+    TouchDrvCHSC5816::setMirrorXY(false, true);
 
     // Share I2C Bus
     res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
@@ -661,12 +675,23 @@ void LilyGo_AMOLED::diablePMUInterrupt(uint32_t params)
 
 void LilyGo_AMOLED::sleep()
 {
+    assert(boards);
+
     //Wire amoled to sleep mode
     lcd_cmd_t t = {0x1000, {0x00}, 1}; //Sleep in
     writeCommand(t.addr, t.param, t.len);
 
     if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
+
+        if (boards == &BOARD_AMOLED_241) {
+            PowersSY6970::disableADCMeasure();
+            PowersSY6970::disableOTG();
+
+            // Disable amoled power
+            digitalWrite(boards->PMICEnPins, LOW);
+            TouchDrvCSTXXX::sleep();
+
+        } else if (boards == &BOARD_AMOLED_147) {
             Serial.println("PMU Disbale AMOLED Power");
 
             // Turn off Sensor
