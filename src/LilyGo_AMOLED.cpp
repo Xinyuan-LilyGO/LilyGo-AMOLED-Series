@@ -409,7 +409,8 @@ bool LilyGo_AMOLED::beginAMOLED_241()
 
     if (boards->sd) {
         SPI.begin(boards->sd->sck, boards->sd->miso, boards->sd->mosi);
-        if (!SD.begin(boards->sd->cs)) {
+        // Set mount point to /fs
+        if (!SD.begin(boards->sd->cs, SPI, 4000000U, "/fs")) {
             log_e("Failed to dected SDCard!");
         }
         if (SD.cardType() != CARD_NONE) {

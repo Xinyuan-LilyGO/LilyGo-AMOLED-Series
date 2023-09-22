@@ -7,7 +7,8 @@
  * @Note      You need to upload the files from the data file to the SPIFFS
  *            file system before using this example
  * @note      platfromio user use <pio run -t uploadfs> ,
- * *  Note that you need to place the sample data folder in the same level directory as <platformio. ini>
+ *                  Note that you need to place the sample data folder in the same level directory as <platformio.ini>
+ *                  If using 2.41 inch, please copy all the pictures in the data folder to the SD card
  */
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
@@ -51,12 +52,31 @@ void setup(void)
     beginLvglHelper();
 
     String file =  String("/") + filename[0];
-    if (!SPIFFS.exists(file)) {
+
+
+    uint8_t id = amoled.getBoardID();
+
+    if (id == LILYGO_AMOLED_147 || id == LILYGO_AMOLED_191) {
+        if (!SPIFFS.exists(file)) {
+            while (1) {
+                Serial.println("You need to upload the files from the data file to the SPIFFS file system before using this example");
+                delay(1000);
+            }
+        }
+    } else if (id == LILYGO_AMOLED_241) {
+        if (!SD.exists(file)) {
+            while (1) {
+                Serial.println("You need to upload the files from the data file to the SD file system before using this example");
+                delay(1000);
+            }
+        }
+    } else {
         while (1) {
-            Serial.println("You need to upload the files from the data file to the SPIFFS file system before using this example");
+            Serial.println("Unkonw board!");
             delay(1000);
         }
     }
+
 
     lv_obj_t *img =  lv_img_create(lv_scr_act());
     lv_obj_center(img);
