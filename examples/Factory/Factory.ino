@@ -26,7 +26,7 @@
 #include <time.h>
 #include <lvgl.h>
 #include "gui.h"
-#include "sntp.h"
+#include <esp_sntp.h>
 #include "zones.h"
 #include <Adafruit_NeoPixel.h>      //https://github.com/adafruit/Adafruit_NeoPixel
 #include <AceButton.h>
