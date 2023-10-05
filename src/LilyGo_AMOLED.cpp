@@ -421,12 +421,12 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
             // Try to find touch device
             Wire.beginTransmission(CST816_SLAVE_ADDRESS);
             if (Wire.endTransmission() == 0) {
+                TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
                 bool res = TouchDrvCSTXXX::init(Wire, boards->touch->sda, boards->touch->scl, CST816_SLAVE_ADDRESS);
                 if (!res) {
                     log_e("Failed to find CST816T - check your wiring!");
                     return false;
                 }
-                TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
                 TouchDrvCSTXXX::setMaxCoordinates(RM67162_HEIGHT, RM67162_WIDTH);
             }
         }
@@ -454,12 +454,12 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         // Try to find touch device
         Wire.beginTransmission(CST226SE_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
+            TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
             bool res = TouchDrvCSTXXX::init(Wire, boards->touch->sda, boards->touch->scl, CST226SE_SLAVE_ADDRESS);
             if (!res) {
                 log_e("Failed to find CST226SE - check your wiring!");
                 return false;
             }
-            TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
             TouchDrvCSTXXX::setMaxCoordinates(RM690B0_HEIGHT, RM690B0_WIDTH);
         }
     }
