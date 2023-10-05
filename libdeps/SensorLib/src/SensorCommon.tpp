@@ -31,87 +31,7 @@
 
 #pragma once
 
-#if defined(ARDUINO)
-#include <Arduino.h>
-#include <Wire.h>
-#include <SPI.h>
-#endif
-
-#define SENSOR_PIN_NONE     (-1)
-#define DEV_WIRE_NONE       (0)
-#define DEV_WIRE_ERR        (-1)
-#define DEV_WIRE_TIMEOUT    (-2)
-
-#ifdef _BV
-#undef _BV
-#endif
-#define _BV(b)                          (1UL << (uint32_t)(b))
-
-// #define LOG_PORT Serial
-#ifdef LOG_PORT
-#define LOG(fmt, ...) LOG_PORT.printf("[%s] " fmt "\n", __func__, ##__VA_ARGS__)
-#define LOG_BIN(x)    LOG_PORT.println(x,BIN);
-#else
-#define LOG(fmt, ...)
-#define LOG_BIN(x)
-#endif
-
-#ifndef ESP32
-#define lowByte(w) ((uint8_t) ((w) & 0xff))
-#define highByte(w) ((uint8_t) ((w) >> 8))
-#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#define bitSet(value, bit) ((value) |= (1UL << (bit)))
-#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
-#define bitToggle(value, bit) ((value) ^= (1UL << (bit)))
-#define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet(value, bit) : bitClear(value, bit))
-#endif
-
-#define SENSORLIB_ATTR_NOT_IMPLEMENTED    __attribute__((error("Not implemented")))
-
-#if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
-#define SPI_DATA_ORDER  MSBFIRST
-#define DEFAULT_SDA     (0xFF)
-#define DEFAULT_SCL     (0xFF)
-#define DEFAULT_SPISETTING  SPISettings()
-#elif defined(ARDUINO_ARCH_RP2040)
-#define SPI_DATA_ORDER  SPI_MSB_FIRST
-#define DEFAULT_SDA     (0xFF)
-#define DEFAULT_SCL     (0xFF)
-#define DEFAULT_SPISETTING  SPISettings()
-#else   //esp32
-#define SPI_DATA_ORDER  SPI_MSBFIRST
-#define DEFAULT_SDA     (SDA)
-#define DEFAULT_SCL     (SCL)
-#define DEFAULT_SPISETTING  SPISettings(__freq, __dataOrder, __dataMode);
-#endif
-
-#ifndef ESP32
-#ifndef log_e
-#define log_e(...)          Serial.printf(__VA_ARGS__)
-#endif
-#ifndef log_i
-#define log_i(...)          Serial.printf(__VA_ARGS__)
-#endif
-#ifndef log_d
-#define log_d(...)          Serial.printf(__VA_ARGS__)
-#endif
-#endif
-
-#ifndef INPUT
-#define INPUT                 (0x0)
-#endif
-
-#ifndef OUTPUT
-#define OUTPUT                (0x1)
-#endif
-
-#ifndef RISING
-#define RISING                (0x01)
-#endif
-
-#ifndef FALLING
-#define FALLING               (0x02)
-#endif
+#include "SensorLib.h"
 
 typedef union  {
     struct {
@@ -147,9 +67,9 @@ public:
     }
 
 #if defined(ARDUINO)
-    bool begin(TwoWire &w, uint8_t addr, int sda, int scl)
+    bool begin(PLATFORM_WIRE_TYPE &w, uint8_t addr, int sda, int scl)
     {
-        LOG("Using Wire interface.\n");
+        log_i("Using Wire interface.\n");
         if (__has_init)return thisChip().initImpl();
         __wire = &w;
         __sda = sda;
@@ -173,14 +93,10 @@ public:
     }
 
     bool begin(int cs, int mosi = -1, int miso = -1, int sck = -1,
-#if defined(ARDUINO_ARCH_RP2040)
-               SPIClassRP2040 &spi = SPI
-#else
-               SPIClass &spi = SPI
-#endif
+               PLATFORM_SPI_TYPE &spi = SPI
               )
     {
-        LOG("Using SPI interface.\n");
+        log_i("Using SPI interface.\n");
         if (__has_init)return thisChip().initImpl();
         __cs  = cs;
         __spi = &spi;
@@ -215,7 +131,7 @@ public:
 
     bool begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback)
     {
-        LOG("Using Custom interface.\n");
+        log_i("Using Custom interface.\n");
         if (__has_init)return thisChip().initImpl();
         thisReadRegCallback = readRegCallback;
         thisWriteRegCallback = writeRegCallback;
@@ -371,7 +287,7 @@ protected:
                 }
             }
             if (__wire->endTransmission(__sendStop) != 0) {
-                LOG("I2C Transfer Error!\n");
+                log_i("I2C Transfer Error!\n");
                 return DEV_WIRE_ERR;
             }
             __wire->requestFrom(__addr, 1U, false);
@@ -580,13 +496,8 @@ protected:
 protected:
     bool                __has_init              = false;
 #if defined(ARDUINO)
-    TwoWire             *__wire                 = NULL;
-#if defined(ARDUINO_ARCH_RP2040)
-    SPIClassRP2040      *__spi                  = NULL;
-#else
-    SPIClass            *__spi                  = NULL;
-#endif
-
+    PLATFORM_WIRE_TYPE             *__wire                 = NULL;
+    PLATFORM_SPI_TYPE      *__spi                  = NULL;
     SPISettings          *__spiSetting           = NULL;
 #endif
     uint32_t            __freq                  = 1000000;

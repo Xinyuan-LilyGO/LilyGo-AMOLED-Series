@@ -50,7 +50,7 @@ public:
 
 
 #if defined(ARDUINO)
-    TouchDrvGT911(TwoWire &w,
+    TouchDrvGT911(PLATFORM_WIRE_TYPE &w,
                   int sda = DEFAULT_SDA,
                   int scl = DEFAULT_SCL,
                   uint8_t addr = GT911_SLAVE_ADDRESS_H)
@@ -82,7 +82,7 @@ public:
     }
 
 #if defined(ARDUINO)
-    bool init(TwoWire &w,
+    bool init(PLATFORM_WIRE_TYPE &w,
               int sda = DEFAULT_SDA,
               int scl = DEFAULT_SCL,
               uint8_t addr = GT911_SLAVE_ADDRESS_H)
@@ -95,23 +95,17 @@ public:
     }
 #endif
 
-    bool init(int rst, int irq)
+    bool init()
     {
-        __rst = rst;
-        __irq = irq;
-        return initImpl();
+        return begin();
     }
+
 
     void deinit()
     {
         // end();
     }
 
-    void setPins(int rst, int irq)
-    {
-        __irq = irq;
-        __rst = rst;
-    }
 
     void setIrqPin(int irq)
     {
@@ -125,6 +119,14 @@ public:
 
     void reset()
     {
+        if (__rst != SENSOR_PIN_NONE) {
+            setRstPinMode(OUTPUT);
+            setRstValue(HIGH);
+            delay(10);
+        }
+        if (__irq != SENSOR_PIN_NONE) {
+            pinMode(__irq, INPUT);
+        }
         writeRegister(GT911_COMMAND, 0x02);
     }
 
@@ -143,30 +145,11 @@ public:
 
     }
 
-    bool writeConfig(uint8_t *data, uint32_t size)
-    {
-        return false;
-    }
-
     uint8_t getSupportTouchPoint()
     {
         return 5;
     }
 
-    bool enableInterrupt()
-    {
-        return false;
-    }
-
-    bool disableInterrupt()
-    {
-        return false;
-    }
-
-    uint8_t getGesture()
-    {
-        return 0;
-    }
 
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t size = 1)
     {
@@ -174,11 +157,11 @@ public:
         uint8_t buffer[39];
 
         if (!x_array || !y_array || size == 0)
-            return DEV_WIRE_ERR;
+            return 0;
 
         int touchPoint = readRegister(GT911_POINT_INFO);
         if (touchPoint == DEV_WIRE_ERR) {
-            return DEV_WIRE_ERR;
+            return 0;
         }
 
         touchPoint &= 0x0F;
@@ -189,7 +172,7 @@ public:
         clearBuffer();
 
         if (readRegister(GT911_POINT_1, buffer, 39) == DEV_WIRE_ERR) {
-            return DEV_WIRE_ERR;
+            return 0;
         }
 
 
@@ -412,8 +395,6 @@ private:
 
 
 protected:
-    int __rst;
-    int __irq;
     int __irq_mode;
     bool __rst_use_cb = false;
 };

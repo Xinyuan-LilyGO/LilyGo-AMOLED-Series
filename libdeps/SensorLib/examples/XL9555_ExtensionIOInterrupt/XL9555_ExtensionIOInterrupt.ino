@@ -33,9 +33,17 @@
 #include <time.h>
 #include "ExtensionIOXL9555.hpp"
 
-#define I2C_SDA                     8
-#define I2C_SCL                     9
-#define XL_IRQ                      3
+#ifndef SENSOR_SDA
+#define SENSOR_SDA  17
+#endif
+
+#ifndef SENSOR_SCL
+#define SENSOR_SCL  18
+#endif
+
+#ifndef SENSOR_IRQ
+#define SENSOR_IRQ  -1
+#endif
 
 ExtensionIOXL9555 extIO;
 
@@ -44,27 +52,26 @@ void setup()
     Serial.begin(115200);
     while (!Serial);
 
-    Wire.begin(I2C_SDA, I2C_SCL);
 
     // Device address 0x20~0x27
-    if (!extIO.begin(Wire, XL9555_SLAVE_ADDRESS4, I2C_SDA, I2C_SCL)) {
+    if (!extIO.begin(Wire, XL9555_SLAVE_ADDRESS4, SENSOR_SDA, SENSOR_SCL)) {
         Serial.println("Failed to find XL9555 - check your wiring!");
         while (1) {
             delay(1000);
         }
     }
 
-    pinMode(XL_IRQ, INPUT_PULLUP);
-    // Set PORT0 as input
-    extIO.configPort(ExtensionIOXL9555::PORT0, INPUT);
-    // Set PORT1 as input
-    extIO.configPort(ExtensionIOXL9555::PORT1, INPUT);
+    pinMode(SENSOR_IRQ, INPUT_PULLUP);
+    // Set PORT0 as input,mask = 0xFF = all pin input
+    extIO.configPort(ExtensionIOXL9555::PORT0, 0xFF);
+    // Set PORT1 as input,mask = 0xFF = all pin input
+    extIO.configPort(ExtensionIOXL9555::PORT1, 0xFF);
 }
 
 void loop()
 {
     // When the interrupt occurs, we read the mask value of PORT
-    if (digitalRead(XL_IRQ) == LOW) {
+    if (digitalRead(SENSOR_IRQ) == LOW) {
         Serial.print("PORT0:0b");
         Serial.print(extIO.readPort(ExtensionIOXL9555::PORT0), BIN);
         Serial.print("\tPORT1:0b");

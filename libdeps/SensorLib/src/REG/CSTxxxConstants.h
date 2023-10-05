@@ -35,17 +35,6 @@
 #define CST328_SLAVE_ADDRESS        (0x1A)
 #define CST226SE_SLAVE_ADDRESS      (0x5A)
 
-#define CSTXXX_REG_STATUS           (0x00)
-#define CSTXXX_REG_MODEL_ID         (0xA8)
-#define CSTXXX_REG_CHIP_TYPE_L      (0xAA)
-#define CSTXXX_REG_CHIP_TYPE_H      (0xAB)
-
-
-#define CST226SE_BUFFER_NUM         (28)
-
-
-
-
 #define CST816S_CHIP_ID             (0xB4)
 #define CST816T_CHIP_ID             (0xB5)
 #define CST716_CHIP_ID              (0x20)

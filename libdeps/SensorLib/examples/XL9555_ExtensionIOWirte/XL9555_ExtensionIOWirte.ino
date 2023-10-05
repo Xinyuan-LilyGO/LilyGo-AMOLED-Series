@@ -33,9 +33,17 @@
 #include <time.h>
 #include "ExtensionIOXL9555.hpp"
 
-#define I2C_SDA                     8
-#define I2C_SCL                     9
-#define XL_IRQ                      3
+#ifndef SENSOR_SDA
+#define SENSOR_SDA  17
+#endif
+
+#ifndef SENSOR_SCL
+#define SENSOR_SCL  18
+#endif
+
+#ifndef SENSOR_IRQ
+#define SENSOR_IRQ  -1
+#endif
 
 ExtensionIOXL9555 extIO;
 
@@ -45,18 +53,18 @@ void setup()
     while (!Serial);
 
 
-    Wire.begin(I2C_SDA, I2C_SCL);
+
     // Device address 0x20~0x27
-    if (!extIO.begin(Wire, XL9555_SLAVE_ADDRESS4, I2C_SDA, I2C_SCL)) {
+    if (!extIO.begin(Wire, XL9555_SLAVE_ADDRESS4, SENSOR_SDA, SENSOR_SCL)) {
         Serial.println("Failed to find XL9555 - check your wiring!");
         while (1) {
             delay(1000);
         }
     }
-    // Set PORT0 as output
-    extIO.configPort(ExtensionIOXL9555::PORT0, OUTPUT);
-    // Set PORT1 as output
-    extIO.configPort(ExtensionIOXL9555::PORT1, OUTPUT);
+    // Set PORT0 as output ,mask = 0x00 = all pin output
+    extIO.configPort(ExtensionIOXL9555::PORT0, 0x00);
+    // Set PORT1 as output ,mask = 0x00 = all pin output
+    extIO.configPort(ExtensionIOXL9555::PORT1, 0x00);
 }
 
 void loop()
