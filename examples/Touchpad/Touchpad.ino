@@ -43,20 +43,32 @@ void setup(void)
 
 
     label = lv_label_create(lv_scr_act());
+    lv_label_set_text(label, "Touch test");
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, 0);
+    lv_obj_center(label);
+
+    // Only 1.91 Inch AMOLED board support
+    amoled.setHomeButtonCallback([](void *ptr) {
+        Serial.println("Home key pressed!");
+        static uint32_t checkMs = 0;
+        static uint8_t lastBri = 0;
+        if (millis() > checkMs) {
+            lv_label_set_text(label, "Home Pressed");
+            lv_obj_center(label);
+        }
+        checkMs = millis() + 200;
+    }, NULL);
 
 }
 
 void loop()
 {
     static int16_t x, y;
-    if (amoled.isPressed()) {
-        bool touched = amoled.getPoint(&x, &y);
-        if ( touched ) {
-            Serial.printf("X:%d Y:%d\n", x, y);
-            lv_label_set_text_fmt(label, "X:%d Y:%d", x, y);
-            lv_obj_center(label);
-        }
+    bool touched = amoled.getPoint(&x, &y);
+    if ( touched ) {
+        Serial.printf("X:%d Y:%d\n", x, y);
+        lv_label_set_text_fmt(label, "X:%d Y:%d", x, y);
+        lv_obj_center(label);
     }
     lv_task_handler();
     delay(5);
