@@ -49,15 +49,17 @@
     {
       "owner": "lvgl",
       "name": "lvgl",
-      "version": "^8.3.7"
+      "version": "^8.3.9"
     },
     {
+      "owner": "lewisxhe",
       "name": "XPowersLib",
-      "version": "https://github.com/lewisxhe/XPowersLib.git#7da0aab811002dee2e113977f98f118e85e294ef"
+      "version": "^0.1.8"
     },
     {
+      "owner": "lewisxhe",
       "name": "SensorLib",
-      "version": "https://github.com/lewisxhe/SensorsLib.git#b3ad77af6e100801c7125aaf45fea61f0d358b5a"
+      "version": "^0.1.2"
     }
   ],
   "examples": ["examples/*/*.ino"],
