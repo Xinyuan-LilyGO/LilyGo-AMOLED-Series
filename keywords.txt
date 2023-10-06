@@ -13,8 +13,10 @@ LilyGo_AMOLED	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 beginLvglHelper	KEYWORD2
-beginAMOLED_191	KEYWORD2
 beginAMOLED_147	KEYWORD2
+beginAMOLED_191	KEYWORD2
+beginAMOLED_241	KEYWORD2
+beginAutomatic	KEYWORD2
 
 setBrightness	KEYWORD2
 getBrightness	KEYWORD2
@@ -27,7 +29,23 @@ width	KEYWORD2
 height	KEYWORD2
 getPoint	KEYWORD2
 getBoarsdConfigure	KEYWORD2
-
+isPressed	KEYWORD2
+getBattVoltage	KEYWORD2
+getVbusVoltage	KEYWORD2
+isBatteryConnect	KEYWORD2
+getSystemVoltage	KEYWORD2
+isCharging	KEYWORD2
+isVbusIn	KEYWORD2
+attachPMU	KEYWORD2
+readPMU	KEYWORD2
+clearPMU	KEYWORD2
+enablePMUInterrupt	KEYWORD2
+diablePMUInterrupt	KEYWORD2
+getBoarsdConfigure	KEYWORD2
+getName	KEYWORD2
+getBoardID	KEYWORD2
+sleep	KEYWORD2
+wakeup	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
