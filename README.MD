@@ -1,14 +1,14 @@
-<h1 align = "center">🌟LilyGO T-Display-AMOLED 🌟</h1> 
+<h1 align = "center">🌟LilyGO AMOLED Series🌟</h1> 
 
 <!-- **English | [中文](README_CN.MD)** -->
 
-## 1️⃣Product
+## 1️⃣Support Product
 
-| Product(PinMap)          | SOC        | Flash | PSRAM    | Resolution | Size      |
-| ------------------------ | ---------- | ----- | -------- | ---------- | --------- |
-| [T-Display-AMOLED][1]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    | 1.47 Inch |
-| [T-Display-S3 AMOLED][2] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
-| [T-Display AMOLED][3]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
+| Product(PinMap)            | SOC        | Flash | PSRAM    | Resolution | Size      |
+| -------------------------- | ---------- | ----- | -------- | ---------- | --------- |
+| [T-Display-AMOLED-Lite][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    | 1.47 Inch |
+| [T-Display-S3 AMOLED][2]   | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
+| [T4-AMOLED][3]             | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
@@ -46,7 +46,7 @@ examples/
 1. Install [Visual Studio Code](https://code.visualstudio.com/) and [Python](https://www.python.org/)
 2. Search for the `PlatformIO` plugin in the `VisualStudioCode` extension and install it.
 3. After the installation is complete, you need to restart `VisualStudioCode`
-4. After restarting `VisualStudioCode`, select `File` in the upper left corner of `VisualStudioCode` -> `Open Folder` -> select the `T-Display-AMOLED` directory
+4. After restarting `VisualStudioCode`, select `File` in the upper left corner of `VisualStudioCode` -> `Open Folder` -> select the `LilyGO AMOLED Series` directory
 5. Wait for the installation of third-party dependent libraries to complete
 6. Click on the `platformio.ini` file, and in the `platformio` column
 7. Uncomment one of the lines `src_dir = xxxx` to make sure only one line works
@@ -62,11 +62,11 @@ examples/
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 2.0.5 or above](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
-3. Download `T-Display-AMOLED` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
+3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
    ![setting](images/ArduinoIDE.jpg)
-6. `File` -> `Examples` -> `T-Display-AMOLED` -> `Any Examples`
+6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
