@@ -9,4 +9,7 @@
 
 #pragma once
 #include <lvgl.h>
-void beginLvglHelper(bool debug = false);
+#include "LilyGo_Display.h"
+
+
+void beginLvglHelper(LilyGo_Display &board, bool debug = false);

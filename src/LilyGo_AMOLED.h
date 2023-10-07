@@ -24,6 +24,8 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
+#include <sys/cdefs.h>
+#include "LilyGo_Display.h"
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -255,6 +257,7 @@ enum AmoledBoardID {
 };
 
 class LilyGo_AMOLED:
+    public LilyGo_Display,
     public XPowersAXP2101,
     public TouchDrvCHSC5816,
     public SensorCM32181,
@@ -266,7 +269,10 @@ public:
 
     ~LilyGo_AMOLED();
 
-    bool beginAutomatic();
+    // Automatically identify hardware
+    bool begin();
+
+    bool beginAutomatic() __attribute__((deprecated("please use begin instead")));
 
     // LILYGO 1.91 Inc AMOLED(RM67162) S3R8
     // https://www.lilygo.cc/products/t-display-s3-amoled
@@ -317,7 +323,7 @@ public:
 
     void sleep();
     void wakeup();
-
+    bool hasTouch();
 private:
     bool initBUS();
     bool initPMU();
@@ -330,4 +336,7 @@ private:
     const BoardsConfigure_t *boards;
 };
 
-extern LilyGo_AMOLED amoled;
+#ifndef LilyGo_Class
+#define LilyGo_Class LilyGo_AMOLED
+#endif
+

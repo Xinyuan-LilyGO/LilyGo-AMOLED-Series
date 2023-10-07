@@ -6,21 +6,26 @@
  * @date      2023-04-20
  *
  */
-#include "LilyGo_AMOLED.h"
-#include <lvgl.h>
+#include <Arduino.h>
+#include "LV_Helper.h"
+
+
+#if LV_VERSION_CHECK(9,0,0)
+#error "Currently not supported 9.x"
+#endif
 
 
 /* Display flushing */
 #if LV_VERSION_CHECK(9,0,0)
-static void disp_flush( lv_disp_t *disp, const lv_area_t *area, lv_color_t *color_p )
+static void disp_flush( lv_disp_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
 #else
-static void disp_flush( lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p )
+static void disp_flush( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
 #endif
 {
     uint32_t w = ( area->x2 - area->x1 + 1 );
     uint32_t h = ( area->y2 - area->y1 + 1 );
-    amoled.pushColors(area->x1, area->y1, w, h, (uint16_t *)color_p);
-    lv_disp_flush_ready( disp );
+    static_cast<LilyGo_Display *>(disp_drv->user_data)->pushColors(area->x1, area->y1, w, h, (uint16_t *)color_p);
+    lv_disp_flush_ready( disp_drv );
 }
 
 /*Read the touchpad*/
@@ -31,13 +36,12 @@ static void touchpad_read( lv_indev_drv_t *indev_driver, lv_indev_data_t *data )
 #endif
 {
     static int16_t x, y;
-    uint8_t touched = amoled.getPoint(&x, &y);
+    uint8_t touched =   static_cast<LilyGo_Display *>(indev_driver->user_data)->getPoint(&x, &y, 1);
     if ( touched ) {
         data->point.x = x;
         data->point.y = y;
         data->state = LV_INDEV_STATE_PR;
         return;
-
     }
     data->state = LV_INDEV_STATE_REL;
 }
@@ -60,8 +64,9 @@ void lv_log_print_g_cb(const char *buf)
 }
 #endif
 
-void beginLvglHelper(bool debug)
+void beginLvglHelper(LilyGo_Display &board, bool debug)
 {
+
     lv_init();
 
 #if LV_USE_LOG
@@ -70,20 +75,20 @@ void beginLvglHelper(bool debug)
     }
 #endif
 
-    size_t lv_buffer_size = amoled.width() * amoled.height() * sizeof(lv_color_t);
+    size_t lv_buffer_size = board.width() * board.height() * sizeof(lv_color_t);
     buf = (lv_color_t *)ps_malloc(lv_buffer_size);
     assert(buf);
 
 #if LV_VERSION_CHECK(9,0,0)
-    lv_disp_t *disp =  lv_disp_create(amoled.width(), amoled.height());
+    lv_disp_t *disp =  lv_disp_create(board.width(), board.height());
 
 #ifdef BOARD_HAS_PSRAM
-    lv_disp_set_draw_buffers(disp, buf, buf1, amoled.width() * amoled.height(), LV_DISP_RENDER_MODE_PARTIAL);
+    lv_disp_set_draw_buffers(disp, buf, buf1, board.width() * board.height(), LV_DISP_RENDER_MODE_PARTIAL);
 #else
     lv_disp_set_draw_buffers(disp, buf, NULL, sizeof(buf), LV_DISP_RENDER_MODE_PARTIAL);
 #endif
-    lv_disp_set_res(disp, amoled.width(), amoled.height());
-    lv_disp_set_physical_res(disp, amoled.width(), amoled.height());
+    lv_disp_set_res(disp, board.width(), board.height());
+    lv_disp_set_physical_res(disp, board.width(), board.height());
     lv_disp_set_flush_cb(disp, disp_flush);
 
     lv_indev_t *indev = lv_indev_create();
@@ -102,22 +107,22 @@ void beginLvglHelper(bool debug)
     /*Initialize the display*/
     lv_disp_drv_init( &disp_drv );
     /* display resolution */
-    disp_drv.hor_res = amoled.height();
-    disp_drv.ver_res = amoled.width();
+    disp_drv.hor_res = board.height();
+    disp_drv.ver_res = board.width();
 
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 1;
+    disp_drv.user_data = &board;
     lv_disp_drv_register( &disp_drv );
 
-    if (amoled.getBoarsdConfigure()) {
-        if (amoled.getBoarsdConfigure()->touch) {
-            lv_indev_drv_init( &indev_drv );
-            indev_drv.type = LV_INDEV_TYPE_POINTER;
-            indev_drv.read_cb = touchpad_read;
-            lv_indev_drv_register( &indev_drv );
-        }
+    if (board.hasTouch()) {
+        lv_indev_drv_init( &indev_drv );
+        indev_drv.type = LV_INDEV_TYPE_POINTER;
+        indev_drv.read_cb = touchpad_read;
+        indev_drv.user_data = &board;
+        lv_indev_drv_register( &indev_drv );
     }
-
 #endif
 }
+

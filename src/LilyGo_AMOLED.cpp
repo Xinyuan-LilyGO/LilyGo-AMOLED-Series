@@ -363,7 +363,8 @@ bool LilyGo_AMOLED::initBUS()
     return true;
 }
 
-bool LilyGo_AMOLED::beginAutomatic()
+
+bool LilyGo_AMOLED::begin()
 {
     //Try find 1.47 inch i2c devices
     Wire.begin(1, 2);
@@ -405,6 +406,12 @@ bool LilyGo_AMOLED::beginAutomatic()
     log_e("Begin 1.91-inch no touch board model");
 
     return beginAMOLED_191(false);
+}
+
+
+bool LilyGo_AMOLED::beginAutomatic()
+{
+    return begin();
 }
 
 bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
@@ -803,7 +810,14 @@ void LilyGo_AMOLED::wakeup()
     writeCommand(t.addr, t.param, t.len);
 }
 
-
-LilyGo_AMOLED amoled;
+bool LilyGo_AMOLED::hasTouch()
+{
+    if (boards) {
+        if (boards->touch) {
+            return true;
+        }
+    }
+    return false;
+}
 
 
