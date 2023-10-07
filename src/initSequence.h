@@ -12,7 +12,7 @@
 
 typedef struct {
     uint32_t addr;
-    uint8_t param[5];
+    uint8_t param[20];
     uint32_t len;
 } lcd_cmd_t;
 
@@ -34,6 +34,11 @@ extern const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT];
 #define RM690B0_WIDTH                            600
 #define RM690B0_HEIGHT                           450
 
+
+#define JD9613_INIT_SEQUENCE_LENGHT             88
+extern const lcd_cmd_t jd9613_cmd[JD9613_INIT_SEQUENCE_LENGHT];
+#define JD9613_WIDTH                            126
+#define JD9613_HEIGHT                           294
 
 
 
