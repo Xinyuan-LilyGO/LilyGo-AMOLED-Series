@@ -6,7 +6,11 @@
  * @date      2023-05-01
  *
  */
-#include <LilyGo_AMOLED.h>
+#ifdef defined(LILYGO_TWRITSTBAND_S3)
+#include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
+#elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
+#include <LilyGo_AMOLED.h>      //To use LilyGo AMOLED series screens, please include <LilyGo_AMOLED.h>
+#endif
 #include <LV_Helper.h>
 
 #if !LV_USE_GIF
@@ -14,6 +18,8 @@
 #endif
 
 LV_IMG_DECLARE(ellipse80);
+
+LilyGo_Class amoled;
 
 void setup()
 {
@@ -30,7 +36,7 @@ void setup()
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     if (!rslt) {
         while (1) {
@@ -39,7 +45,7 @@ void setup()
         }
     }
 
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     lv_obj_t *img = lv_gif_create(lv_scr_act());
     lv_gif_set_src(img, &ellipse80);

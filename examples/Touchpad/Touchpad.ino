@@ -6,10 +6,13 @@
  * @date      2023-07-14
  *
  */
-
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
+LilyGo_Class amoled;
 lv_obj_t *label;
 
 void setup(void)
@@ -29,7 +32,7 @@ void setup(void)
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     if (!rslt) {
         while (1) {
@@ -39,7 +42,7 @@ void setup(void)
     }
 
     // Register lvgl helper
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
 
     label = lv_label_create(lv_scr_act());

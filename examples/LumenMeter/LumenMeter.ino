@@ -6,10 +6,13 @@
  * @date      2023-08-09
  * @note      Sketch only for 1.47" screen with built-in ambient light sensor
  */
-
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
+LilyGo_Class amoled;
 lv_obj_t *label;
 
 
@@ -29,7 +32,7 @@ void setup(void)
     amoled.beginAMOLED_147();
 
     // Register lvgl helper
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 

@@ -12,6 +12,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <WiFi.h>
 
+extern LilyGo_Class amoled;
 
 LV_FONT_DECLARE(alibaba_font_48);
 LV_FONT_DECLARE(alibaba_font_18);

@@ -6,6 +6,9 @@
  * @date      2023-07-25
  * @note      T-AMOLED without GPS function, the sketch demonstrates an example of connecting the M10Q GPS module through the QWIIC UART port
  */
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <TinyGPSPlus.h>
@@ -16,6 +19,8 @@
 
 // The TinyGPSPlus object
 TinyGPSPlus gps;
+LilyGo_Class amoled;
+
 lv_obj_t *label;
 
 void displayInfo();
@@ -39,7 +44,7 @@ void setup()
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     if (!rslt) {
         while (1) {
@@ -49,7 +54,7 @@ void setup()
     }
 
     // Register lvgl helper
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     Serial.println(F("Sats HDOP  Latitude   Longitude   Fix  Date       Time     Date Alt    Course Speed Card  Distance Course Card  Chars Sentences Checksum"));
     Serial.println(F("           (deg)      (deg)       Age                      Age  (m)    --- from GPS ----  ---- to London  ----  RX    RX        Fail"));

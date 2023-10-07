@@ -17,6 +17,11 @@
  *                  USB Mode:"Hardware CDC and JTAG"
  *  Arduino IDE User need move all folders in [libdeps folder](./libdeps/)  to Arduino library folder
  */
+
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
+
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <Arduino.h>
@@ -86,6 +91,7 @@ void updateCoin360Task(void *ptr);
 WiFiClientSecure client ;
 HTTPClient https;
 AceButton *button = NULL;
+LilyGo_Class amoled;
 
 double latitude;
 double longitude;
@@ -221,7 +227,7 @@ void setup()
 
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     Serial.print("Board Nmae:"); Serial.println(amoled.getName());
 
@@ -235,7 +241,7 @@ void setup()
 
 
     // Register lvgl helper
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
 

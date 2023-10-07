@@ -7,14 +7,18 @@
  * @note      Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use tft.xxxx function
  */
 
+#ifdef defined(LILYGO_TWRITSTBAND_S3)
+#include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
+#elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
+#include <LilyGo_AMOLED.h>      //To use LilyGo AMOLED series screens, please include <LilyGo_AMOLED.h>
+#endif
 #include <TFT_eSPI.h>   //https://github.com/Bodmer/TFT_eSPI
 #include "true_color.h"
-#include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
 TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite spr = TFT_eSprite(&tft);
-
+LilyGo_Class amoled;
 
 #define WIDTH  amoled.height()
 #define HEIGHT amoled.width()
@@ -41,7 +45,7 @@ void setup()
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    if (!amoled.beginAutomatic()) {
+    if (!amoled.begin()) {
         while (1) {
             Serial.println("There is a problem with the device!~"); delay(1000);
         }

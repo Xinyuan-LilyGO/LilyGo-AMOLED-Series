@@ -7,9 +7,13 @@
  * @note      Sketch only for 1.47" screen with Power management unit
  *            For more PMU examples, please refer to https://github.com/lewisxhe/XPowersLib
  */
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
+LilyGo_Class amoled;
 bool  pmu_flag = 0;
 lv_obj_t *label1;
 
@@ -25,7 +29,7 @@ void setup()
     // Only support  LilyGo  1.47 Inch AMOLED board
     amoled.beginAMOLED_147();
 
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     label1 = lv_label_create(lv_scr_act());
     lv_label_set_recolor(label1, true);    /*Enable re-coloring by commands in the text*/

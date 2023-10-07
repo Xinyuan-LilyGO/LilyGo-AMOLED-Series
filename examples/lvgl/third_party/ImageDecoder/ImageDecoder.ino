@@ -10,7 +10,11 @@
  *                  Note that you need to place the sample data folder in the same level directory as <platformio.ini>
  *                  If using 2.41 inch, please copy all the pictures in the data folder to the SD card
  */
-#include <LilyGo_AMOLED.h>
+#ifdef defined(LILYGO_TWRITSTBAND_S3)
+#include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
+#elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
+#include <LilyGo_AMOLED.h>      //To use LilyGo AMOLED series screens, please include <LilyGo_AMOLED.h>
+#endif
 #include <LV_Helper.h>
 
 #if !LV_USE_PNG || !LV_USE_BMP || !LV_USE_SJPG
@@ -22,6 +26,8 @@ const char *filename[] = {
     "product0.png", "product1.png", "product2.png", "product3.png",
     "product4.png", "product5.png"
 };
+
+LilyGo_Class amoled;
 
 void setup(void)
 {
@@ -40,7 +46,7 @@ void setup(void)
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     if (!rslt) {
         while (1) {
@@ -49,7 +55,7 @@ void setup(void)
         }
     }
 
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     String file =  String("/") + filename[0];
 

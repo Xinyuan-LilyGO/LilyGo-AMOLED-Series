@@ -9,7 +9,9 @@
  * !!         Note that the wemos hp303b module is inconsistent with the standard Qwiic line sequence, and jumpers are required
  * !!         See ConnectionDiagram.jpg
  */
-
+#ifdef LILYGO_TWRITSTBAND_S3
+#error  "Current example does not apply to T-Wristband"
+#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include "src/LOLIN_HP303B.h"       //https://github.com/wemos/LOLIN_HP303B_Library
@@ -17,6 +19,8 @@
 
 lv_obj_t *label;
 LOLIN_HP303B HP303BPressureSensor;
+LilyGo_Class amoled;
+
 // Default HP303B Address 0x77 , may be is 0x76
 const uint8_t slaveAddress = 0x77;
 
@@ -87,7 +91,7 @@ void setup(void)
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device
-    rslt = amoled.beginAutomatic();
+    rslt = amoled.begin();
 
     if (!rslt) {
         while (1) {
@@ -97,7 +101,7 @@ void setup(void)
     }
 
     // Register lvgl helper
-    beginLvglHelper();
+    beginLvglHelper(amoled);
 
     HP303BPressureSensor.begin(slaveAddress);
 
