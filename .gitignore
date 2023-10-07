@@ -7,3 +7,5 @@
 build
 script
 platformio.ini.self
+*Test*
+*test
