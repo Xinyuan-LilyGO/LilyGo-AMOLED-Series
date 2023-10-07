@@ -6,7 +6,7 @@
  * @date      2023-08-09
  *
  */
-#ifdef defined(LILYGO_TWRITSTBAND_S3)
+#if defined(LILYGO_TWRITSTBAND_S3)
 #include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
 #elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
 #include <LilyGo_AMOLED.h>      //To use LilyGo AMOLED series screens, please include <LilyGo_AMOLED.h>
