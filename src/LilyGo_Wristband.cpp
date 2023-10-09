@@ -7,14 +7,15 @@
  *
  */
 #include <sys/cdefs.h>
-#include "esp_lcd_panel_interface.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_vendor.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_lcd_panel_commands.h"
-#include "esp_check.h"
-#include "hal/spi_types.h"
-#include "driver/spi_common.h"
+#include <esp_lcd_panel_interface.h>
+#include <esp_lcd_panel_io.h>
+#include <esp_lcd_panel_vendor.h>
+#include <esp_lcd_panel_ops.h>
+#include <esp_lcd_panel_commands.h>
+#include <esp_check.h>
+#include <hal/spi_types.h>
+#include <driver/spi_common.h>
+#include <esp_adc_cal.h>
 #include "LilyGo_Wristband.h"
 #include "initSequence.h"
 
@@ -245,6 +246,11 @@ bool LilyGo_Wristband::getTouched()
     return false;
 }
 
+bool LilyGo_Wristband::isPressed()
+{
+    return touchInterruptGetLastStatus(BOARD_TOUCH_BUTTON);
+}
+
 bool LilyGo_Wristband::begin()
 {
     if (panel_handle) {
@@ -386,11 +392,17 @@ void LilyGo_Wristband::writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t lenght
     esp_lcd_panel_io_tx_param(jd9613->io, cmd, pdat, lenght);
 }
 
+void LilyGo_Wristband::enableTouchWakeup(int threshold)
+{
+    touchSleepWakeUpEnable(BOARD_TOUCH_BUTTON, threshold);
+}
+
 void LilyGo_Wristband::sleep()
 {
     lcd_cmd_t t = {0x10, {0x00}, 1}; //Sleep in
     writeCommand(t.addr, t.param, t.len);
 
+    esp_deep_sleep_start();
 }
 
 void LilyGo_Wristband::wakeup()
@@ -419,4 +431,30 @@ uint8_t LilyGo_Wristband::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
     return 0;
 }
 
+uint16_t LilyGo_Wristband::getBattVoltage(void)
+{
+    esp_adc_cal_characteristics_t adc_chars;
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+    uint32_t v1 = 0, raw = 0;
+    raw = analogRead(BOARD_BAT_ADC);
+    v1 = esp_adc_cal_raw_to_voltage(raw, &adc_chars) * 2;
+    return v1;
+}
 
+
+int LilyGo_Wristband::getBatteryPercent()
+{
+    const static int table[11] = {
+        3000, 3650, 3700, 3740, 3760, 3795,
+        3840, 3910, 3980, 4070, 4100
+    };
+    uint16_t voltage = getBattVoltage();
+    if (voltage < table[0])
+        return 0;
+    for (int i = 0; i < 11; i++) {
+        if (voltage < table[i])
+            return i * 10 - (10UL * (int)(table[i] - voltage)) /
+                   (int)(table[i] - table[i - 1]);;
+    }
+    return 100;
+}

@@ -59,6 +59,7 @@ public:
     void setTouchThreshold(uint32_t threshold);
     void detachTouch();
     bool getTouched();
+    bool isPressed();
 
     void setBrightness(uint8_t level);
     uint8_t getBrightness();
@@ -78,7 +79,10 @@ public:
     bool hasTouch();
     uint8_t getPoint(int16_t *x, int16_t *y, uint8_t get_point );
 
+    uint16_t getBattVoltage();
+    int getBatteryPercent();
 
+    void enableTouchWakeup(int threshold = 2000);
     void sleep();
     void wakeup();
 private:
