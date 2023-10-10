@@ -751,13 +751,11 @@ void createWiFiConfigUI(lv_obj_t *parent)
     if (lv_disp_get_ver_res(NULL) > 300) {
         lv_obj_set_size(cont, lv_disp_get_hor_res(NULL), lv_disp_get_ver_res(NULL));
     } else {
-        lv_obj_set_size(cont, lv_disp_get_physical_hor_res(NULL), lv_disp_get_ver_res(NULL) * 2 + 20);
+        lv_obj_set_size(cont, lv_disp_get_hor_res(NULL), lv_disp_get_ver_res(NULL) * 2 + 20);
     }
 
     lv_obj_remove_style(cont, 0, LV_PART_SCROLLBAR);
     lv_obj_set_style_border_width(cont, 0, 0);
-    lv_obj_set_style_pad_all(cont, 0, 0);
-
 
     String txt = "Use ESP Touch App Configure your network\n";
     txt += "1. Install ESPTouch App\n";
