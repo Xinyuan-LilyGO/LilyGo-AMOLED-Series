@@ -66,6 +66,11 @@ enum PowersSY6970NTCStatus {
     POWERS_SY_BOOST_NTC_HOT,
 };
 
+enum SY6970_WDT_Timeout {
+    SY6970_WDT_TIMEROUT_40SEC,      //40 Second
+    SY6970_WDT_TIMEROUT_80SEC,      //80 Second
+    SY6970_WDT_TIMEROUT_160SEC,     //160 Second
+} ;
 
 class PowersSY6970 :
     public XPowersCommon<PowersSY6970> //, public XPowersLibInterface
@@ -189,32 +194,50 @@ public:
         setRegisterBit(POWERS_SY6970_REG_03H, 5);
     }
 
-    bool isEnableWdtReset()
-    {
-        return getRegisterBit(POWERS_SY6970_REG_03H, 6);
-    }
 
-    void disableWdtReset()
-    {
-        clrRegisterBit(POWERS_SY6970_REG_03H, 6);
-    }
-
-    void enableWdtReset()
+    void feedWatchdog()
     {
         setRegisterBit(POWERS_SY6970_REG_03H, 6);
     }
 
-    bool isEnableBattLoad()
+    void disableWatchdog()
+    {
+        int regVal = readRegister(POWERS_SY6970_REG_07H);
+        regVal  &= 0xCF;
+        writeRegister(POWERS_SY6970_REG_07H, regVal);
+    }
+
+    void enableWatchdog(enum SY6970_WDT_Timeout val = SY6970_WDT_TIMEROUT_40SEC )
+    {
+        int regVal = readRegister(POWERS_SY6970_REG_07H);
+        regVal  &= 0xCF;
+        switch (val) {
+        case SY6970_WDT_TIMEROUT_40SEC:
+            writeRegister(POWERS_SY6970_REG_07H, regVal | 0x10);
+            break;
+        case SY6970_WDT_TIMEROUT_80SEC:
+            writeRegister(POWERS_SY6970_REG_07H, regVal | 0x20);
+            break;
+        case SY6970_WDT_TIMEROUT_160SEC:
+            writeRegister(POWERS_SY6970_REG_07H, regVal | 0x30);
+            break;
+        default:
+            break;
+        }
+    }
+
+
+    bool isEnableBattery()
     {
         return getRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
 
-    void disableBattLoad()
+    void disableBattery()
     {
         clrRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
 
-    void enableBattLoad()
+    void enableBattery()
     {
         setRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
@@ -399,7 +422,7 @@ public:
         XPOWERS_CHECK_RANGE(milliampere, POWERS_PRE_CHG_CURRENT_MIN, POWERS_PRE_CHG_CURRENT_MAX, false);
         int val = readRegister(POWERS_SY6970_REG_05H);
         val &= 0x0F;
-        milliampere = (milliampere / POWERS_SY6970_PRE_CHG_CUR_STEP) - POWERS_SY6970_PRE_CHG_CUR_STEP;
+        milliampere = ((milliampere - POWERS_SY6970_PRE_CHG_CUR_BASE) / POWERS_SY6970_PRE_CHG_CUR_STEP);
         val |=  milliampere << 4;
         return writeRegister(POWERS_SY6970_REG_05H, val) != -1;
     }
@@ -459,8 +482,17 @@ public:
 
     bool initImpl()
     {
-        return getChipID() == 0x00;
+
+        if (getChipID() != 0x00) {
+            return false;
+        }
+
+        //Default disbale Watchdog
+        disableWatchdog();
+
+        return true;
     }
+
 private:
 
 };

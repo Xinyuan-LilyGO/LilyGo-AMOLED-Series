@@ -22,37 +22,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @file      BoschParse.h
+ * @file      bosch_interfaces.h
  * @author    Lewis He (lewishe@outlook.com)
- * @date      2023-09-30
+ * @date      2023-10-09
  *
  */
 #pragma once
 
-#include "SensorCommon.tpp"
-#include "SensorBhy2Define.h"
-#include "bosch/bhy2_parse.h"
-#include "bosch/common/common.h"
-#include <vector>
-#include <functional>
+#include "SensorLib.h"
 
-
-enum BoschOrientation {
-    BHY2_DIRECTION_TOP_RIGHT,
-    BHY2_DIRECTION_TOP_LEFT,
-    BHY2_DIRECTION_BOTTOM_LEFT,
-    BHY2_DIRECTION_BOTTOM_RIGHT,
-};
-
-class BoschParse
+class SensorInterfaces
 {
 public:
-    static std::vector<SensorEventCbList_t> bhyEventVector;
-    static std::vector<ParseCallBackList_t> bhyParseEventVector;
+    static bool setup_interfaces(SensorLibConfigure config);
+    static void close_interfaces(SensorLibConfigure config);
+    static int8_t bhy2_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr);
+    static int8_t bhy2_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr);
+    static int8_t bhy2_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t length, void *intf_ptr);
+    static int8_t bhy2_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t length, void *intf_ptr);
+    static void bhy2_delay_us(uint32_t us, void *private_data);
 
-    static void parseData(const struct bhy2_fifo_parse_data_info *fifo, void *user_data);
-
-    static void parseMetaEvent(const struct bhy2_fifo_parse_data_info *callback_info, void *user_data);
-
-    static void parseDebugMessage(const struct bhy2_fifo_parse_data_info *callback_info, void *callback_ref);
+private:
+    static SPISettings  __spiSetting;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+

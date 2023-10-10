@@ -223,15 +223,22 @@ bool TouchClassCST816::initImpl()
 {
     setRegAddressLenght(1);
 
+    if (__rst != SENSOR_PIN_NONE) {
+        pinMode(__rst, OUTPUT);
+    }
+
+    reset();
+
     int chip_id =   readRegister(CST8xx_REG_CHIP_ID);
     log_i("Chip ID:0x%x", chip_id);
 
     int version =   readRegister(CST8xx_REG_FW_VERSION);
     log_i("Version :0x%x", version);
 
+    //CST226SE : A7 = 0X20
     if (chip_id != CST816S_CHIP_ID &&
             chip_id != CST816T_CHIP_ID  &&
-            chip_id != CST716_CHIP_ID) {
+            (chip_id != CST716_CHIP_ID || version == 0)) {
         return false;
     }
     __chipID = chip_id;

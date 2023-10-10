@@ -63,6 +63,7 @@
 #define POWERS_SY6970_VBAT_VOL_STEP                             (20)
 #define POWERS_SY6970_VSYS_VOL_STEP                             (20)
 
+#define POWERS_SY6970_PRE_CHG_CUR_BASE                          (64)
 #define POWERS_SY6970_FAST_CHG_CUR_STEP                         (64)
 #define POWERS_SY6970_PRE_CHG_CUR_STEP                          (64)
 

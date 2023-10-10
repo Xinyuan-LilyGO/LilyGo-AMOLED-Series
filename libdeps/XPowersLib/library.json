@@ -1,6 +1,6 @@
 {
   "name": "XPowersLib",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Arduino,CircuitPython,Micropython library for x-powers power management series",
   "keywords": "AXP192 AXP202 AXP2101 x-powers",
   "authors": [
@@ -82,6 +82,16 @@
       "name": "XPowersLibInterface_Example",
       "base": "examples/XPowersLibInterface_Example",
       "files": ["XPowersLibInterface_Example.ino"]
+    },
+    {
+      "name": "SY6970_Example",
+      "base": "examples/SY6970_Example",
+      "files": ["SY6970_Example.ino"]
+    },
+    {
+      "name": "SY6970_Watchdog_Example",
+      "base": "examples/SY6970_Watchdog_Example",
+      "files": ["SY6970_Watchdog_Example.ino"]
     }
   ],
   "frameworks": ["arduino", "espidf"],
