@@ -10,6 +10,12 @@
 | [T-Display-S3 AMOLED][2]   | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
 | [T4-AMOLED][3]             | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
 
+| Current consumption        | Working current             | sleep current | sleep mode      |
+| -------------------------- | --------------------------- | ------------- | --------------- |
+| [T-Display-AMOLED-Lite][1] | (240MHz) WiFi On 90~230+ mA | Aboud 1.1mA   | timer wakeup    |
+| [T-Display-S3 AMOLED][2]   | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
+| [T4-AMOLED][3]             | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
+
 [1]: https://www.lilygo.cc/products/t-display-amoled
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc
