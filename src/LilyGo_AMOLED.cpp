@@ -453,7 +453,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         deviceScan(&Wire, &Serial);
         PowersSY6970::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
         PowersSY6970::enableADCMeasure();
-        PowersSY6970::disableBattLoad();
+        PowersSY6970::disableBattery();
         PowersSY6970::disableOTG();
     }
 
