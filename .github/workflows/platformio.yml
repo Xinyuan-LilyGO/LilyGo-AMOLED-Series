@@ -1,0 +1,86 @@
+name: PlatformIO CI
+
+on:
+  pull_request:
+  push:
+    # paths:
+    #   - "examples/**"
+    #   - "src/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        examples:
+          [
+            examples/Factory,
+            examples/LumenMeter,
+            examples/PMU_ADC,
+            examples/PMU_Interrupt,
+            examples/QWIIC_GPS_Shield,
+            examples/QWIIC_HP303BSensor,
+            examples/QWIIC_MAX3010X,
+            examples/TFT_eSPI_Sprite,
+            examples/Touchpad,
+            examples/lvgl/event,
+            examples/lvgl/get_started,
+            examples/lvgl/layouts/flex,
+            examples/lvgl/layouts/grid,
+            examples/lvgl/scroll,
+            examples/lvgl/style,
+            examples/lvgl/third_party/ImageDecoder,
+            examples/lvgl/third_party/gif,
+            examples/lvgl/widgets/animimg,
+            examples/lvgl/widgets/arc,
+            examples/lvgl/widgets/bar,
+            examples/lvgl/widgets/btn,
+            examples/lvgl/widgets/btnmatrix,
+            examples/lvgl/widgets/calendar,
+            examples/lvgl/widgets/canvas,
+            examples/lvgl/widgets/chart,
+            examples/lvgl/widgets/checkbox,
+            examples/lvgl/widgets/colorwheel,
+            examples/lvgl/widgets/dropdown,
+            examples/lvgl/widgets/img,
+            examples/lvgl/widgets/imgbtn,
+            examples/lvgl/widgets/keyboard,
+            examples/lvgl/widgets/label,
+            examples/lvgl/widgets/led,
+            examples/lvgl/widgets/line,
+            examples/lvgl/widgets/list,
+            examples/lvgl/widgets/menu,
+            examples/lvgl/widgets/meter,
+            examples/lvgl/widgets/msgbox,
+            examples/lvgl/widgets/obj,
+            examples/lvgl/widgets/roller,
+            examples/lvgl/widgets/slider,
+            examples/lvgl/widgets/span,
+            examples/lvgl/widgets/spinbox,
+            examples/lvgl/widgets/spinner,
+            examples/lvgl/widgets/switch,
+            examples/lvgl/widgets/table,
+            examples/lvgl/widgets/tabview,
+            examples/lvgl/widgets/textarea,
+            examples/lvgl/widgets/tileview,
+            examples/lvgl/widgets/win,
+          ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Run PlatformIO
+        run: |
+          export PLATFORMIO_SRC_DIR=${{ matrix.examples }}
+          pio run
