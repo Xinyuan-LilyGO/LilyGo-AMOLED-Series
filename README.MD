@@ -1,5 +1,8 @@
 <h1 align = "center">🌟LilyGO AMOLED Series🌟</h1> 
 
+
+[![PlatformIO CI](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml)
+
 <!-- **English | [中文](README_CN.MD)** -->
 
 ## 1️⃣Support Product
