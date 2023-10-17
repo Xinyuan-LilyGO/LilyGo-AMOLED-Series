@@ -1,0 +1,91 @@
+name: Arduino_CI
+
+on:
+  pull_request:
+  push:
+    paths:
+      - "examples/**"
+      - "src/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        examples:
+          [
+            examples/Factory/Factory.ino,
+            examples/LumenMeter/LumenMeter.ino,
+            examples/PMU_ADC/PMU_ADC.ino,
+            examples/PMU_Interrupt/PMU_Interrupt.ino,
+            examples/QWIIC_GPS_Shield/QWIIC_GPS_Shield.ino,
+            examples/QWIIC_HP303BSensor/QWIIC_HP303BSensor.ino,
+            examples/QWIIC_MAX3010X/QWIIC_MAX3010X.ino,
+            examples/TFT_eSPI_Sprite/TFT_eSPI_Sprite.ino,
+            examples/Touchpad/Touchpad.ino,
+            examples/lvgl/event/event.ino,
+            examples/lvgl/get_started/get_started.ino,
+            examples/lvgl/layouts/flex/flex.ino,
+            examples/lvgl/layouts/grid/grid.ino,
+            examples/lvgl/scroll/scroll.ino,
+            examples/lvgl/style/style.ino,
+            examples/lvgl/third_party/ImageDecoder/ImageDecoder.ino,
+            examples/lvgl/third_party/gif/gif.ino,
+            examples/lvgl/widgets/animimg/animimg.ino,
+            examples/lvgl/widgets/arc/arc.ino,
+            examples/lvgl/widgets/bar/bar.ino,
+            examples/lvgl/widgets/btn/btn.ino,
+            examples/lvgl/widgets/btnmatrix/btnmatrix.ino,
+            examples/lvgl/widgets/calendar/calendar.ino,
+            examples/lvgl/widgets/canvas/canvas.ino,
+            examples/lvgl/widgets/chart/chart.ino,
+            examples/lvgl/widgets/checkbox/checkbox.ino,
+            examples/lvgl/widgets/colorwheel/colorwheel.ino,
+            examples/lvgl/widgets/dropdown/dropdown.ino,
+            examples/lvgl/widgets/img/img.ino,
+            examples/lvgl/widgets/imgbtn/imgbtn.ino,
+            examples/lvgl/widgets/keyboard/keyboard.ino,
+            examples/lvgl/widgets/label/label.ino,
+            examples/lvgl/widgets/led/led.ino,
+            examples/lvgl/widgets/line/line.ino,
+            examples/lvgl/widgets/list/list.ino,
+            examples/lvgl/widgets/menu/menu.ino,
+            examples/lvgl/widgets/meter/meter.ino,
+            examples/lvgl/widgets/msgbox/msgbox.ino,
+            examples/lvgl/widgets/obj/obj.ino,
+            examples/lvgl/widgets/roller/roller.ino,
+            examples/lvgl/widgets/slider/slider.ino,
+            examples/lvgl/widgets/span/span.ino,
+            examples/lvgl/widgets/spinbox/spinbox.ino,
+            examples/lvgl/widgets/spinner/spinner.ino,
+            examples/lvgl/widgets/switch/switch.ino,
+            examples/lvgl/widgets/table/table.ino,
+            examples/lvgl/widgets/tabview/tabview.ino,
+            examples/lvgl/widgets/textarea/textarea.ino,
+            examples/lvgl/widgets/tileview/tileview.ino,
+            examples/lvgl/widgets/win/win.ino,
+          ]
+
+    env:
+      EXAMPLES: ${{matrix.examples}}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Arduino Ci
+        run: |
+          wget https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Linux_64bit.tar.gz -O arduino-cli.tar.gz ;
+          sudo tar xf arduino-cli.tar.gz -C /usr/local/bin arduino-cli ;
+          arduino-cli config init ;
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json ;
+          arduino-cli core update-index ;
+          arduino-cli core install esp32:esp32 ;
+
+      - name: Build examples
+        run: |
+          mkdir -p $HOME/Arduino/libraries ;
+          cp  -r $PWD/libdeps/* $HOME/Arduino/libraries
+
+          cd $GITHUB_WORKSPACE ;
+          arduino-cli compile -besp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi --library . $PWD/$EXAMPLES ;
