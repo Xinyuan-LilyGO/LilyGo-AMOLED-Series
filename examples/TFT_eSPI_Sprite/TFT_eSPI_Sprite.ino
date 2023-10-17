@@ -7,6 +7,19 @@
  * @note      Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use tft.xxxx function
  */
 
+/*
+* Uncomment the following line to use LilyGo-T-Wristband-S3.
+* Note that LILYGO_TDISPLAY_AMOLED_SERIES needs to be commented out.
+* 取消下面这行注释,将使用LilyGo-T-Wristband-S3, 注意需要将 LILYGO_TDISPLAY_AMOLED_SERIES 注释掉
+* */
+// #define LILYGO_TWRITSTBAND_S3
+
+/*
+* Uncomment the following line to use the LilyGo-AMOLED series
+* 取消下面这行注释,将使用LilyGo-AMOLED系列 , 注意需要将 LILYGO_TWRITSTBAND_S3 注释掉
+* */
+#define LILYGO_TDISPLAY_AMOLED_SERIES
+
 #if defined(LILYGO_TWRITSTBAND_S3)
 #include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
 #elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
