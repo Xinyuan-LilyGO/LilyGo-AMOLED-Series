@@ -8,12 +8,8 @@
  */
 
 #include "LilyGo_AMOLED.h"
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
-#include <driver/temp_sensor.h>
-#else
-#include <driver/temperature_sensor.h>
-#endif
 #include <esp_adc_cal.h>
+#include <driver/gpio.h>
 
 #define SEND_BUF_SIZE           (16384)
 #define TFT_SPI_MODE            SPI_MODE0
@@ -57,7 +53,7 @@ const char *LilyGo_AMOLED::getName()
     return "Unkonw";
 }
 
-const uint8_t LilyGo_AMOLED::getBoardID()
+uint8_t LilyGo_AMOLED::getBoardID()
 {
     if (boards == &BOARD_AMOLED_147) {
         return LILYGO_AMOLED_147;
@@ -107,7 +103,6 @@ bool LilyGo_AMOLED::isPressed()
 uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 {
     uint8_t point = 0;
-    int16_t tmpX = 0, tmpY = 0;
     if (boards == &BOARD_AMOLED_147) {
         point =  TouchDrvCHSC5816::getPoint(x, y);
     } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241) {
@@ -129,8 +124,8 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             }
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
-            esp_adc_cal_value_t val_type = esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-            uint32_t v1 = 0, v2 = 0, raw = 0;
+            esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+            uint32_t v1 = 0,  raw = 0;
             raw = analogRead(boards->adcPins);
             v1 = esp_adc_cal_raw_to_voltage(raw, &adc_chars) * 2;
             return v1;
@@ -478,8 +473,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
             log_e("Failed to dected SDCard!");
         }
         if (SD.cardType() != CARD_NONE) {
-            uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-            log_i("SD Card Size: %llu MB\n", cardSize);
+            log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
         }
     }
     return true;
@@ -671,10 +665,7 @@ void LilyGo_AMOLED::beginCore()
 {
     // https://docs.espressif.com/projects/esp-idf/zh_CN/v4.4.4/esp32s3/api-reference/peripherals/temp_sensor.html
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
-    temp_sensor_config_t temp_sensor = {
-        .dac_offset = TSENS_DAC_L2,
-        .clk_div = 6,
-    };
+    temp_sensor_config_t temp_sensor = TSENS_CONFIG_DEFAULT();
     temp_sensor_set_config(temp_sensor);
     temp_sensor_start();
 #else

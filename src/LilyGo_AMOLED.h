@@ -26,6 +26,11 @@
 #include <SD.h>
 #include <sys/cdefs.h>
 #include "LilyGo_Display.h"
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
+#include <driver/temp_sensor.h>
+#else
+#include <driver/temperature_sensor.h>
+#endif
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -319,7 +324,7 @@ public:
 
     const BoardsConfigure_t *getBoarsdConfigure();
     const char *getName();
-    const uint8_t getBoardID();
+    uint8_t getBoardID();
 
     void sleep();
     void wakeup();
@@ -334,6 +339,10 @@ private:
     spi_device_handle_t spi;
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
+
+#if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
+    temperature_sensor_handle_t temp_sensor;
+#endif
 };
 
 #ifndef LilyGo_Class

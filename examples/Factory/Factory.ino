@@ -172,10 +172,11 @@ void buttonHandleEvent(AceButton *button,
             esp_sleep_enable_timer_wakeup(60 * 1000000ULL);  //60S
 
         } else {
+            uint64_t gpio0_mask = 0;
 #if ESP_IDF_VERSION >=  ESP_IDF_VERSION_VAL(4,4,6)
-            esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ANY_LOW);
+            esp_sleep_enable_ext1_wakeup(gpio0_mask, ESP_EXT1_WAKEUP_ANY_LOW);
 #else
-            esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ALL_LOW);
+            esp_sleep_enable_ext1_wakeup(gpio0_mask, ESP_EXT1_WAKEUP_ALL_LOW);
 #endif
         }
 

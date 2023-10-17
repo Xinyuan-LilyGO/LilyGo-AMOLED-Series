@@ -31,7 +31,7 @@ __BEGIN_DECLS
 
 #define BOARD_DISP_HOST     SPI3_HOST
 
-static const char *TAG = "jd9613";
+#define TAG  "jd9613"
 
 typedef struct {
     esp_lcd_panel_t base;
@@ -47,6 +47,7 @@ static esp_err_t panel_jd9613_del(esp_lcd_panel_t *panel);
 static esp_err_t panel_jd9613_reset(esp_lcd_panel_t *panel);
 static esp_err_t panel_jd9613_init(esp_lcd_panel_t *panel);
 static esp_err_t panel_jd9613_draw_bitmap(esp_lcd_panel_t *panel, int x_start, int y_start, int x_end, int y_end, const void *color_data);
+
 
 
 static esp_err_t esp_lcd_new_panel_jd9613(const esp_lcd_panel_io_handle_t io, const esp_lcd_panel_dev_config_t *panel_dev_config, esp_lcd_panel_handle_t *ret_panel)
@@ -69,13 +70,7 @@ static esp_err_t esp_lcd_new_panel_jd9613(const esp_lcd_panel_io_handle_t io, co
     }
 
     if (panel_dev_config->reset_gpio_num >= 0) {
-        gpio_config_t io_conf = {
-            .pin_bit_mask = BIT(panel_dev_config->reset_gpio_num),
-            .mode = GPIO_MODE_OUTPUT,
-            .pull_up_en = GPIO_PULLUP_ENABLE,
-            .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        };
-        ESP_GOTO_ON_ERROR(gpio_config(&io_conf), err, TAG, "configure GPIO for RST line failed");
+        pinMode(panel_dev_config->reset_gpio_num, OUTPUT);
     }
 
     switch (panel_dev_config->bits_per_pixel) {
@@ -99,7 +94,11 @@ static esp_err_t esp_lcd_new_panel_jd9613(const esp_lcd_panel_io_handle_t io, co
     jd9613->base.set_gap = NULL;
     jd9613->base.mirror = NULL;
     jd9613->base.swap_xy = NULL;
+#if ESP_IDF_VERSION <  ESP_IDF_VERSION_VAL(4,4,6)
     jd9613->base.disp_off = NULL;
+#else
+    jd9613->base.disp_on_off = NULL;
+#endif
     jd9613->rotation = 0;
 
     *ret_panel = &(jd9613->base);
@@ -110,7 +109,7 @@ static esp_err_t esp_lcd_new_panel_jd9613(const esp_lcd_panel_io_handle_t io, co
 err:
     if (jd9613) {
         if (panel_dev_config->reset_gpio_num >= 0) {
-            gpio_reset_pin((gpio_num_t)(panel_dev_config->reset_gpio_num));
+            pinMode(panel_dev_config->reset_gpio_num, OPEN_DRAIN);
         }
         free(jd9613);
     }
@@ -123,7 +122,7 @@ static esp_err_t panel_jd9613_del(esp_lcd_panel_t *panel)
     jd9613_panel_t *jd9613 = __containerof(panel, jd9613_panel_t, base);
 
     if (jd9613->reset_gpio_num >= 0) {
-        gpio_reset_pin((gpio_num_t)(jd9613->reset_gpio_num));
+        pinMode(jd9613->reset_gpio_num, OPEN_DRAIN);
     }
     ESP_LOGD(TAG, "del jd9613 panel @%p", jd9613);
     free(jd9613);
@@ -138,14 +137,14 @@ static esp_err_t panel_jd9613_reset(esp_lcd_panel_t *panel)
 
     // perform hardware reset
     if (jd9613->reset_gpio_num >= 0) {
-        gpio_set_level((gpio_num_t)(jd9613->reset_gpio_num), jd9613->reset_level);
-        vTaskDelay(pdMS_TO_TICKS(100));
-        gpio_set_level((gpio_num_t)(jd9613->reset_gpio_num), !jd9613->reset_level);
-        vTaskDelay(pdMS_TO_TICKS(100));
+        digitalWrite(jd9613->reset_gpio_num, jd9613->reset_level);
+        delay((100));
+        digitalWrite(jd9613->reset_gpio_num, !jd9613->reset_level);
+        delay((100));
     } else {
         // perform software reset
         esp_lcd_panel_io_tx_param(io, LCD_CMD_SWRESET, NULL, 0);
-        vTaskDelay(pdMS_TO_TICKS(20)); // spec, wait at least 5ms before sending new command
+        delay((20)); // spec, wait at least 5ms before sending new command
     }
 
     return ESP_OK;
@@ -166,10 +165,10 @@ static esp_err_t panel_jd9613_init(esp_lcd_panel_t *panel)
     }
 
     esp_lcd_panel_io_tx_param(io, LCD_CMD_SLPOUT, NULL, 0);
-    vTaskDelay(pdMS_TO_TICKS(120));
+    delay((120));
 
     esp_lcd_panel_io_tx_param(io, LCD_CMD_DISPON, NULL, 0);
-    vTaskDelay(pdMS_TO_TICKS(120));
+    delay((120));
 
     return ESP_OK;
 }
@@ -222,7 +221,12 @@ LilyGo_Wristband::LilyGo_Wristband(): _brightness(AMOLED_DEFAULT_BRIGHTNESS), pa
 LilyGo_Wristband::~LilyGo_Wristband()
 {
     esp_lcd_panel_del(panel_handle);
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+    ledcDetach(BOARD_VIBRATION_PIN);
+#else
     ledcDetachPin(BOARD_VIBRATION_PIN);
+#endif
     touchDetachInterrupt(BOARD_TOUCH_BUTTON);
 }
 
@@ -264,13 +268,21 @@ bool LilyGo_Wristband::begin()
     touchAttachInterrupt(BOARD_TOUCH_BUTTON, touchISR, threshold);
 
     // Initialize vibration motor
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+    ledcAttach(BOARD_VIBRATION_PIN, 1000, 8);
+    // Start up and vibrate suddenly
+    ledcWrite(BOARD_VIBRATION_PIN, 50);
+    delay(30);
+    ledcWrite(BOARD_VIBRATION_PIN, 0);
+#else
     ledcSetup(0, 1000, 8);
     ledcAttachPin(BOARD_VIBRATION_PIN, 0);
-
     // Start up and vibrate suddenly
     ledcWrite(0, 50);
     delay(30);
     ledcWrite(0, 0);
+#endif
+
 
 
     Wire.begin(BOARD_I2C_SDA, BOARD_I2C_SCL);
@@ -345,6 +357,7 @@ void LilyGo_Wristband::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16
 
 bool LilyGo_Wristband::initBUS()
 {
+    /*
     spi_bus_config_t buscfg = {
         .mosi_io_num = BOARD_DISP_MOSI,
         .miso_io_num = BOARD_DISP_MISO,
@@ -353,10 +366,19 @@ bool LilyGo_Wristband::initBUS()
         .quadhd_io_num = BOARD_NONE_PIN,
         .max_transfer_sz = JD9613_HEIGHT * 80 * sizeof(uint16_t),
     };
+    */
+    spi_bus_config_t buscfg;
+    buscfg.mosi_io_num = BOARD_DISP_MOSI;
+    buscfg.miso_io_num = BOARD_DISP_MISO;
+    buscfg.sclk_io_num = BOARD_DISP_SCK;
+    buscfg.quadwp_io_num = BOARD_NONE_PIN;
+    buscfg.quadhd_io_num = BOARD_NONE_PIN;
+    buscfg.max_transfer_sz = JD9613_HEIGHT * 80 * sizeof(uint16_t);
     ESP_ERROR_CHECK(spi_bus_initialize(BOARD_DISP_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     log_i( "Install panel IO");
     esp_lcd_panel_io_handle_t io_handle = NULL;
+    /*
     esp_lcd_panel_io_spi_config_t io_config = {
         .cs_gpio_num = BOARD_DISP_CS,
         .dc_gpio_num = BOARD_DISP_DC,
@@ -367,14 +389,38 @@ bool LilyGo_Wristband::initBUS()
         .lcd_cmd_bits = 8,
         .lcd_param_bits = 8,
     };
+    */
+    esp_lcd_panel_io_spi_config_t io_config;
+    io_config.cs_gpio_num = BOARD_DISP_CS;
+    io_config.dc_gpio_num = BOARD_DISP_DC;
+    io_config.spi_mode = 0;
+    io_config.pclk_hz = DEFAULT_SCK_SPEED;
+    io_config.trans_queue_depth = 10;
+    io_config.user_ctx = NULL;
+    io_config.lcd_cmd_bits = 8;
+    io_config.lcd_param_bits = 8;
 
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BOARD_DISP_HOST, &io_config, &io_handle));
 
-    esp_lcd_panel_dev_config_t panel_config = {
-        .reset_gpio_num = BOARD_DISP_RST,
-        .color_space = ESP_LCD_COLOR_SPACE_RGB,
-        .bits_per_pixel = 16,
-    };
+    /*
+        esp_lcd_panel_dev_config_t panel_config = {
+            .reset_gpio_num = BOARD_DISP_RST,
+            .color_space = ESP_LCD_COLOR_SPACE_RGB,
+            .bits_per_pixel = 16,
+            .flags.reset_active_high = 0,
+            .vendor_config = NULL
+        };
+    */
+    esp_lcd_panel_dev_config_t panel_config;
+    panel_config.reset_gpio_num = BOARD_DISP_RST;
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
+    panel_config.color_space = ESP_LCD_COLOR_SPACE_RGB;
+#else
+    panel_config.color_space = LCD_RGB_ELEMENT_ORDER_RGB;
+#endif
+    panel_config.bits_per_pixel = 16;
+    panel_config.flags.reset_active_high = 0;
+    panel_config.vendor_config = NULL;
 
     log_i( "Install JD9613 panel driver");
     ESP_ERROR_CHECK(esp_lcd_new_panel_jd9613(io_handle, &panel_config, &panel_handle));
