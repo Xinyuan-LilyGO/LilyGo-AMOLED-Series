@@ -20,6 +20,8 @@
 * */
 #define LILYGO_TDISPLAY_AMOLED_SERIES
 
+#include "esp_arduino_version.h"
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
 #if defined(LILYGO_TWRITSTBAND_S3)
 #include <LilyGo_Wristband.h> //To use LilyGo Wristband S3, please include <LilyGo_Wristband.h>
 #elif defined(LILYGO_TDISPLAY_AMOLED_SERIES)
@@ -265,3 +267,20 @@ unsigned int rainbow(uint8_t value)
 
     return red << 11 | green << 6 | blue;
 }
+
+#else
+
+#include <Arduino.h>
+
+void setup()
+{
+    Serial.begin(115200);
+}
+
+void loop()
+{
+    Serial.println("The current arduino version of TFT_eSPI does not support arduino 3.0, please change the version to below 3.0");
+    delay(1000);
+}
+
+#endif
