@@ -419,7 +419,12 @@ public:
             log_e("Mistake ! The steps is must %u mA", POWERS_SY6970_PRE_CHG_CUR_STEP);
             return false;
         }
-        XPOWERS_CHECK_RANGE(milliampere, POWERS_PRE_CHG_CURRENT_MIN, POWERS_PRE_CHG_CURRENT_MAX, false);
+        if (milliampere < POWERS_PRE_CHG_CURRENT_MIN) {
+            milliampere = POWERS_PRE_CHG_CURRENT_MIN;
+        }
+        if (milliampere > POWERS_PRE_CHG_CURRENT_MAX) {
+            milliampere = POWERS_PRE_CHG_CURRENT_MAX;
+        }
         int val = readRegister(POWERS_SY6970_REG_05H);
         val &= 0x0F;
         milliampere = ((milliampere - POWERS_SY6970_PRE_CHG_CUR_BASE) / POWERS_SY6970_PRE_CHG_CUR_STEP);
@@ -449,7 +454,10 @@ public:
             log_e("Mistake ! The steps is must %u mA", POWERS_SY6970_FAST_CHG_CUR_STEP);
             return false;
         }
-        XPOWERS_CHECK_RANGE(milliampere, POWERS_FAST_CHG_CURRENT_MIN, POWERS_FAST_CHG_CURRENT_MAX, false);
+        if (milliampere > POWERS_FAST_CHG_CURRENT_MAX) {
+            milliampere = POWERS_FAST_CHG_CURRENT_MAX;
+        }
+
         int val = readRegister(POWERS_SY6970_REG_04H);
         val &= 0x80;
         val |= (milliampere / POWERS_SY6970_FAST_CHG_CUR_STEP);
@@ -473,7 +481,12 @@ public:
             log_e("Mistake ! The steps is must %u mV", POWERS_SY6970_CHG_VOL_STEP);
             return false;
         }
-        XPOWERS_CHECK_RANGE(millivolt, POWERS_FAST_CHG_VOL_MIN, POWERS_FAST_CHG_VOL_MAX, false);
+        if (millivolt < POWERS_FAST_CHG_VOL_MIN) {
+            millivolt = POWERS_FAST_CHG_VOL_MIN;
+        }
+        if (millivolt > POWERS_FAST_CHG_VOL_MAX) {
+            millivolt = POWERS_FAST_CHG_VOL_MAX;
+        }
         int val = readRegister(POWERS_SY6970_REG_06H);
         val &= 0x03;
         val |= (((millivolt - POWERS_SY6970_CHG_VOL_BASE) / POWERS_SY6970_CHG_VOL_STEP) << 2);
