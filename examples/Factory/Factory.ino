@@ -172,7 +172,11 @@ void buttonHandleEvent(AceButton *button,
             esp_sleep_enable_timer_wakeup(60 * 1000000ULL);  //60S
 
         } else {
+#if ESP_IDF_VERSION >=  ESP_IDF_VERSION_VAL(4,4,6)
+            esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ANY_LOW);
+#else
             esp_sleep_enable_ext1_wakeup(GPIO_SEL_0, ESP_EXT1_WAKEUP_ALL_LOW);
+#endif
         }
 
         Wire.end();
@@ -277,7 +281,6 @@ void setup()
     // Draw Factory GUI
     factoryGUI();
 
-    wifi_config_t current_conf = {0};
 
     WiFi.mode(WIFI_STA);
 
@@ -285,6 +288,7 @@ void setup()
 
     // Uncomment will use WIFI configured with SmartConfig
     /*
+    wifi_config_t current_conf;
     esp_wifi_get_config(WIFI_IF_STA, &current_conf);
     if (strlen((const char *)current_conf.sta.ssid) == 0) {
     */

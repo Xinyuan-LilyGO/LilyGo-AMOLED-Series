@@ -194,12 +194,6 @@ static void slider_event_cb(lv_event_t *e)
     amoled.setBrightness(level);
 }
 
-static lv_obj_t *meter;
-static void set_value(void *indic, int32_t v)
-{
-    lv_meter_set_indicator_end_value(meter, (lv_meter_indicator_t *)indic, v);
-}
-
 void createBrightnessUI(lv_obj_t *parent)
 {
     lv_obj_t *label;
@@ -250,7 +244,7 @@ void createBrightnessUI(lv_obj_t *parent)
     if (boards->sd) {
         label = lv_label_create(cont);
         if (SD.cardType() != CARD_NONE) {
-            lv_label_set_text_fmt(label, "SDCard: %u MBytes", SD.cardSize() / 1024 / 1024);
+            lv_label_set_text_fmt(label, "SDCard: %u MBytes", (uint32_t)(SD.cardSize() / 1024 / 1024));
         } else {
             lv_label_set_text(label, "SDCard: NULL");
         }
@@ -272,7 +266,7 @@ void createBrightnessUI(lv_obj_t *parent)
 
     /*Create a label below the slider*/
     lv_obj_t *slider_label = lv_label_create(slider);
-    lv_label_set_text_fmt(slider_label, "%u%%", map(b, 0, 255, 0, 100));
+    lv_label_set_text_fmt(slider_label, "%lu%%", map(b, 0, 255, 0, 100));
     lv_obj_set_style_text_color(slider_label, lv_color_white(), LV_PART_MAIN);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_CENTER, 0, 0);
@@ -544,7 +538,7 @@ void weather_event_cb(lv_event_t *e)
         lv_label_set_text_fmt(label, "Min/Max:%.1f/%.1f°C", api->temp_min, api->temp_max);
         break;
     case 2: //Humidity
-        lv_label_set_text_fmt(label, "Humidity:%.2f%", api->humidity);
+        lv_label_set_text_fmt(label, "Humidity:%.2f%%", api->humidity);
         break;
     case 3: //Pressure
         lv_label_set_text_fmt(label, "Pressure:%.1f Pa", api->pressure);
@@ -829,7 +823,6 @@ void createWiFiConfigUI(lv_obj_t *parent)
 
 void tileview_change_cb(lv_event_t *e)
 {
-    static uint16_t lastPageID = 0;
     lv_obj_t *tileview = lv_event_get_target(e);
     pageId = lv_obj_get_index(lv_tileview_get_tile_act(tileview));
     lv_event_code_t c = lv_event_get_code(e);
