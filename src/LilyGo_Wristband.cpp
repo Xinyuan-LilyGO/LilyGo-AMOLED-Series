@@ -373,9 +373,18 @@ bool LilyGo_Wristband::initBUS()
     buscfg.sclk_io_num = BOARD_DISP_SCK;
     buscfg.quadwp_io_num = BOARD_NONE_PIN;
     buscfg.quadhd_io_num = BOARD_NONE_PIN;
+    buscfg.data4_io_num = 0;
+    buscfg.data5_io_num = 0;
+    buscfg.data6_io_num = 0;
+    buscfg.data7_io_num = 0;
     buscfg.max_transfer_sz = JD9613_HEIGHT * 80 * sizeof(uint16_t);
     buscfg.flags = 0x00;
     buscfg.intr_flags = 0x00;
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+    io_config.isr_cpu_id = INTR_CPU_ID_AUTO;
+#endif
+
     ESP_ERROR_CHECK(spi_bus_initialize(BOARD_DISP_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     log_i( "Install panel IO");
@@ -520,3 +529,20 @@ int LilyGo_Wristband::getBatteryPercent()
     }
     return 100;
 }
+
+
+void LilyGo_Wristband::vibration(uint8_t duty, uint32_t delay_ms)
+{
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+    // Start up and vibrate suddenly
+    ledcWrite(BOARD_VIBRATION_PIN, duty);
+    delay(delay_ms);
+    ledcWrite(BOARD_VIBRATION_PIN, 0);
+#else
+    ledcWrite(0, duty);
+    delay(delay_ms);
+    ledcWrite(0, 0);
+#endif
+}
+
+

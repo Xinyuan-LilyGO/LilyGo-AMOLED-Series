@@ -82,6 +82,8 @@ public:
     uint16_t getBattVoltage();
     int getBatteryPercent();
 
+    void vibration(uint8_t duty = 50, uint32_t delay_ms = 30);
+
     void enableTouchWakeup(int threshold = 2000);
     void sleep();
     void wakeup();
