@@ -402,10 +402,19 @@ bool LilyGo_Wristband::initBUS()
     io_config.user_ctx = NULL;
     io_config.lcd_cmd_bits = 8;
     io_config.lcd_param_bits = 8;
-    io_config.flags.dc_as_cmd_phase = 0;
+
     io_config.flags.dc_low_on_data = 0;
     io_config.flags.octal_mode = 0;
     io_config.flags.lsb_first = 0;
+
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+    io_config.flags.quad_mode = 0;
+    io_config.flags.sio_mode = 0;
+    io_config.flags.cs_high_active = 0;
+#else
+    io_config.flags.dc_as_cmd_phase = 0;
+#endif
+
 
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BOARD_DISP_HOST, &io_config, &io_handle));
 
