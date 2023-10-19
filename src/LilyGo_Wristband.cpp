@@ -374,6 +374,8 @@ bool LilyGo_Wristband::initBUS()
     buscfg.quadwp_io_num = BOARD_NONE_PIN;
     buscfg.quadhd_io_num = BOARD_NONE_PIN;
     buscfg.max_transfer_sz = JD9613_HEIGHT * 80 * sizeof(uint16_t);
+    buscfg.flags = 0x00;
+    buscfg.intr_flags = 0x00;
     ESP_ERROR_CHECK(spi_bus_initialize(BOARD_DISP_HOST, &buscfg, SPI_DMA_CH_AUTO));
 
     log_i( "Install panel IO");
@@ -396,9 +398,14 @@ bool LilyGo_Wristband::initBUS()
     io_config.spi_mode = 0;
     io_config.pclk_hz = DEFAULT_SCK_SPEED;
     io_config.trans_queue_depth = 10;
+    io_config.on_color_trans_done = NULL;
     io_config.user_ctx = NULL;
     io_config.lcd_cmd_bits = 8;
     io_config.lcd_param_bits = 8;
+    io_config.flags.dc_as_cmd_phase = 0;
+    io_config.flags.dc_low_on_data = 0;
+    io_config.flags.octal_mode = 0;
+    io_config.flags.lsb_first = 0;
 
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BOARD_DISP_HOST, &io_config, &io_handle));
 
