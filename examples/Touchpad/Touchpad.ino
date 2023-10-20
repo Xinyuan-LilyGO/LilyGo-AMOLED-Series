@@ -54,7 +54,6 @@ void setup(void)
     amoled.setHomeButtonCallback([](void *ptr) {
         Serial.println("Home key pressed!");
         static uint32_t checkMs = 0;
-        static uint8_t lastBri = 0;
         if (millis() > checkMs) {
             lv_label_set_text(label, "Home Pressed");
             lv_obj_center(label);

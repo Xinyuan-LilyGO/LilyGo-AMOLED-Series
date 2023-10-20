@@ -381,8 +381,8 @@ bool LilyGo_Wristband::initBUS()
     buscfg.flags = 0x00;
     buscfg.intr_flags = 0x00;
 
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
-    io_config.isr_cpu_id = INTR_CPU_ID_AUTO;
+#if ESP_ARDUINO_VERSION >= ESP_ARDUINO_VERSION_VAL(3,0,0)
+    buscfg.isr_cpu_id = INTR_CPU_ID_AUTO;
 #endif
 
     ESP_ERROR_CHECK(spi_bus_initialize(BOARD_DISP_HOST, &buscfg, SPI_DMA_CH_AUTO));
