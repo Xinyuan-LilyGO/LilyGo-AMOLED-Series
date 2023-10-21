@@ -267,6 +267,8 @@ bool LilyGo_Wristband::begin()
     // Initialize touch button
     touchAttachInterrupt(BOARD_TOUCH_BUTTON, touchISR, threshold);
 
+    LilyGo_Button::init(BOARD_TOUCH_BUTTON);
+
     // Initialize vibration motor
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
     ledcAttach(BOARD_VIBRATION_PIN, 1000, 8);
@@ -304,6 +306,12 @@ bool LilyGo_Wristband::begin()
     }
 
     return true;
+}
+
+void LilyGo_Wristband::update()
+{
+    SensorBHI260AP::update();
+    LilyGo_Button::update();
 }
 
 void LilyGo_Wristband::setBrightness(uint8_t level)

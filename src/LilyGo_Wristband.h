@@ -15,6 +15,7 @@
 #include <SensorBHI260AP.hpp>
 #include <esp_lcd_types.h>
 #include "LilyGo_Display.h"
+#include "LilyGo_Button.h"
 
 #define BOARD_NONE_PIN      (-1)
 
@@ -49,13 +50,17 @@
 class LilyGo_Wristband :
     public LilyGo_Display,
     public SensorPCF85063,
-    public SensorBHI260AP
+    public SensorBHI260AP,
+    public LilyGo_Button
 {
 public:
     LilyGo_Wristband();
     ~LilyGo_Wristband();
 
     bool begin();
+
+    void update();
+
     void setTouchThreshold(uint32_t threshold);
     void detachTouch();
     bool getTouched();
