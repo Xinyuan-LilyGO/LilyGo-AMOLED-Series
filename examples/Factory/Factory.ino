@@ -81,7 +81,7 @@ using namespace ace_button;
 #define DAY_LIGHT_OFFSET_SEC  0
 #define GET_TIMEZONE_API      "https://ipapi.co/timezone/"
 #define COINMARKETCAP_HOST    "pro-api.coinmarketcap.com"
-
+#define DEFAULT_TIMEZONE      "CST-8"         //When the time zone cannot be obtained, the default time zone is used
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(BOARD_PIXELS_NUM, BOARD_PIXELS_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -232,8 +232,9 @@ void setup()
 
     // Automatically determine the access device
     rslt = amoled.begin();
-
-    Serial.print("Board Nmae:"); Serial.println(amoled.getName());
+    Serial.println("============================================");
+    Serial.print("    Board Nmae:LilyGo AMOLED "); Serial.println(amoled.getName());
+    Serial.println("============================================");
 
 
     if (!rslt) {
@@ -413,6 +414,7 @@ void datetimeSyncTask(void *ptr)
 
         if ( xSemaphoreTake( xWiFiLock, portMAX_DELAY ) == pdTRUE ) {
 
+            // When the time zone cannot be obtained, please check the validity of the certificate
             client.setCACert(rootCACertificate);
             if (https.begin(client, GET_TIMEZONE_API)) {
                 httpCode = https.GET();
@@ -424,32 +426,33 @@ void datetimeSyncTask(void *ptr)
                 } else {
                     Serial.printf("[HTTPS] GET... failed, error: %s\n",
                                   https.errorToString(httpCode).c_str());
+                    httpBody = "none";
                 }
                 https.end();
             }
 
             client.stop();
 
-            if (httpCode == HTTP_CODE_OK ) {
-                for (uint32_t i = 0; i < sizeof(zones); i++) {
-                    if (httpBody == "none") {
-                        httpBody = "CST-8";
-                        break;
-                    }
-                    if (httpBody == zones[i].name) {
-                        httpBody = zones[i].zones;
-                        break;
-                    }
+            for (uint32_t i = 0; i < sizeof(zones); i++) {
+                if (httpBody == "none") {
+                    Serial.println("Failed to obtain time zone, use default time zone");
+                    // When the time zone cannot be obtained, the default time zone is used
+                    httpBody = DEFAULT_TIMEZONE;
+                    break;
                 }
-                Serial.println("timezone : " + httpBody);
-                setenv("TZ", httpBody.c_str(), 1); // set time zone
-                tzset();
-                xSemaphoreGive( xWiFiLock );
-
-                vUpdateDateTimeTaskHandler = NULL;
-                // Just run once
-                vTaskDelete(NULL);
+                if (httpBody == zones[i].name) {
+                    httpBody = zones[i].zones;
+                    break;
+                }
             }
+            Serial.println("timezone : " + httpBody);
+            setenv("TZ", httpBody.c_str(), 1); // set time zone
+            tzset();
+            xSemaphoreGive( xWiFiLock );
+
+            vUpdateDateTimeTaskHandler = NULL;
+            // Just run once
+            vTaskDelete(NULL);
         }
     }
 }
