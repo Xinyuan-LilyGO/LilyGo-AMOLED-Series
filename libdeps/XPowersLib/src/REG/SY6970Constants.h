@@ -78,4 +78,10 @@
 #define POWERS_FAST_CHG_VOL_MIN                                 (3840)
 #define POWERS_FAST_CHG_VOL_MAX                                 (4608)
 
+#define POWERS_SY6970_SYS_VOL_STEPS         (100)
+#define POWERS_SY6970_SYS_VOFF_VOL_MIN      (3000)
+#define POWERS_SY6970_SYS_VOFF_VOL_MAX      (3700)
 
+#define POWERS_SY6970_IN_CURRENT_STEP                          (50)
+#define POWERS_SY6970_IN_CURRENT_MIN                            (100)
+#define POWERS_SY6970_IN_CURRENT_MAX                            (3250)

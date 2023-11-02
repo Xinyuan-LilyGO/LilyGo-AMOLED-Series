@@ -1,6 +1,6 @@
 {
   "name": "XPowersLib",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Arduino,CircuitPython,Micropython library for x-powers power management series",
   "keywords": "AXP192 AXP202 AXP2101 x-powers",
   "authors": [
@@ -94,7 +94,7 @@
     }
   ],
   "frameworks": ["arduino", "espidf"],
-  "platforms": "esp32",
+  "platforms": "esp32,ststm32",
   "headers": "XPowersLib.h",
   "license": "MIT"
 }

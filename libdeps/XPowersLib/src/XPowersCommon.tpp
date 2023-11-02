@@ -100,7 +100,7 @@ public:
         __sda = sda;
         __scl = scl;
         __wire = &w;
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32)
         __wire->end();
         __wire->setSDA(__sda);
         __wire->setSCL(__scl);
@@ -268,7 +268,7 @@ protected:
         if (__has_init) return thisChip().initImpl();
         __has_init = true;
         log_i("SDA:%d SCL:%d", __sda, __scl);
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32)
         __wire->end();
         __wire->setSDA(__sda);
         __wire->setSCL(__scl);

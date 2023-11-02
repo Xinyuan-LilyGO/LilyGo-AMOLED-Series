@@ -72,12 +72,35 @@ enum SY6970_WDT_Timeout {
     SY6970_WDT_TIMEROUT_160SEC,     //160 Second
 } ;
 
+enum ADCMeasure {
+    SY6970_ADC_ONE_SHORT,
+    SY6970_ADC_CONTINUOUS,
+};
+
+enum BoostFreq {
+    SY6970_BOOST_FREQ_1500KHZ,
+    SY6970_BOOST_FREQ_500KHZ,
+};
+
+enum RequestRange {
+    RANGE_0_9V,
+    RANGE_1_12V,
+};
+
+enum FastChargeTimer {
+    FAST_CHARGE_TIMER_5H,
+    FAST_CHARGE_TIMER_8H,
+    FAST_CHARGE_TIMER_12H,
+    FAST_CHARGE_TIMER_20H,
+};
+
 class PowersSY6970 :
     public XPowersCommon<PowersSY6970> //, public XPowersLibInterface
 {
     friend class XPowersCommon<PowersSY6970>;
 
 public:
+
 
 #if defined(ARDUINO)
     PowersSY6970(TwoWire &w, int sda = SDA, int scl = SCL, uint8_t addr = SY6970_SLAVE_ADDRESS)
@@ -153,7 +176,7 @@ public:
         return chargeStatus() != POWERS_SY_CHARGE_DONE;
     }
 
-    bool isBatteryConnect(void)
+    bool isBatteryConnect(void) __attribute__((error("Not implemented")))
     {
         //TODO:
         return false;
@@ -171,11 +194,13 @@ public:
 
     void disableCharge()
     {
+        __user_disable_charge = true;
         clrRegisterBit(POWERS_SY6970_REG_03H, 4);
     }
 
     void enableCharge()
     {
+        __user_disable_charge = false;
         setRegisterBit(POWERS_SY6970_REG_03H, 4);
     }
 
@@ -187,17 +212,91 @@ public:
     void disableOTG()
     {
         clrRegisterBit(POWERS_SY6970_REG_03H, 5);
+        /*
+        * After turning on the OTG function, the charging function will
+        * be automatically disabled. If the user does not disable the charging
+        * function, the charging function will be automatically enabled after
+        * turning off the OTG output.
+        * */
+        if (!__user_disable_charge) {
+            setRegisterBit(POWERS_SY6970_REG_03H, 4);
+        }
     }
 
-    void enableOTG()
+    bool enableOTG()
     {
-        setRegisterBit(POWERS_SY6970_REG_03H, 5);
+        if (isVbusIn())
+            return false;
+        return setRegisterBit(POWERS_SY6970_REG_03H, 5);
     }
-
 
     void feedWatchdog()
     {
         setRegisterBit(POWERS_SY6970_REG_03H, 6);
+    }
+
+    bool setSysPowerDownVoltage(uint16_t millivolt)
+    {
+        if (millivolt % POWERS_SY6970_SYS_VOL_STEPS) {
+            log_e("Mistake ! The steps is must %u mV", POWERS_SY6970_SYS_VOL_STEPS);
+            return false;
+        }
+        if (millivolt < POWERS_SY6970_SYS_VOFF_VOL_MIN) {
+            log_e("Mistake ! SYS minimum output voltage is  %umV", POWERS_SY6970_SYS_VOFF_VOL_MIN);
+            return false;
+        } else if (millivolt > POWERS_SY6970_SYS_VOFF_VOL_MAX) {
+            log_e("Mistake ! SYS maximum output voltage is  %umV", POWERS_SY6970_SYS_VOFF_VOL_MAX);
+            return false;
+        }
+        int val = readRegister(POWERS_SY6970_REG_03H);
+        if (val == -1)return false;
+        val &= 0xF1;
+        val |= (millivolt - POWERS_SY6970_SYS_VOFF_VOL_MIN) / POWERS_SY6970_SYS_VOL_STEPS;
+        val <<= 1;
+        return 0 ==  writeRegister(POWERS_SY6970_REG_03H, val);
+
+    }
+
+    uint16_t getSysPowerDownVoltage()
+    {
+        int val = readRegister(POWERS_SY6970_REG_03H);
+        if (val == -1)return 0;
+        val &= 0x0E;
+        val >>= 1;
+        return (val * POWERS_SY6970_SYS_VOL_STEPS) + POWERS_SY6970_SYS_VOFF_VOL_MIN;
+    }
+
+    // Charging Termination Enable
+    void enableChargingTermination()
+    {
+        setRegisterBit(POWERS_SY6970_REG_07H, 7);
+    }
+
+    // Charging Termination Enable
+    void disableChargingTermination()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_07H, 7);
+    }
+
+    // Charging Termination Enable
+    bool isEnableChargingTermination()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_07H, 7);
+    }
+
+    void disableStatLed()
+    {
+        setRegisterBit(POWERS_SY6970_REG_07H, 6);
+    }
+
+    void enableStatLed()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_07H, 6);
+    }
+
+    bool isEnableStatLed()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_07H, 6) == false;
     }
 
     void disableWatchdog()
@@ -227,35 +326,66 @@ public:
     }
 
 
-    bool isEnableBattery()
+    void disableChargingSafetyTimer()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_07H, 3);
+    }
+
+    void enableChargingSafetyTimer()
+    {
+        setRegisterBit(POWERS_SY6970_REG_07H, 3);
+    }
+
+    bool isEnableChargingSafetyTimer()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_07H, 3);
+    }
+
+    void setFastChargeTimer(FastChargeTimer timer)
+    {
+        int val;
+        switch (timer) {
+        case FAST_CHARGE_TIMER_5H:
+        case FAST_CHARGE_TIMER_8H:
+        case FAST_CHARGE_TIMER_12H:
+        case FAST_CHARGE_TIMER_20H:
+            val = readRegister(POWERS_SY6970_REG_07H);
+            if (val == -1)
+                return;
+            val &= 0xF1;
+            val |= (timer << 1);
+            writeRegister(POWERS_SY6970_REG_07H, val);
+            break;
+        default:
+            break;
+        }
+    }
+
+    FastChargeTimer getFastChargeTimer()
+    {
+        int  val = readRegister(POWERS_SY6970_REG_07H);
+        return static_cast<FastChargeTimer>((val & 0x0E) >> 1);
+    }
+
+    // Return  Battery Load status
+    bool isEnableBatLoad()
     {
         return getRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
 
-    void disableBattery()
+    // Battery Load (10mA) Disable
+    void disableBatLoad()
     {
         clrRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
 
-    void enableBattery()
+    // Battery Load (10mA) Enable
+    void enableBatLoad()
     {
         setRegisterBit(POWERS_SY6970_REG_03H, 7);
     }
 
-    bool isEnableStatLed()
-    {
-        return getRegisterBit(POWERS_SY6970_REG_07H, 6) == false;
-    }
 
-    void disableStatLed()
-    {
-        setRegisterBit(POWERS_SY6970_REG_07H, 6);
-    }
-
-    void enableStatLed()
-    {
-        clrRegisterBit(POWERS_SY6970_REG_07H, 6);
-    }
 
 
     PowersSY6970BusStatus getBusStatus()
@@ -371,23 +501,188 @@ public:
         return (val & 0x7) == 0;
     }
 
-    bool enableADCMeasure()
+    bool enableADCMeasure(ADCMeasure mode = SY6970_ADC_CONTINUOUS)
     {
         int val = readRegister(POWERS_SY6970_REG_02H);
+        switch (mode) {
+        case SY6970_ADC_CONTINUOUS:
+            val |= _BV(6);
+            break;
+        case SY6970_ADC_ONE_SHORT:
+        default:
+            break;
+        }
         val |= _BV(7);
-        val |= _BV(6);
-        return writeRegister(POWERS_SY6970_REG_02H, val);
+        return writeRegister(POWERS_SY6970_REG_02H, val) != -1;
     }
 
     bool disableADCMeasure()
     {
         int val = readRegister(POWERS_SY6970_REG_02H);
+        if (val == -1) {
+            return false;
+        }
         val &= (~_BV(7));
-        val &= (~_BV(6));
-        return writeRegister(POWERS_SY6970_REG_02H, val);
+        return writeRegister(POWERS_SY6970_REG_02H, val) != 1;
     }
 
+    bool setBoostFreq(BoostFreq freq)
+    {
+        switch (freq) {
+        case SY6970_BOOST_FREQ_500KHZ:
+            return setRegisterBit(POWERS_SY6970_REG_02H, 5);
+        case SY6970_BOOST_FREQ_1500KHZ:
+            return clrRegisterBit(POWERS_SY6970_REG_02H, 5);
+        default:
+            break;
+        }
+        return false;
+    }
 
+    BoostFreq getBoostFreq()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_02H, 5) ? SY6970_BOOST_FREQ_500KHZ : SY6970_BOOST_FREQ_1500KHZ;
+    }
+
+    void enableInputCurrentLimit()
+    {
+        setRegisterBit(POWERS_SY6970_REG_02H, 1);
+    }
+
+    void disableInputCurrentLimit()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_02H, 1);
+    }
+
+    void enableHVDCP()
+    {
+        setRegisterBit(POWERS_SY6970_REG_02H, 3);
+    }
+
+    void disableHVDCP()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_02H, 2);
+    }
+
+    bool isEnableHVDCP()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_02H, 3);
+    }
+
+    void setHighVoltageRequestedRange(RequestRange range)
+    {
+        switch (range) {
+        case RANGE_0_9V:
+            clrRegisterBit(POWERS_SY6970_REG_02H, 2);
+            break;
+        case RANGE_1_12V:
+            setRegisterBit(POWERS_SY6970_REG_02H, 2);
+            break;
+        default:
+            break;
+        }
+    }
+
+    RequestRange getHighVoltageRequestedRange()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_02H, 2) ? RANGE_1_12V : RANGE_0_9V;
+    }
+
+    // Enable Force DP/DM detection
+    void enableDetectionDPDM()
+    {
+        setRegisterBit(POWERS_SY6970_REG_02H, 1);
+    }
+
+    // Disable Force DP/DM detection
+    void disableDetectionDPDM()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_02H, 1);
+    }
+
+    // Get Force DP/DM detection
+    bool isEnableDetectionDPDM()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_02H, 1);
+    }
+
+    // Enable DPDM detection when BUS is plugged-in.
+    void enableAutoDetectionDPDM()
+    {
+        setRegisterBit(POWERS_SY6970_REG_02H, 0);
+    }
+
+    // Disable DPDM detection when BUS is plugged-in.
+    void disableAutoDetectionDPDM()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_02H, 0);
+    }
+
+    // Get DPDM detection when BUS is plugged-in.
+    bool isEnableAutoDetectionDPDM()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_02H, 0);
+    }
+
+    bool setInputCurrentLimit(uint16_t milliampere)
+    {
+        if (milliampere % POWERS_SY6970_IN_CURRENT_STEP) {
+            log_e("Mistake ! The steps is must %u mA", POWERS_SY6970_IN_CURRENT_STEP);
+            return false;
+        }
+        if (milliampere < POWERS_SY6970_IN_CURRENT_MIN) {
+            milliampere = POWERS_SY6970_IN_CURRENT_MIN;
+        }
+        if (milliampere > POWERS_SY6970_IN_CURRENT_MAX) {
+            milliampere = POWERS_SY6970_IN_CURRENT_MAX;
+        }
+        int val = readRegister(POWERS_SY6970_REG_00H);
+        if (val == -1)
+            return false;
+        val &= 0xC0;
+        milliampere = ((milliampere - POWERS_SY6970_IN_CURRENT_MIN) / POWERS_SY6970_IN_CURRENT_STEP);
+        val |=  milliampere;
+        return writeRegister(POWERS_SY6970_REG_00H, val) != -1;
+    }
+
+    uint32_t getInputCurrentLimit()
+    {
+        int val = readRegister(POWERS_SY6970_REG_00H);
+        if (val == -1)
+            return false;
+        val &= 0x3F;
+        return (val * POWERS_SY6970_IN_CURRENT_STEP) + POWERS_SY6970_IN_CURRENT_MIN;
+    }
+
+    void enableHIZ()
+    {
+        setRegisterBit(POWERS_SY6970_REG_00H, 7);
+    }
+
+    void disableHIZ()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_00H, 7);
+    }
+
+    bool isHIZ()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_00H, 7);
+    }
+
+    void enableCurrentLimitPin()
+    {
+        setRegisterBit(POWERS_SY6970_REG_00H, 6);
+    }
+
+    void disableCurrentLimitPin()
+    {
+        clrRegisterBit(POWERS_SY6970_REG_00H, 6);
+    }
+
+    bool isEnableCurrentLimitPin()
+    {
+        return getRegisterBit(POWERS_SY6970_REG_00H, 6);
+    }
 
     uint16_t getVbusVoltage()
     {
@@ -493,9 +788,11 @@ public:
         return  writeRegister(POWERS_SY6970_REG_06H, val) != -1;
     }
 
+private:
+
     bool initImpl()
     {
-
+        __user_disable_charge = false;
         if (getChipID() != 0x00) {
             return false;
         }
@@ -506,8 +803,7 @@ public:
         return true;
     }
 
-private:
-
+    bool __user_disable_charge;
 };
 
 
