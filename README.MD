@@ -112,14 +112,30 @@ Please enter the upload mode manually.
 
 # 7️⃣ Resource
 
+| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                   |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| [T-Display-AMOLED-Lite][1] | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STEP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     |
+| [T-Display-S3 AMOLED][2]   | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STEP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) |
+| [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STEP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              |
+
+##### T-Display-AMOLED-Lite datasheet
 * [AMOLED Driver datasheet](./datasheet/SH8501B0%20DataSheet.pdf)
 * [Touchpad Driver datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CHSC5816%E8%A7%A6%E6%8E%A7%E8%8A%AF%E7%89%87%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8EV1-20221114.pdf)
 * [PMU datasheet](https://github.com/lewisxhe/XPowersLib/blob/master/datasheet/AXP2101_Datasheet_V1.0_en.pdf)
 * [Light Sensor datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CM32181A3OP.pdf)
-* [ESP32S3](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
-* [Board schematic](./schematic/T-Display_AMOLED-Lite.pdf)
-* [Board 3D step](./shell/PCB_3D.7z)
-* [Board Dimensions](./shell/PCB.DXF)
+* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+
+##### T-Display-S3 AMOLED datasheet
+
+* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+* [AMOLED Driver datasheet](./datasheet/RM67162%20DataSheet.pdf)
+* [CST816 datasheet]([./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf))
+
+##### T4-S3 datasheet
+
+* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+* [SY6970](./datasheet/SY6970%20Datasheet.pdf)
+* [CST226 datasheet]([./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf))
 
 # 8️⃣ Depends on required libraries
 
