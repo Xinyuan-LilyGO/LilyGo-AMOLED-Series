@@ -20,9 +20,12 @@
 | [T-Display-S3 AMOLED][2]   | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
 | [T4-S3][3]                 | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
 
-[1]: https://www.lilygo.cc/products/t-display-amoled
+[1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
-[3]: https://www.lilygo.cc
+[3]: https://www.lilygo.cc/products/t4-s3
+
+* [T-Display-S3 AMOLED][2] Supports both with and without touch panel
+
 
 ## 2️⃣Examples
 
