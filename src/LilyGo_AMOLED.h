@@ -179,7 +179,7 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
 
 
 // LILYGO 2.41 Inch AMOLED(RM690B0) S3R8
-// https://www.lilygo.cc
+// https://www.lilygo.cc/products/t4-s3
 static const DisplayConfigure_t RM690B0_AMOLED  = {
     14,//BOARD_DISP_DATA0,
     10,//BOARD_DISP_DATA1,
