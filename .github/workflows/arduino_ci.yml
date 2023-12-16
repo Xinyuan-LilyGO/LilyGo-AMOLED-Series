@@ -6,7 +6,8 @@ on:
     paths:
       - "examples/**"
       - "src/**"
-
+      - "libdeps/**"
+      - "platformio.ini"
 jobs:
   build:
     runs-on: ubuntu-latest
