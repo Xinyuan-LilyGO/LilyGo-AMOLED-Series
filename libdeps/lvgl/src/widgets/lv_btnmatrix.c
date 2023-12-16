@@ -440,12 +440,16 @@ static void lv_btnmatrix_event(const lv_obj_class_t * class_p, lv_event_t * e)
             lv_indev_get_point(param, &p);
             btn_pr = get_button_from_point(obj, &p);
             /*Handle the case where there is no button there*/
+            btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
             if(btn_pr != LV_BTNMATRIX_BTN_NONE) {
                 if(button_is_inactive(btnm->ctrl_bits[btn_pr]) == false &&
                    button_is_hidden(btnm->ctrl_bits[btn_pr]) == false) {
                     btnm->btn_id_sel = btn_pr;
                     invalidate_button_area(obj, btnm->btn_id_sel); /*Invalidate the new area*/
                 }
+            }
+            else {
+                btnm->btn_id_sel = LV_BTNMATRIX_BTN_NONE;
             }
         }
 
