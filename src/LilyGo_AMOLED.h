@@ -339,6 +339,7 @@ private:
     spi_device_handle_t spi;
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
+    bool _touchOnline;
 
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;

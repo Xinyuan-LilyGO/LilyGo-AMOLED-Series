@@ -427,11 +427,16 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
                 bool res = TouchDrvCSTXXX::init(Wire, boards->touch->sda, boards->touch->scl, CST816_SLAVE_ADDRESS);
                 if (!res) {
                     log_e("Failed to find CST816T - check your wiring!");
-                    return false;
+                    // return false;
+                    _touchOnline = false;
+                } else {
+                    TouchDrvCSTXXX::setMaxCoordinates(RM67162_HEIGHT, RM67162_WIDTH);
+                    _touchOnline = true;
                 }
-                TouchDrvCSTXXX::setMaxCoordinates(RM67162_HEIGHT, RM67162_WIDTH);
             }
         }
+    } else {
+        _touchOnline = false;
     }
     return true;
 }
@@ -459,9 +464,11 @@ bool LilyGo_AMOLED::beginAMOLED_241()
             bool res = TouchDrvCSTXXX::init(Wire, boards->touch->sda, boards->touch->scl, CST226SE_SLAVE_ADDRESS);
             if (!res) {
                 log_e("Failed to find CST226SE - check your wiring!");
-                return false;
+                // return false;
+            } else {
+                _touchOnline = true;
+                TouchDrvCSTXXX::setMaxCoordinates(RM690B0_HEIGHT, RM690B0_WIDTH);
             }
-            TouchDrvCSTXXX::setMaxCoordinates(RM690B0_HEIGHT, RM690B0_WIDTH);
         }
     }
 
@@ -505,31 +512,32 @@ bool LilyGo_AMOLED::beginAMOLED_147()
     }
 
     TouchDrvCHSC5816::setPins(boards->touch->rst, boards->touch->irq);
-    bool res = TouchDrvCHSC5816::begin(Wire, CHSC5816_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
-    if (!res) {
+    _touchOnline = TouchDrvCHSC5816::begin(Wire, CHSC5816_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
+    if (!_touchOnline) {
         log_e("Failed to find CHSC5816 - check your wiring!");
-        return false;
+        // return false;
+    } else {
+        TouchDrvCHSC5816::setMaxCoordinates(SH8501_HEIGHT, SH8501_WIDTH);
+        TouchDrvCHSC5816::setSwapXY(true);
+        TouchDrvCHSC5816::setMirrorXY(false, true);
     }
-    TouchDrvCHSC5816::setMaxCoordinates(SH8501_HEIGHT, SH8501_WIDTH);
-    TouchDrvCHSC5816::setSwapXY(true);
-    TouchDrvCHSC5816::setMirrorXY(false, true);
 
     // Share I2C Bus
-    res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
+    bool res = SensorCM32181::begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
     if (!res) {
         log_e("Failed to find CM32181 - check your wiring!");
-        return false;
+        // return false;
+    } else {
+        /*
+            Sensitivity mode selection
+                SAMPLING_X1
+                SAMPLING_X2
+                SAMPLING_X1_8
+                SAMPLING_X1_4
+        */
+        SensorCM32181::setSampling(SensorCM32181::SAMPLING_X2),
+                      powerOn();
     }
-    /*
-        Sensitivity mode selection
-            SAMPLING_X1
-            SAMPLING_X2
-            SAMPLING_X1_8
-            SAMPLING_X1_4
-    */
-    SensorCM32181::setSampling(SensorCM32181::SAMPLING_X2),
-                  powerOn();
-
 
     // Temperature detect
     beginCore();
@@ -802,7 +810,7 @@ void LilyGo_AMOLED::wakeup()
 
 bool LilyGo_AMOLED::hasTouch()
 {
-    if (boards) {
+    if (boards && _touchOnline) {
         if (boards->touch) {
             return true;
         }
