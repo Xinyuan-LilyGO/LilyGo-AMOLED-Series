@@ -135,6 +135,7 @@ Please enter the upload mode manually.
 
 * [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
 * [SY6970](./datasheet/SY6970%20Datasheet.pdf)
+* [AMOLED Driver datasheet](./datasheet/RM690B0%20DataSheet_V0.2.pdf)
 * [CST226 datasheet]([./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf))
 
 # 8️⃣ Depends on required libraries
