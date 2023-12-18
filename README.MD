@@ -141,7 +141,7 @@ Please enter the upload mode manually.
 
 * [XPowersLib](https://github.com/lewisxhe/XPowersLib)
 * [SensorLib](https://github.com/lewisxhe/SensorsLib)
-* [lvgl 8.3.9](https://github.com/lvgl/lvgl)
+* [lvgl 8.3.11](https://github.com/lvgl/lvgl)
 * [AceButton](https://github.com/bxparks/AceButton)
 * [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
 * [TinyGPSPlusl](https://github.com/mikalhart/TinyGPSPlusl)
