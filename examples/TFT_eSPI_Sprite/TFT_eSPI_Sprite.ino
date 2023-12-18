@@ -73,7 +73,11 @@ void setup()
 
 void loop()
 {
-    spr.pushImage(0, 0, WIDTH, HEIGHT, (uint16_t *)gImage_true_color);
+    size_t examples_image_size = sizeof(gImage_true_color) / sizeof(gImage_true_color[0]);
+    if (examples_image_size == (WIDTH * HEIGHT * sizeof(uint16_t))) {
+        spr.pushImage(0, 0, WIDTH, HEIGHT, (uint16_t *)gImage_true_color);
+    }
+    
     amoled.pushColors(0, 0, WIDTH, HEIGHT, (uint16_t *)spr.getPointer());
     delay(2000);
 
