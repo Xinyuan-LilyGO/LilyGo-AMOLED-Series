@@ -318,6 +318,7 @@ void LilyGo_Wristband::setBrightness(uint8_t level)
 {
     lcd_cmd_t t = {0x51, {level}, 1};
     writeCommand(t.addr, t.param, t.len);
+    _brightness = level;
 }
 
 uint8_t LilyGo_Wristband::getBrightness()
