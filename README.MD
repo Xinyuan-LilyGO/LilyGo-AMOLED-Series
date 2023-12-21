@@ -3,7 +3,7 @@
 
 [![PlatformIO CI](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml)
 [![Arduino CI](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/arduino_ci.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/arduino_ci.yml)
-
+[![arduino-library-badge](https://www.ardu-badge.com/badge/LilyGo-AMOLED-Series.svg?)](https://www.ardu-badge.com/LilyGo-AMOLED-Series)
 <!-- **English | [中文](README_CN.MD)** -->
 
 ## 1️⃣Support Product
@@ -24,7 +24,7 @@
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
 
-* [T-Display-S3 AMOLED][2] Supports both with and without touch panel
+* This code supports T-Display-S3 AMOLED  both touch and non-touch versions
 
 
 ## 2️⃣Examples
