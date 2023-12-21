@@ -94,11 +94,11 @@ static esp_err_t esp_lcd_new_panel_jd9613(const esp_lcd_panel_io_handle_t io, co
     jd9613->base.set_gap = NULL;
     jd9613->base.mirror = NULL;
     jd9613->base.swap_xy = NULL;
-#if ESP_IDF_VERSION <  ESP_IDF_VERSION_VAL(4,4,6)
-    jd9613->base.disp_off = NULL;
-#else
-    jd9613->base.disp_on_off = NULL;
-#endif
+// #if ESP_IDF_VERSION <  ESP_IDF_VERSION_VAL(4,4,6)
+//     jd9613->base.disp_off = NULL;
+// #else
+//     jd9613->base.disp_on_off = NULL;
+// #endif
     jd9613->rotation = 0;
 
     *ret_panel = &(jd9613->base);
