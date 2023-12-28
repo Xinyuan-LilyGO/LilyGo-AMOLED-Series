@@ -80,7 +80,7 @@ examples/
 7. Click `upload` , Wait for compilation and writing to complete
 8. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
-## 4️⃣ Arduino IDE Manual installation (not recommended)
+## 5️⃣ Arduino IDE Manual installation (not recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
@@ -95,7 +95,7 @@ examples/
 
 ## 📽️ [Arduino IDE Manual installation Video steps](https://youtu.be/WQIH7FD0yuU)
 
-# 5️⃣ ESP32 basic examples
+# 6️⃣ ESP32 basic examples
 
 * [BLE Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE)
 * [WiFi Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/WiFi)
@@ -103,7 +103,7 @@ examples/
 * [FFat Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/FFat)
 * For more examples of esp32 chip functions, please refer to [arduino-esp32-libraries](https://github.com/espressif/arduino-esp32/tree/master/libraries)
 
-# 6️⃣ FAQ
+# 7️⃣ FAQ
 
 1. The board uses USB as the JTAG upload port. When printing serial port information on USB_CDC_ON_BOOT configuration needs to be turned on.
 If the port cannot be found when uploading the program or the USB has been used for other functions, the port does not appear.
@@ -117,7 +117,7 @@ Please enter the upload mode manually.
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
 3. AMOLED does not support hardware screen rotation function
 
-# 7️⃣ Resource
+# 8️⃣ Resource
 
 | Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                   |
 | -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
