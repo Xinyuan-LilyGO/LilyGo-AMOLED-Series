@@ -69,9 +69,18 @@ examples/
 11. Click (plug symbol) to monitor serial output
 12. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
-## 4️⃣ Arduino IDE Quick Start
+## 4️⃣ Install from Arduino Library Manager (recommended)
 
-* It is recommended to use platformio without cumbersome steps
+1. Install [Arduino IDE](https://www.arduino.cc/en/software)
+2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
+3. `Sketch` -> `Inclued Library` -> `Manage Libraries`
+4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
+5. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
+6. Select `Port`
+7. Click `upload` , Wait for compilation and writing to complete
+8. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
+
+## 4️⃣ Arduino IDE Manual installation (not recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
@@ -84,9 +93,7 @@ examples/
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
-## 📽️ [Arduino IDE Video steps](https://youtu.be/WQIH7FD0yuU)
-
-
+## 📽️ [Arduino IDE Manual installation Video steps](https://youtu.be/WQIH7FD0yuU)
 
 # 5️⃣ ESP32 basic examples
 
