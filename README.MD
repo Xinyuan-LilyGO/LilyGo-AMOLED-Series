@@ -33,10 +33,12 @@
 examples/
 ├── Factory                # Factory example
 ├── LumenMeter             # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── CameraShield           # Extern camera shield example, only supports 1.91 inches
 ├── PMU_ADC                # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt          # PMU interrupt example , only support 1.47-inch AMOLED
 ├── QWIIC_GPS_Shield       # Extern GPS Shield example,use Serial communication
 ├── QWIIC_HP303BSensor     # Extern Temperature Pressure Sensor example,use Wire communication
+├── QWIIC_MAX3010X         # External heart rate module,use Wire communication
 ├── TFT_eSPI_Sprite        # Use TFT_eSPI Sprite example
 ├── Touchpad               # Touchpad example
 └── lvgl                   # LVGL examples
