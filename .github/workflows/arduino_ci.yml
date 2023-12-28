@@ -19,6 +19,7 @@ jobs:
             examples/Factory/Factory.ino,
             examples/LumenMeter/LumenMeter.ino,
             examples/PMU_ADC/PMU_ADC.ino,
+            examples/CameraShield/CameraShield.ino,
             examples/PMU_Interrupt/PMU_Interrupt.ino,
             examples/QWIIC_GPS_Shield/QWIIC_GPS_Shield.ino,
             examples/QWIIC_HP303BSensor/QWIIC_HP303BSensor.ino,

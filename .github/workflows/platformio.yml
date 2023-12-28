@@ -19,6 +19,7 @@ jobs:
             examples/LumenMeter,
             examples/PMU_ADC,
             examples/PMU_Interrupt,
+            examples/CameraShield,
             examples/QWIIC_GPS_Shield,
             examples/QWIIC_HP303BSensor,
             examples/QWIIC_MAX3010X,
