@@ -76,9 +76,11 @@ examples/
 3. `Sketch` -> `Inclued Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
-6. Select `Port`
-7. Click `upload` , Wait for compilation and writing to complete
-8. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
+6. `Tools` , Look at the picture to choose
+<img src="./images/ArduinoIDE.jpg" width = "300" align=center />
+7. Select `Port`
+8. Click `upload` , Wait for compilation and writing to complete
+9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
 ## 5️⃣ Arduino IDE Manual installation (not recommended)
 
@@ -87,7 +89,7 @@ examples/
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
-   ![setting](images/ArduinoIDE.jpg)
+<img src="./images/ArduinoIDE.jpg" width = "300" align=center />
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
