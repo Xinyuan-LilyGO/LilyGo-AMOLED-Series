@@ -9,6 +9,7 @@ on:
       - "src/**"
       - "libdeps/**"
       - "platformio.ini"
+      - ".github/workflows/platformio.yml"
 jobs:
   build:
     runs-on: ubuntu-latest
