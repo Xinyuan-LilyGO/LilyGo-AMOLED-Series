@@ -73,13 +73,13 @@ void setup()
 
 void loop()
 {
+    // This is a picture for 1.47 inch screen size, other sizes will not fit
     size_t examples_image_size = sizeof(gImage_true_color) / sizeof(gImage_true_color[0]);
     if (examples_image_size == (WIDTH * HEIGHT * sizeof(uint16_t))) {
         spr.pushImage(0, 0, WIDTH, HEIGHT, (uint16_t *)gImage_true_color);
+        amoled.pushColors(0, 0, WIDTH, HEIGHT, (uint16_t *)spr.getPointer());
+        delay(2000);
     }
-    
-    amoled.pushColors(0, 0, WIDTH, HEIGHT, (uint16_t *)spr.getPointer());
-    delay(2000);
 
     spr.fillSprite(TFT_BLACK);
 

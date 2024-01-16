@@ -26,8 +26,15 @@ extern const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGHT];
 
 #define RM67162_INIT_SEQUENCE_LENGHT             6
 extern const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT];
-#define RM67162_WIDTH                            240
-#define RM67162_HEIGHT                           536
+#define RM67162_WIDTH                           240
+#define RM67162_HEIGHT                          536
+#define RM67162_MADCTL_MY                       0x80
+#define RM67162_MADCTL_MX                       0x40
+#define RM67162_MADCTL_MV                       0x20
+#define RM67162_MADCTL_ML                       0x10
+#define RM67162_MADCTL_RGB                      0x00
+#define RM67162_MADCTL_MH                       0x04
+#define RM67162_MADCTL_BGR                      0x08
 
 #define RM690B0_INIT_SEQUENCE_LENGHT             13
 extern const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT];

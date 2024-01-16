@@ -326,7 +326,7 @@ uint8_t LilyGo_Wristband::getBrightness()
     return _brightness;
 }
 
-void LilyGo_Wristband::setRotation(DispRotation rotation)
+void LilyGo_Wristband::setRotation(uint8_t rotation)
 {
     assert(panel_handle);
     jd9613_panel_t *jd9613 = __containerof(panel_handle, jd9613_panel_t, base);
@@ -334,11 +334,11 @@ void LilyGo_Wristband::setRotation(DispRotation rotation)
     _rotation = rotation;
 }
 
-DispRotation LilyGo_Wristband::getRotation()
+uint8_t LilyGo_Wristband::getRotation()
 {
     assert(panel_handle);
     jd9613_panel_t *jd9613 = __containerof(panel_handle, jd9613_panel_t, base);
-    return static_cast<DispRotation>(jd9613->rotation);
+    return (jd9613->rotation);
 }
 
 void LilyGo_Wristband::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t w, uint16_t h)

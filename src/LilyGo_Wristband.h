@@ -69,8 +69,8 @@ public:
     void setBrightness(uint8_t level);
     uint8_t getBrightness();
 
-    void setRotation(DispRotation rotation);
-    DispRotation getRotation();
+    void setRotation(uint8_t rotation);
+    uint8_t getRotation();
 
     // Direct writing without software rotation
     void setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);

@@ -294,7 +294,10 @@ public:
     void setBrightness(uint8_t level);
     uint8_t getBrightness();
 
-    void setRotation(uint8_t r) __attribute__((error("setRotation Method Not implemented")));
+    // void setRotation(uint8_t r) __attribute__((error("setRotation Method Not implemented")));
+    void setRotation(uint8_t rotation);
+    uint8_t getRotation();
+
     void setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
     void pushColors(uint16_t *data, uint32_t len);
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
@@ -340,6 +343,7 @@ private:
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
     bool _touchOnline;
+    uint16_t _width,_height;
 
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;

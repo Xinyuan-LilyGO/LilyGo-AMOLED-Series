@@ -72,12 +72,12 @@ const BoardsConfigure_t *LilyGo_AMOLED::getBoarsdConfigure()
 
 uint16_t  LilyGo_AMOLED::width()
 {
-    return boards->display.width;
+    return _width;
 }
 
 uint16_t  LilyGo_AMOLED::height()
 {
-    return boards->display.height;
+    return _height;
 }
 
 void inline LilyGo_AMOLED::setCS()
@@ -287,6 +287,9 @@ bool LilyGo_AMOLED::initBUS()
     log_i("Freq   > %d", boards->display.freq);
     log_i("Power  > %d", boards->PMICEnPins);
     log_i("==================");
+
+    _width = boards->display.width;
+    _height = boards->display.height;
 
     pinMode(boards->display.rst, OUTPUT);
     pinMode(boards->display.cs, OUTPUT);
@@ -818,4 +821,62 @@ bool LilyGo_AMOLED::hasTouch()
     return false;
 }
 
+void LilyGo_AMOLED::setRotation(uint8_t rotation)
+{
+    uint8_t data = 0x00;
+    rotation %= 4;
+    _rotation = rotation;
+    if (boards == &BOARD_AMOLED_191) {
+        switch (_rotation) {
+        case 1:  //✔
+            data = RM67162_MADCTL_RGB;
+            _height = boards->display.height;
+            _width = boards->display.width;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(true);
+                TouchDrvCSTXXX::setMirrorXY(true, false);
+            }
+            break;
+        case 2:
+            data = RM67162_MADCTL_MV | RM67162_MADCTL_MY | RM67162_MADCTL_RGB;
+            _height = boards->display.width;
+            _width = boards->display.height;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(false);
+                TouchDrvCSTXXX::setMirrorXY(true, true);
+            }
+            break;
+        case 3:
+            data = RM67162_MADCTL_MX | RM67162_MADCTL_MY | RM67162_MADCTL_RGB;
+            _height = boards->display.height;
+            _width = boards->display.width;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(true);
+                TouchDrvCSTXXX::setMirrorXY(false, true);
+            }
+            break;
+        default: // case 0: ✔
+            data = RM67162_MADCTL_MX | RM67162_MADCTL_MV | RM67162_MADCTL_RGB;
+            _height = boards->display.width;
+            _width = boards->display.height;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(false);
+                TouchDrvCSTXXX::setMirrorXY(false, false);
+            }
+            break;
+        }
+        writeCommand(0x3600, &data, 1);
+    } else {
+        Serial.println("The screen you are currently using does not support screen rotation!!!");
+    }
+}
+
+uint8_t LilyGo_AMOLED::getRotation()
+{
+    return (_rotation);
+}
 

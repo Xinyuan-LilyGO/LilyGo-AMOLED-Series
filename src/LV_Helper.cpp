@@ -14,13 +14,13 @@
 #error "Currently not supported 9.x"
 #endif
 
+static void lvgl_port_update_callback(lv_disp_drv_t *drv);
+static lv_disp_draw_buf_t draw_buf;
+static lv_disp_drv_t disp_drv;
+static lv_indev_drv_t  indev_drv;
 
 /* Display flushing */
-#if LV_VERSION_CHECK(9,0,0)
-static void disp_flush( lv_disp_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
-#else
 static void disp_flush( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
-#endif
 {
     uint32_t w = ( area->x2 - area->x1 + 1 );
     uint32_t h = ( area->y2 - area->y1 + 1 );
@@ -29,11 +29,7 @@ static void disp_flush( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color
 }
 
 /*Read the touchpad*/
-#if LV_VERSION_CHECK(9,0,0)
-static void touchpad_read( lv_indev_t *indev_driver, lv_indev_data_t *data )
-#else
 static void touchpad_read( lv_indev_drv_t *indev_driver, lv_indev_data_t *data )
-#endif
 {
     static int16_t x, y;
     uint8_t touched =   static_cast<LilyGo_Display *>(indev_driver->user_data)->getPoint(&x, &y, 1);
@@ -53,11 +49,7 @@ static lv_color_t *buf = NULL;
 #endif
 
 #if LV_USE_LOG
-#if LV_VERSION_CHECK(9,0,0)
-void lv_log_print_g_cb(lv_log_level_t level, const char *buf)
-#else
 void lv_log_print_g_cb(const char *buf)
-#endif
 {
     Serial.println(buf);
     Serial.flush();
@@ -79,29 +71,6 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
     buf = (lv_color_t *)ps_malloc(lv_buffer_size);
     assert(buf);
 
-#if LV_VERSION_CHECK(9,0,0)
-    lv_disp_t *disp =  lv_disp_create(board.width(), board.height());
-
-#ifdef BOARD_HAS_PSRAM
-    lv_disp_set_draw_buffers(disp, buf, buf1, board.width() * board.height(), LV_DISP_RENDER_MODE_PARTIAL);
-#else
-    lv_disp_set_draw_buffers(disp, buf, NULL, sizeof(buf), LV_DISP_RENDER_MODE_PARTIAL);
-#endif
-    lv_disp_set_res(disp, board.width(), board.height());
-    lv_disp_set_physical_res(disp, board.width(), board.height());
-    lv_disp_set_flush_cb(disp, disp_flush);
-
-    lv_indev_t *indev = lv_indev_create();
-    lv_indev_set_read_cb(indev, touchpad_read);
-    lv_indev_set_disp(indev, disp);
-    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
-#else
-
-
-    static lv_disp_draw_buf_t draw_buf;
-    static lv_disp_drv_t disp_drv;
-    static lv_indev_drv_t  indev_drv;
-
     lv_disp_draw_buf_init( &draw_buf, buf, NULL, lv_buffer_size);
 
     /*Initialize the display*/
@@ -109,7 +78,6 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
     /* display resolution */
     disp_drv.hor_res = board.height();
     disp_drv.ver_res = board.width();
-
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 1;
@@ -123,6 +91,4 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
         indev_drv.user_data = &board;
         lv_indev_drv_register( &indev_drv );
     }
-#endif
 }
-
