@@ -1,6 +1,7 @@
 name: Arduino_CI
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     paths:
@@ -26,6 +27,8 @@ jobs:
             examples/QWIIC_MAX3010X/QWIIC_MAX3010X.ino,
             examples/TFT_eSPI_Sprite/TFT_eSPI_Sprite.ino,
             examples/Touchpad/Touchpad.ino,
+            examples/LVGL_Rotation/LVGL_Rotation.ino,
+            examples/TFT_eSPI_Sprite_Rotation/TFT_eSPI_Sprite_Rotation.ino,
             examples/lvgl/event/event.ino,
             examples/lvgl/get_started/get_started.ino,
             examples/lvgl/layouts/flex/flex.ino,
