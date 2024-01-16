@@ -31,17 +31,19 @@
 
 ```txt
 examples/
-├── Factory                # Factory example
-├── LumenMeter             # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
-├── CameraShield           # Extern camera shield example, only supports 1.91 inches
-├── PMU_ADC                # PMU Voltage detection example , only support 1.47-inch AMOLED
-├── PMU_Interrupt          # PMU interrupt example , only support 1.47-inch AMOLED
-├── QWIIC_GPS_Shield       # Extern GPS Shield example,use Serial communication
-├── QWIIC_HP303BSensor     # Extern Temperature Pressure Sensor example,use Wire communication
-├── QWIIC_MAX3010X         # External heart rate module,use Wire communication
-├── TFT_eSPI_Sprite        # Use TFT_eSPI Sprite example
-├── Touchpad               # Touchpad example
-└── lvgl                   # LVGL examples
+├── Factory                     # Factory example
+├── LumenMeter                  # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── CameraShield                # Extern camera shield example, only supports 1.91 inches
+├── PMU_ADC                     # PMU Voltage detection example , only support 1.47-inch AMOLED
+├── PMU_Interrupt               # PMU interrupt example , only support 1.47-inch AMOLED
+├── QWIIC_GPS_Shield            # Extern GPS Shield example,use Serial communication
+├── QWIIC_HP303BSensor          # Extern Temperature Pressure Sensor example,use Wire communication
+├── QWIIC_MAX3010X              # External heart rate module,use Wire communication
+├── TFT_eSPI_Sprite             # Use TFT_eSPI Sprite example
+├── LVGL_Rotation               # Screen rotation, only available for 1.91, 2.41 inches
+├── TFT_eSPI_Sprite_Rotation    # Screen rotation, only available for 1.91, 2.41 inches
+├── Touchpad                    # Touchpad example
+└── lvgl                        # LVGL examples
     ├── event
     ├── get_started
     ├── layouts
@@ -121,7 +123,7 @@ Please enter the upload mode manually.
    5. Upload sketch
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
-3. AMOLED does not support hardware screen rotation function
+3. **1.47 inches AMOLED(T-Display-AMOLED-Lite)** does not support hardware screen rotation function
 
 # 8️⃣ Resource
 
@@ -132,6 +134,7 @@ Please enter the upload mode manually.
 | [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              |
 
 ##### T-Display-AMOLED-Lite datasheet
+
 * [AMOLED Driver datasheet](./datasheet/SH8501B0%20DataSheet.pdf)
 * [Touchpad Driver datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CHSC5816%E8%A7%A6%E6%8E%A7%E8%8A%AF%E7%89%87%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8EV1-20221114.pdf)
 * [PMU datasheet](https://github.com/lewisxhe/XPowersLib/blob/master/datasheet/AXP2101_Datasheet_V1.0_en.pdf)
