@@ -5,9 +5,8 @@
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
  * @date      2023-06-14
  * @note      Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use tft.xxxx function
- * @note      Screen rotation only supports 1.91-inch touch and non-touch versions
- * @note      Screen rotation only supports 1.91-inch touch and non-touch versions
- * @note      Screen rotation only supports 1.91-inch touch and non-touch versions
+ * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
+ * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  */
 
 #ifdef LILYGO_TWRITSTBAND_S3
@@ -43,7 +42,7 @@ void setup()
     // Begin LilyGo  1.91 Inch AMOLED board class
     //rslt =  amoled.beginAMOLED_191();
 
-    // 2.41 inches has not yet been adapted.
+    // Begin LilyGo  2.41 Inch AMOLED board class
     //rslt =  amoled.beginAMOLED_241();
 
     // Automatically determine the access device

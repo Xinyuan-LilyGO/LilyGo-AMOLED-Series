@@ -7,8 +7,7 @@
 build
 script
 platformio.ini.self
-*Test*
-*test
+Test
 Wrist*
 Butt*
 *loacl

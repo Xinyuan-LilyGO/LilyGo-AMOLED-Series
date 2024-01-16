@@ -433,7 +433,6 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
                     // return false;
                     _touchOnline = false;
                 } else {
-                    TouchDrvCSTXXX::setMaxCoordinates(RM67162_HEIGHT, RM67162_WIDTH);
                     _touchOnline = true;
                 }
             }
@@ -441,6 +440,9 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
     } else {
         _touchOnline = false;
     }
+
+    setRotation(0);
+
     return true;
 }
 
@@ -470,7 +472,6 @@ bool LilyGo_AMOLED::beginAMOLED_241()
                 // return false;
             } else {
                 _touchOnline = true;
-                TouchDrvCSTXXX::setMaxCoordinates(RM690B0_HEIGHT, RM690B0_WIDTH);
             }
         }
     }
@@ -485,6 +486,9 @@ bool LilyGo_AMOLED::beginAMOLED_241()
             log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
         }
     }
+
+    setRotation(0);
+
     return true;
 }
 
@@ -520,7 +524,7 @@ bool LilyGo_AMOLED::beginAMOLED_147()
         log_e("Failed to find CHSC5816 - check your wiring!");
         // return false;
     } else {
-        TouchDrvCHSC5816::setMaxCoordinates(SH8501_HEIGHT, SH8501_WIDTH);
+        TouchDrvCHSC5816::setMaxCoordinates(_width, _height);
         TouchDrvCHSC5816::setSwapXY(true);
         TouchDrvCHSC5816::setMirrorXY(false, true);
     }
@@ -650,7 +654,7 @@ void LilyGo_AMOLED::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t 
 
     if (boards->display.frameBufferSize) {
         assert(pBuffer);
-        uint16_t _x = this->width() - (y + hight);
+        uint16_t _x = this->height() - (y + hight);
         uint16_t _y = x;
         uint16_t _h = width;
         uint16_t _w = hight;
@@ -828,7 +832,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
     _rotation = rotation;
     if (boards == &BOARD_AMOLED_191) {
         switch (_rotation) {
-        case 1:  //✔
+        case 1:  
             data = RM67162_MADCTL_RGB;
             _height = boards->display.height;
             _width = boards->display.width;
@@ -858,7 +862,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
                 TouchDrvCSTXXX::setMirrorXY(false, true);
             }
             break;
-        default: // case 0: ✔
+        default: 
             data = RM67162_MADCTL_MX | RM67162_MADCTL_MV | RM67162_MADCTL_RGB;
             _height = boards->display.width;
             _width = boards->display.height;
@@ -866,6 +870,50 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
                 TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
                 TouchDrvCSTXXX::setSwapXY(false);
                 TouchDrvCSTXXX::setMirrorXY(false, false);
+            }
+            break;
+        }
+        writeCommand(0x3600, &data, 1);
+    } else if (boards == &BOARD_AMOLED_241) {
+        switch (_rotation) {
+        case 1: 
+            data = RM690B0_MADCTL_RGB;
+            _height = boards->display.width;
+            _width = boards->display.height;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(false);
+                TouchDrvCSTXXX::setMirrorXY(false, false);
+            }
+            break;
+        case 2:
+            data = RM690B0_MADCTL_MV | RM690B0_MADCTL_MY | RM690B0_MADCTL_RGB;
+            _height = boards->display.height;
+            _width = boards->display.width;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(true);
+                TouchDrvCSTXXX::setMirrorXY(true, false);
+            }
+            break;
+        case 3:
+            data = RM690B0_MADCTL_MX | RM690B0_MADCTL_MY | RM690B0_MADCTL_RGB;
+            _height = boards->display.width;
+            _width = boards->display.height;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(false);
+                TouchDrvCSTXXX::setMirrorXY(true, true);
+            }
+            break;
+        default: 
+            data = RM690B0_MADCTL_MX | RM690B0_MADCTL_MV | RM690B0_MADCTL_RGB;
+            _height = boards->display.height;
+            _width = boards->display.width;
+            if (_touchOnline) {
+                TouchDrvCSTXXX::setMaxCoordinates(_width, _height);
+                TouchDrvCSTXXX::setSwapXY(true);
+                TouchDrvCSTXXX::setMirrorXY(false, true);
             }
             break;
         }

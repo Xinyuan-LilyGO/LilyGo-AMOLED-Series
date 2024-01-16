@@ -71,13 +71,13 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
     buf = (lv_color_t *)ps_malloc(lv_buffer_size);
     assert(buf);
 
-    lv_disp_draw_buf_init( &draw_buf, buf, NULL, lv_buffer_size);
+    lv_disp_draw_buf_init( &draw_buf, buf, NULL, board.width() * board.height());
 
     /*Initialize the display*/
     lv_disp_drv_init( &disp_drv );
     /* display resolution */
-    disp_drv.hor_res = board.height();
-    disp_drv.ver_res = board.width();
+    disp_drv.hor_res = board.width();
+    disp_drv.ver_res = board.height();
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.full_refresh = 1;
