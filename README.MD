@@ -32,7 +32,8 @@
 ```txt
 examples/
 ├── Factory                     # Factory example
-├── LumenMeter                  # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── LumenMeter                  # Screen color test
+├── Lvgl_Images                 # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
 ├── CameraShield                # Extern camera shield example, only supports 1.91 inches
 ├── PMU_ADC                     # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt               # PMU interrupt example , only support 1.47-inch AMOLED

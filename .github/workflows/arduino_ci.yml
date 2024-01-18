@@ -19,6 +19,7 @@ jobs:
         examples:
           [
             examples/Factory/Factory.ino,
+            examples/Factory/Lvgl_Images.ino,
             examples/LumenMeter/LumenMeter.ino,
             examples/PMU_ADC/PMU_ADC.ino,
             examples/CameraShield/CameraShield.ino,
