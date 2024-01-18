@@ -22,7 +22,7 @@ static int16_t x, y;
 
 
 // Image resources need to define the screen size
-// #define USE_AMOLED_147    //1.47 inches 194x368
+#define USE_AMOLED_147    //1.47 inches 194x368
 // #define USE_AMOLED_241    //1.91 inches 450x600
 // #define USE_AMOLED_191    //2.41 inches 240x536
 
