@@ -125,6 +125,25 @@ Please enter the upload mode manually.
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
 3. **1.47 inches AMOLED(T-Display-AMOLED-Lite)** does not support hardware screen rotation function
+4. If you use external power supply instead of USBC, please turn off the CDC option. This is because the board will wait for USB access when it starts.
+   * For Arduino IDE users, it can be turned off in the options , Please note that turning off USB CDC will turn off Serial redirection to USBC. At this time, you will not see any Serial message output when opening the port from USBC, but output from GPIO43 and GPIO44.
+
+    ```c
+    Tools -> USB CDC On Boot -> Disable
+    ```
+
+   * For Platformio users, you can add the following compilation flags in the ini file
+
+    ```c
+    build_flags =
+        ; Enable UARDUINO_USB_CDC_ON_BOOT will start printing and wait for terminal access during startup
+        ; -DARDUINO_USB_CDC_ON_BOOT=1
+
+        ; Enable UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery
+        -UARDUINO_USB_CDC_ON_BOOT
+    ```
+
+
 
 # 8️⃣ Resource
 
