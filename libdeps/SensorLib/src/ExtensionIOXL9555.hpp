@@ -31,11 +31,14 @@
 
 #include "REG/XL9555Constants.h"
 #include "SensorCommon.tpp"
+#include "ExtensionSPI.tpp"
 
 class ExtensionIOXL9555 :
-    public SensorCommon<ExtensionIOXL9555>
+    public SensorCommon<ExtensionIOXL9555>,
+    public ExtensionSPI<ExtensionIOXL9555>
 {
     friend class SensorCommon<ExtensionIOXL9555>;
+    friend class ExtensionSPI<ExtensionIOXL9555>;
 public:
 
     enum {
@@ -43,7 +46,7 @@ public:
         PORT1,
     };
 
-    enum {
+    enum ExtensionGPIO {
         IO0,
         IO1,
         IO2,
@@ -91,18 +94,10 @@ public:
 #if defined(ARDUINO)
     bool init(PLATFORM_WIRE_TYPE &w, int sda = DEFAULT_SDA, int scl = DEFAULT_SCL, uint8_t addr = XL9555_SLAVE_ADDRESS0)
     {
-        __wire = &w;
-        __sda = sda;
-        __scl = scl;
-        __addr = addr;
-        return begin();
+        return SensorCommon::begin(w, addr, sda, scl);
     }
 #endif
 
-    bool init()
-    {
-        return begin();
-    }
 
     void deinit()
     {

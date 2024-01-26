@@ -27,8 +27,12 @@
  * @date      2023-09-07
  *
  */
-
+#ifdef ARDUINO
 #include <Arduino.h>
+#else
+#include <stdint.h>
+#endif /*defined(ARDUINO)*/
+
 #include <sys/time.h>
 
 #define RTC_DAYS_IN_JANUARY     (31u)
@@ -157,15 +161,17 @@ private:
 class RTC_Alarm
 {
 public:
-    RTC_Alarm(void): minute(0), hour(0), day(0), week(0) {}
+    RTC_Alarm(void): second(0), minute(0), hour(0), day(0), week(0) {}
     RTC_Alarm(
-        uint8_t minute,
         uint8_t hour,
+        uint8_t minute,
+        uint8_t second,
         uint8_t day,
         uint8_t week
-    ): minute(minute), hour(hour), day(day), week(week)
+    ): second(second), minute(minute), hour(hour), day(day), week(week)
     {
     }
+    uint8_t second;
     uint8_t minute;
     uint8_t hour;
     uint8_t day;

@@ -77,18 +77,10 @@ public:
 #if defined(ARDUINO)
     bool init(PLATFORM_WIRE_TYPE &w, int sda = DEFAULT_SDA, int scl = DEFAULT_SCL, uint8_t addr = PCF8563_SLAVE_ADDRESS)
     {
-        __wire = &w;
-        __sda = sda;
-        __scl = scl;
-        __addr = addr;
-        return begin();
+        return SensorCommon::begin(w, addr, sda, scl);
     }
 #endif
 
-    bool init()
-    {
-        return begin();
-    }
 
     void deinit()
     {
@@ -154,11 +146,12 @@ public:
     {
         uint8_t buffer[4];
         readRegister(PCF8563_ALRM_MIN_REG, buffer, 4);
-        buffer[0] = BCD2DEC(buffer[0] & 0x80);
-        buffer[1] = BCD2DEC(buffer[1] & 0x40);
-        buffer[2] = BCD2DEC(buffer[2] & 0x40);
-        buffer[3] = BCD2DEC(buffer[3] & 0x08);
-        return RTC_Alarm(buffer[0], buffer[1], buffer[2], buffer[3]);
+        buffer[0] = BCD2DEC(buffer[0] & 0x80); //minute
+        buffer[1] = BCD2DEC(buffer[1] & 0x40); //hour
+        buffer[2] = BCD2DEC(buffer[2] & 0x40); //day
+        buffer[3] = BCD2DEC(buffer[3] & 0x08); //weekday
+        // RTC_Alarm(uint8_t hour, uint8_t minute, uint8_t second, uint8_t day, uint8_t week)
+        return RTC_Alarm(buffer[1], buffer[0], 0, buffer[2], buffer[3]);
     }
 
     void enableAlarm()
@@ -183,12 +176,17 @@ public:
 
     void setAlarm(RTC_Alarm alarm)
     {
-        setAlarm(alarm.minute, alarm.hour, alarm.day, alarm.week);
+        setAlarm( alarm.hour, alarm.minute, alarm.day, alarm.week);
     }
 
     void setAlarm(uint8_t hour, uint8_t minute, uint8_t day, uint8_t week)
     {
         uint8_t buffer[4] = {0};
+
+        RTC_DateTime datetime =  getDateTime();
+
+        uint8_t daysInMonth =  getDaysInMonth(datetime.month, datetime.year);
+
         if (minute != PCF8563_NO_ALARM) {
             if (minute > 59) {
                 minute = 59;
@@ -209,7 +207,8 @@ public:
             buffer[1] = PCF8563_ALARM_ENABLE;
         }
         if (day != PCF8563_NO_ALARM) {
-            buffer[2] = DEC2BCD(constrain(day, 1, 31));
+            //TODO:Check  day in Month
+            buffer[2] = DEC2BCD(((day) < (1) ? (1) : ((day) > (daysInMonth) ? (daysInMonth) : (day))));
             buffer[2] &= ~PCF8563_ALARM_ENABLE;
         } else {
             buffer[2] = PCF8563_ALARM_ENABLE;

@@ -92,20 +92,36 @@ public:
     }
 
 #if defined(ARDUINO)
-    bool init(PLATFORM_WIRE_TYPE &w, int sda = DEFAULT_SDA, int scl = DEFAULT_SCL, uint8_t addr = FT6X36_SLAVE_ADDRESS)
+
+    bool begin(PLATFORM_WIRE_TYPE &w,
+               uint8_t addr = FT6X36_SLAVE_ADDRESS,
+               int sda = DEFAULT_SDA,
+               int scl = DEFAULT_SCL)
     {
-        __wire = &w;
-        __sda = sda;
-        __scl = scl;
-        __addr = addr;
-        return begin();
+        return SensorCommon::begin(w, addr, sda, scl);
     }
+
+#elif defined(ESP_PLATFORM) && !defined(ARDUINO)
+
+#if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
+    bool begin(i2c_master_bus_handle_t i2c_dev_bus_handle, uint8_t addr)
+    {
+        return SensorCommon::begin(i2c_dev_bus_handle, addr);
+    }
+#else
+    bool begin(i2c_port_t port_num, uint8_t addr, int sda, int scl)
+    {
+        return SensorCommon::begin(port_num, addr, sda, scl);
+    }
+#endif //ESP_IDF_VERSION
+
 #endif
 
-    bool init()
+    bool begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback)
     {
-        return begin();
+        return SensorCommon::begin(addr, readRegCallback, writeRegCallback);
     }
+
 
     void deinit()
     {
@@ -231,8 +247,8 @@ public:
         LOG_PORT.println("----------------------------------------------------------------------------");
         LOG_PORT.println("Touched Gesture EvenFlag    [0]PosX    [0]PosY  [1]PosX    [1]PosY");
         LOG_PORT.print(point); LOG_PORT.print("\t");
-        LOG_PORT.print(gestrue); LOG_PORT.print("\t");
-        LOG_PORT.print(eventFlag); LOG_PORT.print("\t");
+        // LOG_PORT.print(gestrue); LOG_PORT.print("\t");
+        // LOG_PORT.print(eventFlag); LOG_PORT.print("\t");
         LOG_PORT.print(posX); LOG_PORT.print("\t");
         LOG_PORT.print(posY); LOG_PORT.print("\t");
 #endif
@@ -264,7 +280,7 @@ public:
     bool isPressed()
     {
         if (__irq != SENSOR_PIN_NONE) {
-            return digitalRead(__irq) == LOW;
+            return this->getGpioLevel(__irq) == LOW;
         }
         return readRegister(FT6X36_REG_STATUS) & 0x0F;
     }
@@ -329,13 +345,24 @@ public:
     void reset()
     {
         if (__rst != SENSOR_PIN_NONE) {
-            digitalWrite(__rst, HIGH);
+
+            this->setGpioLevel(__rst, HIGH);
             delay(10);
-            digitalWrite(__rst, LOW);
+            this->setGpioLevel(__rst, LOW);
             delay(30);
-            digitalWrite(__rst, HIGH);
+            this->setGpioLevel(__rst, HIGH);
             delay(5);
         }
+    }
+
+
+    void  setGpioCallback(gpio_mode_fprt_t mode_cb,
+                          gpio_write_fprt_t write_cb,
+                          gpio_read_fprt_t read_cb)
+    {
+        SensorCommon::setGpioModeCallback(mode_cb);
+        SensorCommon::setGpioWriteCallback(write_cb);
+        SensorCommon::setGpioReadCallback(read_cb);
     }
 
 private:
@@ -367,12 +394,10 @@ private:
             return false;
         }
 
-        uint16_t version = getLibraryVersion();
-        log_i("Chip library version : 0x%x\n", version);
+        log_i("Chip library version : 0x%x\n", getLibraryVersion());
 
         // This register describes period of monitor status, it should not less than 30.
-        uint8_t val = readRegister(FT6X36_REG_PERIODMONITOR);
-        log_i("Chip period of monitor status : 0x%x\n", val);
+        log_i("Chip period of monitor status : 0x%x\n", readRegister(FT6X36_REG_PERIODMONITOR));
 
         // This register describes the period of active status, it should not less than 12
 

@@ -31,26 +31,50 @@
 #define CST2xx_REG_STATUS           (0x00)
 #define CST226SE_BUFFER_NUM         (28)
 
-TouchClassCST226::TouchClassCST226(PLATFORM_WIRE_TYPE &wire, int sda, int scl, uint8_t address)
+#if defined(ARDUINO)
+TouchClassCST226::TouchClassCST226()
 {
-    __wire = &wire;
-    __sda = sda;
-    __scl = scl;
-    __addr = address;
+
 }
 
-bool TouchClassCST226::init()
+bool TouchClassCST226::begin(PLATFORM_WIRE_TYPE &wire, uint8_t address, int sda, int scl)
 {
-    return begin();
+    return SensorCommon::begin(wire, address, sda, scl);
+}
+
+#elif defined(ESP_PLATFORM)
+
+#if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
+bool TouchClassCST226::begin(i2c_master_bus_handle_t i2c_dev_bus_handle, uint8_t addr)
+{
+    return SensorCommon::begin(i2c_dev_bus_handle, addr);
+}
+#else
+bool TouchClassCST226::begin(i2c_port_t port_num, uint8_t addr, int sda, int scl)
+{
+    return SensorCommon::begin(port_num, addr, sda, scl);
+}
+#endif //ESP_IDF_VERSION
+
+#endif //ARDUINO
+
+
+bool TouchClassCST226::begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback)
+{
+    return SensorCommon::begin(addr, readRegCallback, writeRegCallback);
 }
 
 void TouchClassCST226::reset()
 {
     if (__rst != SENSOR_PIN_NONE) {
-        digitalWrite(__rst, LOW);
-        delay(30);
-        digitalWrite(__rst, HIGH);
-        delay(50);
+        this->setGpioMode(__rst, OUTPUT);
+        this->setGpioLevel(__rst, LOW);
+        delay(100);
+        this->setGpioLevel(__rst, HIGH);
+        delay(100);
+    } else {
+        writeRegister(0xD1, 0x0E);
+        delay(20);
     }
 }
 
@@ -120,7 +144,7 @@ bool TouchClassCST226::isPressed()
 {
     static uint32_t lastPulse = 0;
     if (__irq != SENSOR_PIN_NONE) {
-        int val = digitalRead(__irq) == LOW;
+        int val = this->getGpioLevel(__irq) == LOW;
         if (val) {
             //Filter low levels with intervals greater than 1000ms
             val = (millis() - lastPulse > 1000) ?  false : true;
@@ -143,10 +167,10 @@ void TouchClassCST226::sleep()
     writeRegister(0xD1, 0x05);
 #ifdef ESP32
     if (__irq != SENSOR_PIN_NONE) {
-        pinMode(__irq, OPEN_DRAIN);
+        this->setGpioMode(__irq, OPEN_DRAIN);
     }
     if (__rst != SENSOR_PIN_NONE) {
-        pinMode(__rst, OPEN_DRAIN);
+        this->setGpioMode(__rst, OPEN_DRAIN);
     }
 #endif
 }
@@ -177,12 +201,24 @@ void TouchClassCST226::setHomeButtonCallback(home_button_callback_t cb, void *us
     __userData = user_data;
 }
 
+void TouchClassCST226::setGpioCallback(gpio_mode_fprt_t mode_cb,
+                                       gpio_write_fprt_t write_cb,
+                                       gpio_read_fprt_t read_cb)
+{
+    SensorCommon::setGpioModeCallback(mode_cb);
+    SensorCommon::setGpioWriteCallback(write_cb);
+    SensorCommon::setGpioReadCallback(read_cb);
+}
+
 bool TouchClassCST226::initImpl()
 {
-    setRegAddressLenght(2);
 
     if (__rst != SENSOR_PIN_NONE) {
-        pinMode(__rst, OUTPUT);
+        this->setGpioMode(__rst, OUTPUT);
+    }
+
+    if (__irq != SENSOR_PIN_NONE) {
+        this->setGpioMode(__irq, INPUT);
     }
 
     reset();
@@ -191,7 +227,8 @@ bool TouchClassCST226::initImpl()
     // Enter Command mode
     writeRegister(0xD1, 0x01);
     delay(10);
-    readRegister(0xD1FC, buffer, 4);
+    uint8_t write_buffer[2] = {0xD1, 0xFC};
+    writeThenRead(write_buffer, 2, buffer, 4);
     uint32_t checkcode = 0;
     checkcode = buffer[3];
     checkcode <<= 8;
@@ -201,14 +238,18 @@ bool TouchClassCST226::initImpl()
     checkcode <<= 8;
     checkcode |= buffer[0];
 
-    log_i("Chip checkcode:0x%x.\r\n", checkcode);
+    log_i("Chip checkcode:0x%lx.\r\n", checkcode);
 
-    readRegister(0xD1F8, buffer, 4);
+    write_buffer[0] = {0xD1};
+    write_buffer[1] = {0xF8};
+    writeThenRead(write_buffer, 2, buffer, 4);
     __resX = ( buffer[1] << 8) | buffer[0];
     __resY = ( buffer[3] << 8) | buffer[2];
     log_i("Chip resolution X:%u Y:%u\r\n", __resX, __resY);
 
-    readRegister(0xD204, buffer, 4);
+    write_buffer[0] = {0xD2};
+    write_buffer[1] = {0x04};
+    writeThenRead(write_buffer, 2, buffer, 4);
     uint32_t chipType = buffer[3];
     chipType <<= 8;
     chipType |= buffer[2];
@@ -217,12 +258,14 @@ bool TouchClassCST226::initImpl()
     uint32_t ProjectID = buffer[1];
     ProjectID <<= 8;
     ProjectID |= buffer[0];
-
-    log_i("Chip type :0x%X, ProjectID:0X%x\r\n",
+    log_i("Chip type :0x%lx, ProjectID:0X%lx\r\n",
           chipType, ProjectID);
 
 
-    readRegister(0xD208, buffer, 8);
+
+    write_buffer[0] = {0xD2};
+    write_buffer[1] = {0x08};
+    writeThenRead(write_buffer, 2, buffer, 8);
 
     uint32_t fwVersion = buffer[3];
     fwVersion <<= 8;
@@ -240,15 +283,15 @@ bool TouchClassCST226::initImpl()
     checksum <<= 8;
     checksum |= buffer[4];
 
-    log_i("Chip ic version:0x%X, checksum:0x%X",
+    log_i("Chip ic version:0x%lx, checksum:0x%lx\n",
           fwVersion, checksum);
 
     if (fwVersion == 0xA5A5A5A5) {
-        log_i("Chip ic don't have firmware. ");
+        log_i("Chip ic don't have firmware. \n");
         return false;
     }
     if ((checkcode & 0xffff0000) != 0xCACA0000) {
-        log_i("Firmware info read error .");
+        log_i("Firmware info read error .\n");
         return false;
     }
 
@@ -256,9 +299,6 @@ bool TouchClassCST226::initImpl()
 
     // Exit Command mode
     writeRegister(0xD1, 0x09);
-
-    setRegAddressLenght(1);
-
     return true;
 }
 

@@ -41,29 +41,49 @@
 #define CST816S_CHIP_ID             (0xB4)
 #define CST816T_CHIP_ID             (0xB5)
 #define CST716_CHIP_ID              (0x20)
+#define CST820_CHIP_ID              (0xB7)
+#define CST816D_CHIP_ID             (0xB6)
 
-
-TouchClassCST816::TouchClassCST816(PLATFORM_WIRE_TYPE &wire, int sda, int scl, uint8_t address):
+#if defined(ARDUINO)
+TouchClassCST816::TouchClassCST816():
     __center_btn_x(0),
     __center_btn_y(0)
 {
-    __wire = & wire;
-    __sda = sda;
-    __scl = scl;
-    __addr = address;
 }
 
-bool TouchClassCST816::init()
+bool TouchClassCST816::begin(PLATFORM_WIRE_TYPE &wire, uint8_t address, int sda, int scl)
 {
-    return begin();
+    return SensorCommon::begin(wire, address, sda, scl);
+}
+
+#elif defined(ESP_PLATFORM)
+
+#if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
+bool TouchClassCST816::begin(i2c_master_bus_handle_t i2c_dev_bus_handle, uint8_t addr)
+{
+    return SensorCommon::begin(i2c_dev_bus_handle, addr);
+}
+#else
+bool TouchClassCST816::begin(i2c_port_t port_num, uint8_t addr, int sda, int scl)
+{
+    return SensorCommon::begin(port_num, addr, sda, scl);
+}
+
+#endif //ESP_IDF_VERSION
+#endif //ARDUINO
+
+bool TouchClassCST816::begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback)
+{
+    return SensorCommon::begin(addr, readRegCallback, writeRegCallback);
 }
 
 void TouchClassCST816::reset()
 {
     if (__rst != SENSOR_PIN_NONE) {
-        digitalWrite(__rst, LOW);
+        this->setGpioMode(__rst, OUTPUT);
+        this->setGpioLevel(__rst, LOW);
         delay(30);
-        digitalWrite(__rst, HIGH);
+        this->setGpioLevel(__rst, HIGH);
         delay(50);
     }
 }
@@ -76,6 +96,11 @@ uint8_t TouchClassCST816::getPoint(int16_t *x_array, int16_t *y_array, uint8_t g
     }
 
     if (!buffer[2] || !x_array || !y_array || !get_point) {
+        return 0;
+    }
+
+    // Some CST816T will return all 0xFF after turning off automatic sleep.
+    if (buffer[2] == 0xFF) {
         return 0;
     }
 
@@ -130,7 +155,7 @@ bool TouchClassCST816::isPressed()
 {
     static uint32_t lastPulse = 0;
     if (__irq != SENSOR_PIN_NONE) {
-        int val = digitalRead(__irq) == LOW;
+        int val = this->getGpioLevel(__irq) == LOW;
         if (val) {
             //Filter low levels with intervals greater than 1000ms
             val = (millis() - lastPulse > 1000) ?  false : true;
@@ -152,6 +177,10 @@ const char *TouchClassCST816::getModelName()
         return "CST816T";
     case CST716_CHIP_ID:
         return "CST716";
+    case CST820_CHIP_ID:
+        return "CST820";
+    case CST816D_CHIP_ID:
+        return "CST816D";
     default:
         break;
     }
@@ -163,10 +192,10 @@ void TouchClassCST816::sleep()
     writeRegister(CST8xx_REG_SLEEP, 0x03);
 #ifdef ESP32
     if (__irq != SENSOR_PIN_NONE) {
-        pinMode(__irq, OPEN_DRAIN);
+        this->setGpioMode(__irq, OPEN_DRAIN);
     }
     if (__rst != SENSOR_PIN_NONE) {
-        pinMode(__rst, OPEN_DRAIN);
+        this->setGpioMode(__rst, OPEN_DRAIN);
     }
 #endif
 }
@@ -209,6 +238,8 @@ void TouchClassCST816::disableAutoSleep()
     switch (__chipID) {
     case CST816S_CHIP_ID:
     case CST816T_CHIP_ID:
+    case CST820_CHIP_ID:
+    case CST816D_CHIP_ID:
         reset();
         delay(50);
         writeRegister(CST8xx_REG_DIS_AUTOSLEEP, 0x01);
@@ -219,29 +250,64 @@ void TouchClassCST816::disableAutoSleep()
     }
 }
 
+void TouchClassCST816::enableAutoSleep()
+{
+    switch (__chipID) {
+    case CST816S_CHIP_ID:
+    case CST816T_CHIP_ID:
+    case CST820_CHIP_ID:
+    case CST816D_CHIP_ID:
+        reset();
+        delay(50);
+        writeRegister(CST8xx_REG_DIS_AUTOSLEEP, 0x00);
+        break;
+    case CST716_CHIP_ID:
+    default:
+        break;
+    }
+}
+
+void TouchClassCST816::setGpioCallback(gpio_mode_fprt_t mode_cb,
+                                       gpio_write_fprt_t write_cb,
+                                       gpio_read_fprt_t read_cb)
+{
+    SensorCommon::setGpioModeCallback(mode_cb);
+    SensorCommon::setGpioWriteCallback(write_cb);
+    SensorCommon::setGpioReadCallback(read_cb);
+}
+
 bool TouchClassCST816::initImpl()
 {
-    setRegAddressLenght(1);
 
     if (__rst != SENSOR_PIN_NONE) {
-        pinMode(__rst, OUTPUT);
+        this->setGpioMode(__rst, OUTPUT);
     }
 
     reset();
 
     int chip_id =   readRegister(CST8xx_REG_CHIP_ID);
-    log_i("Chip ID:0x%x", chip_id);
+    log_i("Chip ID:0x%x\n", chip_id);
 
     int version =   readRegister(CST8xx_REG_FW_VERSION);
-    log_i("Version :0x%x", version);
+    log_i("Version :0x%x\n", version);
 
-    //CST226SE : A7 = 0X20
+    // CST716  : 0x20
+    // CST816S : 0xB4
+    // CST816T : 0xB5
+    // CST816D : 0xB6
+    // CST226SE : A7 = 0X20
     if (chip_id != CST816S_CHIP_ID &&
             chip_id != CST816T_CHIP_ID  &&
+            chip_id != CST820_CHIP_ID &&
+            chip_id != CST816D_CHIP_ID &&
             (chip_id != CST716_CHIP_ID || version == 0)) {
         return false;
     }
+
     __chipID = chip_id;
+
+    log_i("Touch type:%s\n", getModelName());
+
     return true;
 }
 

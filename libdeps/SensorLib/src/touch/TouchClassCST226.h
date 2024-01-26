@@ -36,9 +36,22 @@ class TouchClassCST226 : public TouchDrvInterface,
     friend class SensorCommon<TouchClassCST226>;
 
 public:
-    TouchClassCST226(PLATFORM_WIRE_TYPE &wire, int sda, int scl, uint8_t address);
 
-    bool init();
+#if defined(ARDUINO)
+    TouchClassCST226();
+
+    bool begin(PLATFORM_WIRE_TYPE &wire, uint8_t address, int sda, int scl);
+
+#elif defined(ESP_PLATFORM)
+#if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
+    bool begin(i2c_master_bus_handle_t i2c_dev_bus_handle, uint8_t addr);
+#else
+    bool begin(i2c_port_t port_num, uint8_t addr, int sda, int scl);
+#endif //ESP_IDF_VERSION
+
+#endif
+
+    bool begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback);
 
     void reset();
 
@@ -60,11 +73,11 @@ public:
 
     void setHomeButtonCallback(home_button_callback_t cb, void *user_data);
 
+    void setGpioCallback(gpio_mode_fprt_t mode_cb,
+                         gpio_write_fprt_t write_cb,
+                         gpio_read_fprt_t read_cb);
 
 private:
-
-    TouchClassCST226() {};
-
     bool initImpl();
     int getReadMaskImpl();
 protected:
