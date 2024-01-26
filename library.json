@@ -34,32 +34,32 @@
     {
       "owner": "mikalhart",
       "name": "TinyGPSPlus",
-      "version": "^1.0.3"
+      "version": "1.0.3"
     },
     {
       "owner": "adafruit",
       "name": "Adafruit NeoPixel",
-      "version": "^1.11.0"
+      "version": "1.11.0"
     },
     {
       "owner": "bxparks",
       "name": "AceButton",
-      "version": "^1.10.1"
+      "version": "1.10.1"
     },
     {
       "owner": "lvgl",
       "name": "lvgl",
-      "version": "^8.3.9"
+      "version": "8.3.9"
     },
     {
       "owner": "lewisxhe",
       "name": "XPowersLib",
-      "version": "^0.1.8"
+      "version": "0.2.1"
     },
     {
       "owner": "lewisxhe",
       "name": "SensorLib",
-      "version": "^0.1.2"
+      "version": "0.1.6"
     }
   ],
   "examples": ["examples/*/*.ino"],
