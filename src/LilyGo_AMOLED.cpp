@@ -434,6 +434,7 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
                     _touchOnline = false;
                 } else {
                     _touchOnline = true;
+                    TouchDrvCSTXXX::setCenterButtonCoordinate(600, 120);  //AMOLED 1.91 inch
                 }
             }
         }
