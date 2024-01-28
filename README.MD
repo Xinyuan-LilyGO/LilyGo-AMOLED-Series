@@ -1,9 +1,10 @@
-<h1 align = "center">🌟LilyGO AMOLED Series🌟</h1> 
-
+<h1 align = "center">🌟LilyGO AMOLED Series🌟</h1>
 
 [![PlatformIO CI](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/platformio.yml)
 [![Arduino CI](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/arduino_ci.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/actions/workflows/arduino_ci.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/LilyGo-AMOLED-Series.svg?)](https://www.ardu-badge.com/LilyGo-AMOLED-Series)
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/xinyuan-lilygo/library/LilyGo-AMOLED-Series.svg)](https://registry.platformio.org/libraries/xinyuan-lilygo/LilyGo-AMOLED-Series)
+
 <!-- **English | [中文](README_CN.MD)** -->
 
 ## 1️⃣Support Product
@@ -24,8 +25,7 @@
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
 
-* This code supports T-Display-S3 AMOLED  both touch and non-touch versions
-
+- This code supports T-Display-S3 AMOLED both touch and non-touch versions
 
 ## 2️⃣Examples
 
@@ -77,12 +77,12 @@ examples/
 ## 4️⃣ Install from Arduino Library Manager (recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
+2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Inclued Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 6. `Tools` , Look at the picture to choose
-<img src="./images/ArduinoIDE.jpg" width = "300" align=center />
+   <img src="./images/ArduinoIDE.jpg" width = "300" align=center />
 
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
@@ -91,11 +91,11 @@ examples/
 ## 5️⃣ Arduino IDE Manual installation (not recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
+2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
-4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
-5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
-<img src="./images/ArduinoIDE.jpg" width = "300" align=center />
+4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
+5. Open ArduinoIDE ,`Tools` , Look at the picture to choose
+   <img src="./images/ArduinoIDE.jpg" width = "300" align=center />
 
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port`
@@ -106,80 +106,79 @@ examples/
 
 # 6️⃣ ESP32 basic examples
 
-* [BLE Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE)
-* [WiFi Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/WiFi)
-* [SPIFFS Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/SPIFFS)
-* [FFat Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/FFat)
-* For more examples of esp32 chip functions, please refer to [arduino-esp32-libraries](https://github.com/espressif/arduino-esp32/tree/master/libraries)
+- [BLE Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE)
+- [WiFi Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/WiFi)
+- [SPIFFS Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/SPIFFS)
+- [FFat Examples](https://github.com/espressif/arduino-esp32/tree/master/libraries/FFat)
+- For more examples of esp32 chip functions, please refer to [arduino-esp32-libraries](https://github.com/espressif/arduino-esp32/tree/master/libraries)
 
 # 7️⃣ FAQ
 
 1. The board uses USB as the JTAG upload port. When printing serial port information on USB_CDC_ON_BOOT configuration needs to be turned on.
-If the port cannot be found when uploading the program or the USB has been used for other functions, the port does not appear.
-Please enter the upload mode manually.
+   If the port cannot be found when uploading the program or the USB has been used for other functions, the port does not appear.
+   Please enter the upload mode manually.
+
    1. Connect the board via the USB cable
    2. Press and hold the BOOT button , While still pressing the BOOT button, press RST
    3. Release the RST
    4. Release the BOOT button
    5. Upload sketch
 
-2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
+2. If the above is invalid, burn the [binary file](./firmware/README.MD) to check whether the hardware is normal
 3. **1.47 inches AMOLED(T-Display-AMOLED-Lite)** does not support hardware screen rotation function
 4. If you use external power supply instead of USBC, please turn off the CDC option. This is because the board will wait for USB access when it starts.
-   * For Arduino IDE users, it can be turned off in the options , Please note that turning off USB CDC will turn off Serial redirection to USBC. At this time, you will not see any Serial message output when opening the port from USBC, but output from GPIO43 and GPIO44.
 
-    ```c
-    Tools -> USB CDC On Boot -> Disable
-    ```
+   - For Arduino IDE users, it can be turned off in the options , Please note that turning off USB CDC will turn off Serial redirection to USBC. At this time, you will not see any Serial message output when opening the port from USBC, but output from GPIO43 and GPIO44.
 
-   * For Platformio users, you can add the following compilation flags in the ini file
+   ```c
+   Tools -> USB CDC On Boot -> Disable
+   ```
 
-    ```c
-    build_flags =
-        ; Enable UARDUINO_USB_CDC_ON_BOOT will start printing and wait for terminal access during startup
-        ; -DARDUINO_USB_CDC_ON_BOOT=1
+   - For Platformio users, you can add the following compilation flags in the ini file
 
-        ; Enable UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery
-        -UARDUINO_USB_CDC_ON_BOOT
-    ```
+   ```c
+   build_flags =
+       ; Enable UARDUINO_USB_CDC_ON_BOOT will start printing and wait for terminal access during startup
+       ; -DARDUINO_USB_CDC_ON_BOOT=1
 
-
+       ; Enable UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery
+       -UARDUINO_USB_CDC_ON_BOOT
+   ```
 
 # 8️⃣ Resource
 
-| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                   |
-| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                  |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- |
 | [T-Display-AMOLED-Lite][1] | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     |
 | [T-Display-S3 AMOLED][2]   | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) |
 | [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              |
 
 ##### T-Display-AMOLED-Lite datasheet
 
-* [AMOLED Driver datasheet](./datasheet/SH8501B0%20DataSheet.pdf)
-* [Touchpad Driver datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CHSC5816%E8%A7%A6%E6%8E%A7%E8%8A%AF%E7%89%87%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8EV1-20221114.pdf)
-* [PMU datasheet](https://github.com/lewisxhe/XPowersLib/blob/master/datasheet/AXP2101_Datasheet_V1.0_en.pdf)
-* [Light Sensor datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CM32181A3OP.pdf)
-* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [AMOLED Driver datasheet](./datasheet/SH8501B0%20DataSheet.pdf)
+- [Touchpad Driver datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CHSC5816%E8%A7%A6%E6%8E%A7%E8%8A%AF%E7%89%87%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8EV1-20221114.pdf)
+- [PMU datasheet](https://github.com/lewisxhe/XPowersLib/blob/master/datasheet/AXP2101_Datasheet_V1.0_en.pdf)
+- [Light Sensor datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CM32181A3OP.pdf)
+- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
 
 ##### T-Display-S3 AMOLED datasheet
 
-* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
-* [AMOLED Driver datasheet](./datasheet/RM67162%20DataSheet.pdf)
-* [CST816 datasheet]([./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf))
+- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [AMOLED Driver datasheet](./datasheet/RM67162%20DataSheet.pdf)
+- [CST816 datasheet](<[./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf)>)
 
 ##### T4-S3 datasheet
 
-* [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
-* [SY6970](./datasheet/SY6970%20Datasheet.pdf)
-* [AMOLED Driver datasheet](./datasheet/RM690B0%20DataSheet_V0.2.pdf)
-* [CST226 datasheet]([./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf))
+- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [SY6970](./datasheet/SY6970%20Datasheet.pdf)
+- [AMOLED Driver datasheet](./datasheet/RM690B0%20DataSheet_V0.2.pdf)
+- [CST226 datasheet](<[./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf)>)
 
 # 8️⃣ Depends on required libraries
 
-* [XPowersLib](https://github.com/lewisxhe/XPowersLib)
-* [SensorLib](https://github.com/lewisxhe/SensorsLib)
-* [lvgl 8.3.11](https://github.com/lvgl/lvgl)
-* [AceButton](https://github.com/bxparks/AceButton)
-* [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
-* [TinyGPSPlusl](https://github.com/mikalhart/TinyGPSPlusl)
-
+- [XPowersLib](https://github.com/lewisxhe/XPowersLib)
+- [SensorLib](https://github.com/lewisxhe/SensorsLib)
+- [lvgl 8.3.11](https://github.com/lvgl/lvgl)
+- [AceButton](https://github.com/bxparks/AceButton)
+- [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
+- [TinyGPSPlusl](https://github.com/mikalhart/TinyGPSPlusl)
