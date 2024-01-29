@@ -7,6 +7,12 @@
 
 <!-- **English | [中文](README_CN.MD)** -->
 
+
+## News
+
+*  `LilyGo-AMOLED-Series` depends on lvgl **v8.3.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.3.x** 
+
+
 ## 1️⃣Support Product
 
 | Product(PinMap)            | SOC        | Flash | PSRAM    | Resolution | Size      |
@@ -82,7 +88,26 @@ examples/
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 6. `Tools` , Look at the picture to choose
-   <img src="./images/ArduinoIDE.jpg" width = "300" align=center />
+    | Arduino IDE Setting                  | Value                             |
+    | ------------------------------------ | --------------------------------- |
+    | Board                                | **ESP32S3 Dev Module**            |
+    | Port                                 | Your port                         |
+    | USB CDC On Boot                      | Enable                            |
+    | CPU Frequency                        | 240MHZ(WiFi)                      |
+    | Core Debug Level                     | None                              |
+    | USB DFU On Boot                      | Disable                           |
+    | Erase All Flash Before Sketch Upload | Disbale                           |
+    | Events Run On                        | Core1                             |
+    | Flash Mode                           | QIO 80MHZ                         |
+    | Flash Size                           | **16MB(128Mb)**                   |
+    | Arduino Runs On                      | Core1                             |
+    | USB Firmware MSC On Boot             | Disbale                           |
+    | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
+    | PSRAM                                | **OPI PSRAM**                     |
+    | Upload Mode                          | **UART0/Hardware CDC**            |
+    | Upload Speed                         | 921600                            |
+    | USB Mode                             | **CDC and JTAG**                  |
+    * The options in bold are required, others are selected according to actual conditions.
 
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
@@ -95,7 +120,26 @@ examples/
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE ,`Tools` , Look at the picture to choose
-   <img src="./images/ArduinoIDE.jpg" width = "300" align=center />
+    | Arduino IDE Setting                  | Value                             |
+    | ------------------------------------ | --------------------------------- |
+    | Board                                | **ESP32S3 Dev Module**            |
+    | Port                                 | Your port                         |
+    | USB CDC On Boot                      | Enable                            |
+    | CPU Frequency                        | 240MHZ(WiFi)                      |
+    | Core Debug Level                     | None                              |
+    | USB DFU On Boot                      | Disable                           |
+    | Erase All Flash Before Sketch Upload | Disbale                           |
+    | Events Run On                        | Core1                             |
+    | Flash Mode                           | QIO 80MHZ                         |
+    | Flash Size                           | **16MB(128Mb)**                   |
+    | Arduino Runs On                      | Core1                             |
+    | USB Firmware MSC On Boot             | Disbale                           |
+    | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
+    | PSRAM                                | **OPI PSRAM**                     |
+    | Upload Mode                          | **UART0/Hardware CDC**            |
+    | Upload Speed                         | 921600                            |
+    | USB Mode                             | **CDC and JTAG**                  |
+    * The options in bold are required, others are selected according to actual conditions.
 
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port`
