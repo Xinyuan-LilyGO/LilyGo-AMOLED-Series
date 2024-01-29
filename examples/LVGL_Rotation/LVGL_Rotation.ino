@@ -82,6 +82,23 @@ void setup(void)
     // Register lvgl helper
     beginLvglHelper(amoled);
 
+    lv_align_t  align[] = {LV_ALIGN_TOP_LEFT,
+                           LV_ALIGN_TOP_MID,
+                           LV_ALIGN_TOP_RIGHT,
+                           LV_ALIGN_BOTTOM_LEFT,
+                           LV_ALIGN_BOTTOM_MID,
+                           LV_ALIGN_BOTTOM_RIGHT,
+                           LV_ALIGN_LEFT_MID,
+                           LV_ALIGN_RIGHT_MID
+                          };
+    for (int i = 0; i < sizeof(align) / sizeof(*align); ++i) {
+        lv_obj_t *btn = lv_btn_create(lv_scr_act());
+        lv_obj_t *label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d", i);
+        lv_obj_center(btn);
+        lv_obj_align(btn, align[i], 0, 0);
+    }
+
 
     label1 = lv_label_create(lv_scr_act());
     lv_label_set_long_mode(label1, LV_LABEL_LONG_WRAP);     /*Break the long lines*/
