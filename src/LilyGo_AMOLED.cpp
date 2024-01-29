@@ -586,6 +586,10 @@ uint8_t LilyGo_AMOLED::getBrightness()
 
 void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye)
 {
+    xs += _offset_x;
+    ys += _offset_y;
+    xe += _offset_x;
+    ye += _offset_y;
     lcd_cmd_t t[3] = {
         {
             0x2A00, {
@@ -878,6 +882,8 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
     } else if (boards == &BOARD_AMOLED_241) {
         switch (_rotation) {
         case 1:
+            _offset_x = 16;
+            _offset_y = 0;
             data = RM690B0_MADCTL_RGB;
             _height = boards->display.width;
             _width = boards->display.height;
@@ -888,6 +894,8 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             }
             break;
         case 2:
+            _offset_x = 0;
+            _offset_y = 16;
             data = RM690B0_MADCTL_MV | RM690B0_MADCTL_MY | RM690B0_MADCTL_RGB;
             _height = boards->display.height;
             _width = boards->display.width;
@@ -898,6 +906,8 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             }
             break;
         case 3:
+            _offset_x = 16;
+            _offset_y = 0;
             data = RM690B0_MADCTL_MX | RM690B0_MADCTL_MY | RM690B0_MADCTL_RGB;
             _height = boards->display.width;
             _width = boards->display.height;
@@ -908,6 +918,8 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             }
             break;
         default:
+            _offset_x = 0;
+            _offset_y = 16;
             data = RM690B0_MADCTL_MX | RM690B0_MADCTL_MV | RM690B0_MADCTL_RGB;
             _height = boards->display.height;
             _width = boards->display.width;

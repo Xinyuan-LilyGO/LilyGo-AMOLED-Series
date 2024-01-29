@@ -31,5 +31,7 @@ public:
     virtual bool    hasTouch() = 0;
 
 protected:
+    uint16_t _offset_x = 0;
+    uint16_t _offset_y = 0;
     uint8_t _rotation;
 };
