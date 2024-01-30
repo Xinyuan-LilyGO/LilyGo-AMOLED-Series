@@ -38,11 +38,11 @@
 ```txt
 examples/
 ├── Factory                     # Factory example
-├── LumenMeter                  # Screen color test
-├── Lvgl_Images                 # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
-├── CameraShield                # Extern camera shield example, only supports 1.91 inches
+├── LumenMeter                  # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── Lvgl_Images                 # Screen color test
 ├── PMU_ADC                     # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt               # PMU interrupt example , only support 1.47-inch AMOLED
+├── CameraShield                # Extern camera shield example, only supports 1.91 inches
 ├── QWIIC_GPS_Shield            # Extern GPS Shield example,use Serial communication
 ├── QWIIC_HP303BSensor          # Extern Temperature Pressure Sensor example,use Wire communication
 ├── QWIIC_MAX3010X              # External heart rate module,use Wire communication
