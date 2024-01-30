@@ -50,7 +50,7 @@ const char *LilyGo_AMOLED::getName()
     } else if (boards == &BOARD_AMOLED_241) {
         return "2.41 inch";
     }
-    return "Unkonw";
+    return "Unknown";
 }
 
 uint8_t LilyGo_AMOLED::getBoardID()
@@ -62,7 +62,7 @@ uint8_t LilyGo_AMOLED::getBoardID()
     } else if (boards == &BOARD_AMOLED_241) {
         return LILYGO_AMOLED_241;
     }
-    return LILYGO_AMOLED_UNKOWN;
+    return LILYGO_AMOLED_UNKNOWN;
 }
 
 const BoardsConfigure_t *LilyGo_AMOLED::getBoarsdConfigure()
