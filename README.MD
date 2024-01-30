@@ -43,6 +43,7 @@ examples/
 ├── PMU_ADC                     # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt               # PMU interrupt example , only support 1.47-inch AMOLED
 ├── CameraShield                # Extern camera shield example, only supports 1.91 inches
+├── SPI_SDCard                  # External SD card example, SPI communication
 ├── QWIIC_GPS_Shield            # Extern GPS Shield example,use Serial communication
 ├── QWIIC_HP303BSensor          # Extern Temperature Pressure Sensor example,use Wire communication
 ├── QWIIC_MAX3010X              # External heart rate module,use Wire communication

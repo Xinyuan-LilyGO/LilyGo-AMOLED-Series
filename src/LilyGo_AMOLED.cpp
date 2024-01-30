@@ -493,6 +493,62 @@ bool LilyGo_AMOLED::beginAMOLED_241()
     return true;
 }
 
+// Default SPI Pin
+#define AMOLED_191_DEFAULT_MISO  15
+#define AMOLED_191_DEFAULT_MOSI  14
+#define AMOLED_191_DEFAULT_SCLK  13
+#define AMOLED_191_DEFAULT_CS    12
+
+#define AMOLED_147_DEFAULT_MISO  47
+#define AMOLED_147_DEFAULT_MOSI  39
+#define AMOLED_147_DEFAULT_SCLK  38
+#define AMOLED_147_DEFAULT_CS    9
+/**
+ * @brief   Hang on SD card
+ * @note   If the specified Pin is not passed in, the default Pin will be used as the SPI
+ * @param  miso: 1.91 Inch [GPIO15] 1.47 Inch [GPIO47]    2.41 Inch defaults to onboard SD slot
+ * @param  mosi: 1.91 Inch [GPIO14] 1.47 Inch [GPIO39]    2.41 Inch defaults to onboard SD slot
+ * @param  sclk: 1.91 Inch [GPIO13] 1.47 Inch [GPIO38]    2.41 Inch defaults to onboard SD slot
+ * @param  cs:   1.91 Inch [GPIO12] 1.47 Inch [GPIO9]     2.41 Inch defaults to onboard SD slot
+ * @retval Returns true if successful, otherwise false
+ */
+bool LilyGo_AMOLED::installSD(uint8_t miso, uint8_t mosi, uint8_t sclk, uint8_t cs)
+{
+    if (boards == &BOARD_AMOLED_241) {
+        miso = boards->sd->miso;
+        mosi = boards->sd->mosi;
+        sclk = boards->sd->sck;
+        cs = boards->sd->cs;
+    } else if (boards == &BOARD_AMOLED_147) {
+        sclk = (sclk == -1)  ? AMOLED_147_DEFAULT_SCLK : sclk;
+        miso = (miso == -1) ? AMOLED_147_DEFAULT_MISO : miso;
+        mosi = (mosi == -1) ? AMOLED_147_DEFAULT_MOSI : mosi;
+        cs = (cs == -1)   ? AMOLED_147_DEFAULT_CS : cs;
+    } else if (boards == &BOARD_AMOLED_191) {
+        sclk = (sclk == -1)  ? AMOLED_191_DEFAULT_SCLK : sclk;
+        miso = (miso == -1) ? AMOLED_191_DEFAULT_MISO : miso;
+        mosi = (mosi == -1) ? AMOLED_191_DEFAULT_MOSI : mosi;
+        cs = (cs == -1)   ? AMOLED_191_DEFAULT_CS : cs;
+    }
+    
+    SPI.begin(sclk, miso, mosi);
+
+    // Set mount point to /fs
+    if (!SD.begin(cs, SPI, 4000000U, "/fs")) {
+        log_e("Failed to dected SDCard!");
+        return false;
+    }
+    if (SD.cardType() != CARD_NONE) {
+        log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
+        return true;
+    }
+    return false;
+}
+
+void LilyGo_AMOLED::uninstallSD()
+{
+    SD.end();
+}
 
 bool LilyGo_AMOLED::beginAMOLED_147()
 {
@@ -943,7 +999,7 @@ uint8_t LilyGo_AMOLED::getRotation()
 
 bool LilyGo_AMOLED::needFullRefresh()
 {
-    if(boards){
+    if (boards) {
         return boards->display.fullRefresh;
     }
     return false;

@@ -22,6 +22,7 @@ jobs:
             examples/Lvgl_Images/Lvgl_Images.ino,
             examples/LumenMeter/LumenMeter.ino,
             examples/PMU_ADC/PMU_ADC.ino,
+            examples/SPI_SDCard/SPI_SDCard.ino,
             examples/CameraShield/CameraShield.ino,
             examples/PMU_Interrupt/PMU_Interrupt.ino,
             examples/QWIIC_GPS_Shield/QWIIC_GPS_Shield.ino,

@@ -21,6 +21,7 @@ jobs:
             examples/Lvgl_Images,
             examples/LumenMeter,
             examples/PMU_ADC,
+            examples/SPI_SDCard,
             examples/PMU_Interrupt,
             examples/CameraShield,
             examples/QWIIC_GPS_Shield,

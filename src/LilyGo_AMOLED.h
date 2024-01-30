@@ -306,6 +306,11 @@ public:
     void pushColors(uint16_t *data, uint32_t len);
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
 
+
+    bool installSD(uint8_t miso = -1, uint8_t mosi = -1, uint8_t sclk = -1, uint8_t cs = -1);
+
+    void uninstallSD();
+
     float readCoreTemp();
     void beginCore();
 
