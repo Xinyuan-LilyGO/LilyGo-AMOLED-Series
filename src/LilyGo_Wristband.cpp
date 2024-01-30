@@ -554,4 +554,7 @@ void LilyGo_Wristband::vibration(uint8_t duty, uint32_t delay_ms)
 #endif
 }
 
-
+bool LilyGo_Wristband::needFullRefresh()
+{
+    return true;
+}

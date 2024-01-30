@@ -80,6 +80,7 @@ typedef struct __DisplayConfigure {
     uint16_t width;
     uint16_t height;
     uint32_t frameBufferSize;
+    bool fullRefresh;
 } DisplayConfigure_t;
 
 typedef struct __BoardTouchPins {
@@ -142,7 +143,8 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
     SH8501_INIT_SEQUENCE_LENGHT,
     SH8501_WIDTH, //width
     SH8501_HEIGHT, //height
-    SH8501_WIDTH *SH8501_HEIGHT * sizeof(uint16_t) //frameBufferSize
+    SH8501_WIDTH *SH8501_HEIGHT * sizeof(uint16_t), //frameBufferSize
+    true //fullRefresh
 };
 
 static const int AMOLED_147_BUTTONTS[2] = {0, 21};
@@ -173,7 +175,8 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     RM67162_INIT_SEQUENCE_LENGHT,
     RM67162_WIDTH,//width
     RM67162_HEIGHT,//height
-    0//frameBufferSize
+    0,//frameBufferSize
+    false //fullRefresh
 };
 
 
@@ -197,7 +200,8 @@ static const DisplayConfigure_t RM690B0_AMOLED  = {
     RM690B0_INIT_SEQUENCE_LENGHT,
     RM690B0_WIDTH,//width
     RM690B0_HEIGHT,//height
-    0//frameBufferSize
+    0,//frameBufferSize
+    false //fullRefresh
 };
 static const int AMOLED_241_BUTTONTS[1] = {0};
 static const BoardPmuPins_t AMOLED_241_PMU_PINS =  {6/*SDA*/, 7/*SCL*/, 5/*IRQ*/};
@@ -332,6 +336,8 @@ public:
     void sleep();
     void wakeup();
     bool hasTouch();
+
+    bool needFullRefresh();
 private:
     bool initBUS();
     bool initPMU();

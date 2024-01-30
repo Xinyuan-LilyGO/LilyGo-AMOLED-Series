@@ -92,6 +92,7 @@ public:
     void enableTouchWakeup(int threshold = 2000);
     void sleep();
     void wakeup();
+    bool needFullRefresh();
 private:
     bool initBUS();
     void writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t lenght);

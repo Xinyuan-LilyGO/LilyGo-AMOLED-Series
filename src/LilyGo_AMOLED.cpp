@@ -941,3 +941,10 @@ uint8_t LilyGo_AMOLED::getRotation()
     return (_rotation);
 }
 
+bool LilyGo_AMOLED::needFullRefresh()
+{
+    if(boards){
+        return boards->display.fullRefresh;
+    }
+    return false;
+}

@@ -30,6 +30,8 @@ public:
     virtual uint8_t getPoint(int16_t *x, int16_t *y, uint8_t get_point ) = 0;
     virtual bool    hasTouch() = 0;
 
+    virtual bool needFullRefresh() = 0;
+
 protected:
     uint16_t _offset_x = 0;
     uint16_t _offset_y = 0;

@@ -56,6 +56,19 @@ void lv_log_print_g_cb(const char *buf)
 }
 #endif
 
+static void lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
+{
+    // make sure all coordinates are even
+    if (area->x1 & 1)
+        area->x1--;
+    if (!(area->x2 & 1))
+        area->x2++;
+    if (area->y1 & 1)
+        area->y1--;
+    if (!(area->y2 & 1))
+        area->y2++;
+}
+
 void beginLvglHelper(LilyGo_Display &board, bool debug)
 {
 
@@ -80,8 +93,12 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
     disp_drv.ver_res = board.height();
     disp_drv.flush_cb = disp_flush;
     disp_drv.draw_buf = &draw_buf;
-    disp_drv.full_refresh = 1;
+    bool full_refresh = board.needFullRefresh();
+    disp_drv.full_refresh = full_refresh;
     disp_drv.user_data = &board;
+    if (!full_refresh) {
+        disp_drv.rounder_cb = lv_rounder_cb;
+    }
     lv_disp_drv_register( &disp_drv );
 
     if (board.hasTouch()) {
