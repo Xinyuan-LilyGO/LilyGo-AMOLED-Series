@@ -307,7 +307,7 @@ public:
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
 
 
-    bool installSD(uint8_t miso = -1, uint8_t mosi = -1, uint8_t sclk = -1, uint8_t cs = -1);
+    bool installSD(int miso = -1, int mosi = -1, int sclk = -1, int cs = -1);
 
     void uninstallSD();
 
@@ -354,7 +354,7 @@ private:
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
     bool _touchOnline;
-    uint16_t _width,_height;
+    uint16_t _width, _height;
 
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;

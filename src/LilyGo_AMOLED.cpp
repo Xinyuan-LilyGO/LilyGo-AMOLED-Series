@@ -512,7 +512,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
  * @param  cs:   1.91 Inch [GPIO12] 1.47 Inch [GPIO9]     2.41 Inch defaults to onboard SD slot
  * @retval Returns true if successful, otherwise false
  */
-bool LilyGo_AMOLED::installSD(uint8_t miso, uint8_t mosi, uint8_t sclk, uint8_t cs)
+bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
 {
     if (boards == &BOARD_AMOLED_241) {
         miso = boards->sd->miso;
@@ -530,7 +530,7 @@ bool LilyGo_AMOLED::installSD(uint8_t miso, uint8_t mosi, uint8_t sclk, uint8_t 
         mosi = (mosi == -1) ? AMOLED_191_DEFAULT_MOSI : mosi;
         cs = (cs == -1)   ? AMOLED_191_DEFAULT_CS : cs;
     }
-    
+
     SPI.begin(sclk, miso, mosi);
 
     // Set mount point to /fs
