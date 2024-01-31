@@ -11,7 +11,7 @@
 ## News
 
 *  `LilyGo-AMOLED-Series` depends on lvgl **v8.3.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.3.x** 
-
+* `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
 
 ## 1️⃣Support Product
 
