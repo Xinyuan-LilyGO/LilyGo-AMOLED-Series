@@ -101,12 +101,12 @@ examples/
     | CPU Frequency                        | 240MHZ(WiFi)                      |
     | Core Debug Level                     | None                              |
     | USB DFU On Boot                      | Disable                           |
-    | Erase All Flash Before Sketch Upload | Disbale                           |
+    | Erase All Flash Before Sketch Upload | Disable                           |
     | Events Run On                        | Core1                             |
     | Flash Mode                           | QIO 80MHZ                         |
     | Flash Size                           | **16MB(128Mb)**                   |
     | Arduino Runs On                      | Core1                             |
-    | USB Firmware MSC On Boot             | Disbale                           |
+    | USB Firmware MSC On Boot             | Disable                           |
     | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
     | PSRAM                                | **OPI PSRAM**                     |
     | Upload Mode                          | **UART0/Hardware CDC**            |
@@ -124,7 +124,7 @@ examples/
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
-5. Open ArduinoIDE ,`Tools` , Look at the picture to choose
+5. Open ArduinoIDE ,`Tools` , Make your selection according to the table below
     | Arduino IDE Setting                  | Value                             |
     | ------------------------------------ | --------------------------------- |
     | Board                                | **ESP32S3 Dev Module**            |
@@ -133,12 +133,12 @@ examples/
     | CPU Frequency                        | 240MHZ(WiFi)                      |
     | Core Debug Level                     | None                              |
     | USB DFU On Boot                      | Disable                           |
-    | Erase All Flash Before Sketch Upload | Disbale                           |
+    | Erase All Flash Before Sketch Upload | Disable                           |
     | Events Run On                        | Core1                             |
     | Flash Mode                           | QIO 80MHZ                         |
     | Flash Size                           | **16MB(128Mb)**                   |
     | Arduino Runs On                      | Core1                             |
-    | USB Firmware MSC On Boot             | Disbale                           |
+    | USB Firmware MSC On Boot             | Disable                           |
     | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
     | PSRAM                                | **OPI PSRAM**                     |
     | Upload Mode                          | **UART0/Hardware CDC**            |
