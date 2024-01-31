@@ -37,21 +37,24 @@
 
 ```txt
 examples/
-├── Factory                     # Factory example
-├── LumenMeter                  # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
-├── Lvgl_Images                 # Screen color test
-├── PMU_ADC                     # PMU Voltage detection example , only support 1.47-inch AMOLED
-├── PMU_Interrupt               # PMU interrupt example , only support 1.47-inch AMOLED
-├── CameraShield                # Extern camera shield example, only supports 1.91 inches
-├── SPI_SDCard                  # External SD card example, SPI communication
-├── QWIIC_GPS_Shield            # Extern GPS Shield example,use Serial communication
-├── QWIIC_HP303BSensor          # Extern Temperature Pressure Sensor example,use Wire communication
-├── QWIIC_MAX3010X              # External heart rate module,use Wire communication
-├── TFT_eSPI_Sprite             # Use TFT_eSPI Sprite example
-├── LVGL_Rotation               # Screen rotation, only available for 1.91, 2.41 inches
-├── TFT_eSPI_Sprite_Rotation    # Screen rotation, only available for 1.91, 2.41 inches
-├── Touchpad                    # Touchpad example
-└── lvgl                        # LVGL examples
+├── Factory                             # Factory example
+├── LumenMeter                          # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── Lvgl_Images                         # Screen color test
+├── PMU_ADC                             # PMU Voltage detection example , only support 1.47-inch AMOLED
+├── PMU_Interrupt                       # PMU interrupt example , only support 1.47-inch AMOLED
+├── CameraShield                        # Extern camera shield example, only supports 1.91 inches
+├── SPI_SDCard                          # External SD card example, SPI communication
+├── QWIIC_GPS_Shield                    # Extern GPS Shield example,use Serial communication
+├── QWIIC_HP303BSensor                  # Extern Temperature Pressure Sensor example,use Wire communication
+├── QWIIC_MAX3010X                      # External heart rate module,use Wire communication
+├── TFT_eSPI_Sprite                     # Use TFT_eSPI Sprite example
+├── TFT_eSPI_Sprite_ArcFill             # Use TFT_eSPI Sprite example
+├── TFT_eSPI_Sprite_graphicstest_small  # Use TFT_eSPI Sprite example
+├── TFT_eSPI_Sprite_RLE_Font            # Use TFT_eSPI Sprite example
+├── TFT_eSPI_Sprite_Rotation            # Screen rotation, only available for 1.91, 2.41 inches
+├── LVGL_Rotation                       # Screen rotation, only available for 1.91, 2.41 inches
+├── Touchpad                            # Touchpad example
+└── lvgl                                # LVGL examples
     ├── event
     ├── get_started
     ├── layouts
