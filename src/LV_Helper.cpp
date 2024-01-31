@@ -14,7 +14,6 @@
 #error "Currently not supported 9.x"
 #endif
 
-static void lvgl_port_update_callback(lv_disp_drv_t *drv);
 static lv_disp_draw_buf_t draw_buf;
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t  indev_drv;
