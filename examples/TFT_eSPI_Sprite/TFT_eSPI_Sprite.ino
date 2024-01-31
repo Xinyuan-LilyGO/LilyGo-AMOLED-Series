@@ -35,8 +35,8 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite spr = TFT_eSprite(&tft);
 LilyGo_Class amoled;
 
-#define WIDTH  amoled.height()
-#define HEIGHT amoled.width()
+#define WIDTH  amoled.width()
+#define HEIGHT amoled.height()
 unsigned long targetTime = 0;
 byte red = 31;
 byte green = 0;
