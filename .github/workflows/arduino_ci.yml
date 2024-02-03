@@ -8,7 +8,6 @@ on:
       - "examples/**"
       - "src/**"
       - "libdeps/**"
-      - "platformio.ini"
       - ".github/workflows/arduino_ci.yml"
 jobs:
   build:
