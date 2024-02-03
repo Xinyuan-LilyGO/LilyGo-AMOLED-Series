@@ -50,8 +50,8 @@ extern const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT];
 
 #define JD9613_INIT_SEQUENCE_LENGHT             88
 extern const lcd_cmd_t jd9613_cmd[JD9613_INIT_SEQUENCE_LENGHT];
-#define JD9613_WIDTH                            126
-#define JD9613_HEIGHT                           294
+#define JD9613_WIDTH                            294
+#define JD9613_HEIGHT                           126
 
 
 
