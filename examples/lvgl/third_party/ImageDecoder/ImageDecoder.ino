@@ -10,7 +10,6 @@
  *                  Note that you need to place the sample data folder in the same level directory as <platformio.ini>
  *                  If using 2.41 inch, please copy all the pictures in the data folder to the SD card
  */
-/*
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
