@@ -8,14 +8,8 @@
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  */
-
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
-
 #include "esp_arduino_version.h"
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
-
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <TFT_eSPI.h>   //https://github.com/Bodmer/TFT_eSPI

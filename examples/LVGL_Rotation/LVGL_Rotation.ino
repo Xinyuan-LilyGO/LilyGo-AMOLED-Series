@@ -7,9 +7,7 @@
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
+
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <AceButton.h>

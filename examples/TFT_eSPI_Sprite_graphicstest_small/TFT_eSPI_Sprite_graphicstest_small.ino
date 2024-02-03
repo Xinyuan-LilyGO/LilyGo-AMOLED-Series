@@ -10,14 +10,8 @@
  *            resolution of TFT_eSPI. Do not change it here. Use fillRect.
  *            3. Use TFT_eSPI Sprite made by framebuffer , unnecessary calling during use framebuffers.xxxx function
  */
-
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
-
 #include "esp_arduino_version.h"
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
-
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <TFT_eSPI.h>   //https://github.com/Bodmer/TFT_eSPI

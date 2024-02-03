@@ -6,9 +6,7 @@
  * @date      2023-07-25
  * @note      T-AMOLED without GPS function, the sketch demonstrates an example of connecting the M10Q GPS module through the QWIIC UART port
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
+
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <TinyGPSPlus.h>

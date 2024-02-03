@@ -14,13 +14,8 @@
  * | SCK     | 39        | 13        | onboard |
  * | CS      | 9         | 12        | onboard |
  */
-
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
-
 
 LilyGo_Class amoled;
 

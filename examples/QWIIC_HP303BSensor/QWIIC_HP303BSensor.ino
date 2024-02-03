@@ -9,9 +9,6 @@
  * !!         Note that the wemos hp303b module is inconsistent with the standard Qwiic line sequence, and jumpers are required
  * !!         See ConnectionDiagram.jpg
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include "src/LOLIN_HP303B.h"       //https://github.com/wemos/LOLIN_HP303B_Library

@@ -6,9 +6,7 @@
  * @date      2023-08-09
  * @note      Sketch only for 1.47" screen with built-in ambient light sensor
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
+
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 

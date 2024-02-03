@@ -7,9 +7,7 @@
  * @note      Sketch only for 1.47" screen with Power management unit
  *            For more PMU examples, please refer to https://github.com/lewisxhe/XPowersLib
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
+
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 

@@ -17,11 +17,6 @@
  *                  USB Mode:"Hardware CDC and JTAG"
  *  Arduino IDE User need move all folders in [libdeps folder](./libdeps/)  to Arduino library folder
  */
-
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
-
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <Arduino.h>

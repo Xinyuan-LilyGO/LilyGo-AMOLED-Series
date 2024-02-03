@@ -7,9 +7,6 @@
  * @note      Connect the external MAX30102 heart rate sensor using the QWIIC interface,
  *            The sensor is not included on the board and requires external connection
  */
-#ifdef LILYGO_TWRITSTBAND_S3
-#error  "Current example does not apply to T-Wristband"
-#endif
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <MAX30105.h>   //https://github.com/sparkfun/SparkFun_MAX3010x_Sensor_Library
