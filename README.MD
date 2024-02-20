@@ -7,11 +7,10 @@
 
 <!-- **English | [中文](README_CN.MD)** -->
 
-
 ## News
 
-*  `LilyGo-AMOLED-Series` depends on lvgl **v8.3.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.3.x** 
-* `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
+- `LilyGo-AMOLED-Series` depends on lvgl **v8.3.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.3.x**
+- `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
 
 ## 1️⃣Support Product
 
@@ -93,26 +92,27 @@ examples/
 5. `Library Search` -> `lvgl` -> `v8.3.11` -> `Install`
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. `Tools` , Look at the picture to choose
-    | Arduino IDE Setting                  | Value                             |
-    | ------------------------------------ | --------------------------------- |
-    | Board                                | **ESP32S3 Dev Module**            |
-    | Port                                 | Your port                         |
-    | USB CDC On Boot                      | Enable                            |
-    | CPU Frequency                        | 240MHZ(WiFi)                      |
-    | Core Debug Level                     | None                              |
-    | USB DFU On Boot                      | Disable                           |
-    | Erase All Flash Before Sketch Upload | Disable                           |
-    | Events Run On                        | Core1                             |
-    | Flash Mode                           | QIO 80MHZ                         |
-    | Flash Size                           | **16MB(128Mb)**                   |
-    | Arduino Runs On                      | Core1                             |
-    | USB Firmware MSC On Boot             | Disable                           |
-    | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
-    | PSRAM                                | **OPI PSRAM**                     |
-    | Upload Mode                          | **UART0/Hardware CDC**            |
-    | Upload Speed                         | 921600                            |
-    | USB Mode                             | **CDC and JTAG**                  |
-    * The options in bold are required, others are selected according to actual conditions.
+   | Arduino IDE Setting | Value |
+   | ------------------------------------ | --------------------------------- |
+   | Board | **ESP32S3 Dev Module** |
+   | Port | Your port |
+   | USB CDC On Boot | Enable |
+   | CPU Frequency | 240MHZ(WiFi) |
+   | Core Debug Level | None |
+   | USB DFU On Boot | Disable |
+   | Erase All Flash Before Sketch Upload | Disable |
+   | Events Run On | Core1 |
+   | Flash Mode | QIO 80MHZ |
+   | Flash Size | **16MB(128Mb)** |
+   | Arduino Runs On | Core1 |
+   | USB Firmware MSC On Boot | Disable |
+   | Partition Scheme | **16M Flash(3M APP/9.9MB FATFS)** |
+   | PSRAM | **OPI PSRAM** |
+   | Upload Mode | **UART0/Hardware CDC** |
+   | Upload Speed | 921600 |
+   | USB Mode | **CDC and JTAG** |
+
+   - The options in bold are required, others are selected according to actual conditions.
 
 8. Select `Port`
 9. Click `upload` , Wait for compilation and writing to complete
@@ -125,26 +125,27 @@ examples/
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE ,`Tools` , Make your selection according to the table below
-    | Arduino IDE Setting                  | Value                             |
-    | ------------------------------------ | --------------------------------- |
-    | Board                                | **ESP32S3 Dev Module**            |
-    | Port                                 | Your port                         |
-    | USB CDC On Boot                      | Enable                            |
-    | CPU Frequency                        | 240MHZ(WiFi)                      |
-    | Core Debug Level                     | None                              |
-    | USB DFU On Boot                      | Disable                           |
-    | Erase All Flash Before Sketch Upload | Disable                           |
-    | Events Run On                        | Core1                             |
-    | Flash Mode                           | QIO 80MHZ                         |
-    | Flash Size                           | **16MB(128Mb)**                   |
-    | Arduino Runs On                      | Core1                             |
-    | USB Firmware MSC On Boot             | Disable                           |
-    | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
-    | PSRAM                                | **OPI PSRAM**                     |
-    | Upload Mode                          | **UART0/Hardware CDC**            |
-    | Upload Speed                         | 921600                            |
-    | USB Mode                             | **CDC and JTAG**                  |
-    * The options in bold are required, others are selected according to actual conditions.
+   | Arduino IDE Setting | Value |
+   | ------------------------------------ | --------------------------------- |
+   | Board | **ESP32S3 Dev Module** |
+   | Port | Your port |
+   | USB CDC On Boot | Enable |
+   | CPU Frequency | 240MHZ(WiFi) |
+   | Core Debug Level | None |
+   | USB DFU On Boot | Disable |
+   | Erase All Flash Before Sketch Upload | Disable |
+   | Events Run On | Core1 |
+   | Flash Mode | QIO 80MHZ |
+   | Flash Size | **16MB(128Mb)** |
+   | Arduino Runs On | Core1 |
+   | USB Firmware MSC On Boot | Disable |
+   | Partition Scheme | **16M Flash(3M APP/9.9MB FATFS)** |
+   | PSRAM | **OPI PSRAM** |
+   | Upload Mode | **UART0/Hardware CDC** |
+   | Upload Speed | 921600 |
+   | USB Mode | **CDC and JTAG** |
+
+   - The options in bold are required, others are selected according to actual conditions.
 
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port`
@@ -196,11 +197,11 @@ examples/
 
 # 8️⃣ Resource
 
-| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                  |
-| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- |
-| [T-Display-AMOLED-Lite][1] | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     |
-| [T-Display-S3 AMOLED][2]   | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) |
-| [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              |
+| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                  | Shell                                  |
+| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| [T-Display-AMOLED-Lite][1] | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     | x                                      |
+| [T-Display-S3 AMOLED][2]   | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) | [STP](./shell/T-Display-S3-AMOLED.zip) |
+| [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              | [STP](./shell/T4-S3-AMOLED.zip)        |
 
 ##### T-Display-AMOLED-Lite datasheet
 
