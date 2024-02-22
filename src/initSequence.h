@@ -24,7 +24,7 @@ extern const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGHT];
 #define SH8501_HEIGHT                           194
 
 
-#define RM67162_INIT_SEQUENCE_LENGHT             6
+#define RM67162_INIT_SEQUENCE_LENGHT            12
 extern const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT];
 #define RM67162_WIDTH                           240
 #define RM67162_HEIGHT                          536

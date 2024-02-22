@@ -502,19 +502,30 @@ const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGHT] = {
 };
 
 const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT] = {
+    {0xFE00, {0x00}, 0x01}, //SET APGE 00H
     {0x1100, {0x00}, 0x80}, // Sleep Out
-    // {0x44, {0x01, 0x66},        0x02}, //Set_Tear_Scanline
+
+    {0xFE00, {0x05}, 0x01}, //SET APGE
+    {0x0500, {0x05}, 0x01}, //OVSS control set elvss -3.95v
+
+    {0xFE00, {0x01}, 0x01}, //SET APGE
+    {0x7300, {0x25}, 0x01}, //set OVSS voltage level.= -4.0V
+
+    {0xFE00, {0x00}, 0x01}, //SET APGE 00H
+    // {0x44, {0x01, 0x66},0x02}, //Set_Tear_Scanline
     // {0x35, {0x00},        0x00}, //TE ON
     // {0x34, {0x00},        0x00}, //TE OFF
     // {0x36, {0x00},        0x01}, //Scan Direction Control
+    {0x3600, {0x60}, 0x01}, //
     {0x3A00, {0x55}, 0x01}, // Interface Pixel Format 16bit/pixel
     // {0x3A, {0x66},        0x01}, //Interface Pixel Format    18bit/pixel
     // {0x3A, {0x77},        0x01}, //Interface Pixel Format    24bit/pixel
     {0x5100, {0x00}, 0x01}, // Write Display Brightness MAX_VAL=0XFF
     {0x2900, {0x00}, 0x80}, // Display on
-    {0x5100, {AMOLED_DEFAULT_BRIGHTNESS}, 0x01}, // Write Display Brightness   MAX_VAL=0XFF
-    {0x3600, {0x60}, 0x01}, //
+    {0x5100, {AMOLED_DEFAULT_BRIGHTNESS}, 0x01} // Write Display Brightness   MAX_VAL=0XFF
 };
+
+
 
 const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT] = {
     {0xFE00, {0x20}, 0x01},           //SET PAGE
