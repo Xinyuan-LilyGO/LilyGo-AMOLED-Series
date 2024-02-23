@@ -22,9 +22,9 @@
 
 | Current consumption        | Working current             | sleep current | sleep mode      |
 | -------------------------- | --------------------------- | ------------- | --------------- |
-| [T-Display-AMOLED-Lite][1] | (240MHz) WiFi On 90~230+ mA | Aboud 1.1mA   | timer wakeup    |
-| [T-Display-S3 AMOLED][2]   | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
-| [T4-S3][3]                 | (240MHz) WiFi On 90~230+ mA | Aboud 160uA   | external wakeup |
+| [T-Display-AMOLED-Lite][1] | (240MHz) WiFi On 90~230+ mA | About 1.1mA   | timer wakeup    |
+| [T-Display-S3 AMOLED][2]   | (240MHz) WiFi On 90~230+ mA | About 160uA   | external wakeup |
+| [T4-S3][3]                 | (240MHz) WiFi On 90~230+ mA | About 160uA   | external wakeup |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
@@ -87,7 +87,7 @@ examples/
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
-3. `Sketch` -> `Inclued Library` -> `Manage Libraries`
+3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.3.11` -> `Install`
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
