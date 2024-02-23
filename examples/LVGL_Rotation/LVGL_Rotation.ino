@@ -21,7 +21,7 @@ uint8_t btnPin = 0;
 AceButton button(btnPin);
 uint8_t rotation = 1;
 
-const char *formart_string = "#0000ff X:%d#\n #ff00ff Y:%d#\n #f00f00 Rotation:%d#\n #00ff00 Size:%s# ";
+const char *format_string = "#0000ff X:%d#\n #ff00ff Y:%d#\n #f00f00 Rotation:%d#\n #00ff00 Size:%s# ";
 
 void setRotation()
 {
@@ -101,7 +101,7 @@ void setup(void)
     label1 = lv_label_create(lv_scr_act());
     lv_label_set_long_mode(label1, LV_LABEL_LONG_WRAP);     /*Break the long lines*/
     lv_label_set_recolor(label1, true);                      /*Enable re-coloring by commands in the text*/
-    lv_label_set_text_fmt(label1, formart_string, 0, 0, amoled.getRotation(), amoled.getName());
+    lv_label_set_text_fmt(label1, format_string, 0, 0, amoled.getRotation(), amoled.getName());
     lv_obj_set_width(label1, 150);  /*Set smaller width to make the lines wrap*/
     lv_obj_set_style_text_align(label1, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
@@ -144,7 +144,7 @@ void loop()
     uint8_t rotation = amoled.getRotation();
     bool touched = amoled.getPoint(&x, &y);
     if ( touched ) {
-        lv_label_set_text_fmt(label1, formart_string, x, y, amoled.getRotation(), amoled.getName());
+        lv_label_set_text_fmt(label1, format_string, x, y, amoled.getRotation(), amoled.getName());
     }
     lv_task_handler();
     button.check();
