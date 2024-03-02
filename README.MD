@@ -37,6 +37,7 @@
 ```txt
 examples/
 ├── Factory                             # Factory example
+├── DS18x20_Temperature                 # OneWire example
 ├── LumenMeter                          # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
 ├── Lvgl_Images                         # Screen color test
 ├── PMU_ADC                             # PMU Voltage detection example , only support 1.47-inch AMOLED
@@ -92,25 +93,25 @@ examples/
 5. `Library Search` -> `lvgl` -> `v8.3.11` -> `Install`
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. `Tools` , Look at the picture to choose
-   | Arduino IDE Setting | Value |
+   | Arduino IDE Setting                  | Value                             |
    | ------------------------------------ | --------------------------------- |
-   | Board | **ESP32S3 Dev Module** |
-   | Port | Your port |
-   | USB CDC On Boot | Enable |
-   | CPU Frequency | 240MHZ(WiFi) |
-   | Core Debug Level | None |
-   | USB DFU On Boot | Disable |
-   | Erase All Flash Before Sketch Upload | Disable |
-   | Events Run On | Core1 |
-   | Flash Mode | QIO 80MHZ |
-   | Flash Size | **16MB(128Mb)** |
-   | Arduino Runs On | Core1 |
-   | USB Firmware MSC On Boot | Disable |
-   | Partition Scheme | **16M Flash(3M APP/9.9MB FATFS)** |
-   | PSRAM | **OPI PSRAM** |
-   | Upload Mode | **UART0/Hardware CDC** |
-   | Upload Speed | 921600 |
-   | USB Mode | **CDC and JTAG** |
+   | Board                                | **ESP32S3 Dev Module**            |
+   | Port                                 | Your port                         |
+   | USB CDC On Boot                      | Enable                            |
+   | CPU Frequency                        | 240MHZ(WiFi)                      |
+   | Core Debug Level                     | None                              |
+   | USB DFU On Boot                      | Disable                           |
+   | Erase All Flash Before Sketch Upload | Disable                           |
+   | Events Run On                        | Core1                             |
+   | Flash Mode                           | QIO 80MHZ                         |
+   | Flash Size                           | **16MB(128Mb)**                   |
+   | Arduino Runs On                      | Core1                             |
+   | USB Firmware MSC On Boot             | Disable                           |
+   | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
+   | PSRAM                                | **OPI PSRAM**                     |
+   | Upload Mode                          | **UART0/Hardware CDC**            |
+   | Upload Speed                         | 921600                            |
+   | USB Mode                             | **CDC and JTAG**                  |
 
    - The options in bold are required, others are selected according to actual conditions.
 
@@ -125,25 +126,25 @@ examples/
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE ,`Tools` , Make your selection according to the table below
-   | Arduino IDE Setting | Value |
+   | Arduino IDE Setting                  | Value                             |
    | ------------------------------------ | --------------------------------- |
-   | Board | **ESP32S3 Dev Module** |
-   | Port | Your port |
-   | USB CDC On Boot | Enable |
-   | CPU Frequency | 240MHZ(WiFi) |
-   | Core Debug Level | None |
-   | USB DFU On Boot | Disable |
-   | Erase All Flash Before Sketch Upload | Disable |
-   | Events Run On | Core1 |
-   | Flash Mode | QIO 80MHZ |
-   | Flash Size | **16MB(128Mb)** |
-   | Arduino Runs On | Core1 |
-   | USB Firmware MSC On Boot | Disable |
-   | Partition Scheme | **16M Flash(3M APP/9.9MB FATFS)** |
-   | PSRAM | **OPI PSRAM** |
-   | Upload Mode | **UART0/Hardware CDC** |
-   | Upload Speed | 921600 |
-   | USB Mode | **CDC and JTAG** |
+   | Board                                | **ESP32S3 Dev Module**            |
+   | Port                                 | Your port                         |
+   | USB CDC On Boot                      | Enable                            |
+   | CPU Frequency                        | 240MHZ(WiFi)                      |
+   | Core Debug Level                     | None                              |
+   | USB DFU On Boot                      | Disable                           |
+   | Erase All Flash Before Sketch Upload | Disable                           |
+   | Events Run On                        | Core1                             |
+   | Flash Mode                           | QIO 80MHZ                         |
+   | Flash Size                           | **16MB(128Mb)**                   |
+   | Arduino Runs On                      | Core1                             |
+   | USB Firmware MSC On Boot             | Disable                           |
+   | Partition Scheme                     | **16M Flash(3M APP/9.9MB FATFS)** |
+   | PSRAM                                | **OPI PSRAM**                     |
+   | Upload Mode                          | **UART0/Hardware CDC**            |
+   | Upload Speed                         | 921600                            |
+   | USB Mode                             | **CDC and JTAG**                  |
 
    - The options in bold are required, others are selected according to actual conditions.
 
