@@ -195,6 +195,10 @@ examples/
        ; Enable -UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery
        -UARDUINO_USB_CDC_ON_BOOT
    ```
+5. How to find the location of your own libraries, [please see here](https://support.arduino.cc/hc/en-us/articles/4415103213714-Find-sketches-libraries-board-cores-and-other-files-on-your-computer)
+     - Windows: `C:\Users\{username}\Documents\Arduino`
+     - macOS: `/Users/{username}/Documents/Arduino`
+     - Linux: `/home/{username}/Arduino`
 
 # 8️⃣ Resource
 
