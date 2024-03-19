@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         examples:
+          - examples/AdjustBrightness/AdjustBrightness.ino
           - examples/DS18x20_Temperature/DS18x20_Temperature.ino
           - examples/Factory/Factory.ino
           - examples/Lvgl_Images/Lvgl_Images.ino

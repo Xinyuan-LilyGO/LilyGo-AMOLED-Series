@@ -16,6 +16,7 @@ jobs:
     strategy:
       matrix:
         examples:
+          - examples/AdjustBrightness
           - examples/DS18x20_Temperature
           - examples/Factory
           - examples/Lvgl_Images
