@@ -37,6 +37,7 @@
 ```txt
 examples/
 ├── Factory                             # Factory example
+├── AdjustBrightness                    # Adjust brightness example
 ├── DS18x20_Temperature                 # OneWire example
 ├── LumenMeter                          # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
 ├── Lvgl_Images                         # Screen color test
