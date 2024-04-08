@@ -20,6 +20,7 @@ jobs:
           - examples/DS18x20_Temperature
           - examples/Factory
           - examples/Lvgl_Images
+          - examples/LVGL_SD_Images
           - examples/LumenMeter
           - examples/PMU_ADC
           - examples/SPI_SDCard
