@@ -145,7 +145,7 @@ void setup()
     lv_obj_center(img1);
     lv_obj_add_event_cb(img1, images_event_cb, LV_EVENT_CLICKED, NULL);
 
-    // Only 1.91 Inch AMOLED board support
+    // Home Button Only 1.91 Inch AMOLED board support ,other board not support
     amoled.setHomeButtonCallback([](void *ptr) {
         static uint32_t checkMs = 0;
         if (millis() > checkMs) {
