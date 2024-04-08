@@ -20,7 +20,6 @@ static lv_obj_t *img1;
 static int16_t x, y;
 
 
-
 // Image resources need to define the screen size
 // #define USE_AMOLED_147    //1.47 inches 194x368
 // #define USE_AMOLED_191    //1.91 inches 240x536
@@ -68,10 +67,13 @@ const void *images[] = {
     &image_1_600x450,
     &image_2_600x450,
     &image_3_600x450,
-    &image_4_600x450,
-    &image_5_600x450,
-    &image_6_600x450,
-    &image_7_600x450,
+    
+    // Cannot customize partitions on ArduinoIDE, the maximum size is 3M APP
+    // Platformio does not have this limitation
+    // &image_4_600x450,
+    // &image_5_600x450,
+    // &image_6_600x450,
+    // &image_7_600x450,
 #elif defined(USE_AMOLED_191)
     &image_1_536x240,
     &image_2_536x240,
