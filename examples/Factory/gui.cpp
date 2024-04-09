@@ -39,6 +39,8 @@ LV_IMG_DECLARE(icon_xrp);
 LV_IMG_DECLARE(icon_bitcoin);
 
 LV_IMG_DECLARE(icon_humidity);
+LV_IMG_DECLARE(img_certification_amoled_191_tp);
+LV_IMG_DECLARE(img_certification_t4_s3_241_tp);
 
 
 static lv_obj_t *time_label;
@@ -890,6 +892,30 @@ void tileview_change_cb(lv_event_t *e)
     Serial.print(" pageId:");
     Serial.println(pageId);
 
+}
+
+
+void showCertification(uint32_t delay_ms)
+{
+    uint8_t board = amoled.getBoardID();
+
+    lv_obj_t *img =  lv_img_create(lv_scr_act());
+
+    if (board == LILYGO_AMOLED_191 && amoled.hasTouch()) {
+        lv_img_set_src(img, &img_certification_amoled_191_tp);
+    } else if (board == LILYGO_AMOLED_241) {
+        lv_img_set_src(img, &img_certification_t4_s3_241_tp);
+    } else {
+        lv_obj_del(img); return;
+    }
+    lv_obj_center(img);
+
+    uint32_t start_ms = millis();
+    while ((millis() - start_ms) < delay_ms) {
+        lv_timer_handler();
+        delay(2);
+    }
+    lv_obj_del(img); 
 }
 
 void factoryGUI(void)

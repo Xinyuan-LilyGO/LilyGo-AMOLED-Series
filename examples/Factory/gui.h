@@ -48,3 +48,4 @@ typedef struct  __OpenWeatherMapApi {
 
 
 void selectNextItem();
+void showCertification(uint32_t delay_ms);

@@ -36,6 +36,8 @@
 
 using namespace ace_button;
 
+// #define USE_WIFI_SMART_CONFIG // Defining USE_WIFI_SMART_CONFIG will automatically use the WiFi ssid and password saved inside the chip
+
 //! You can use EspTouch to configure the network key without changing the WiFi password below
 #ifndef WIFI_SSID
 #define WIFI_SSID             "Your WiFi SSID"
@@ -273,7 +275,8 @@ void setup()
         }
     }
 
-
+    // Show certificate image
+    showCertification(3000);
 
     // Draw Factory GUI
     factoryGUI();
@@ -283,31 +286,30 @@ void setup()
 
     // Connect to the Internet after initializing the UI.
 
-    // Uncomment will use WIFI configured with SmartConfig
-    /*
+    // Defining USE_WIFI_SMART_CONFIG will automatically use the WiFi ssid and password saved inside the chip
+#ifdef USE_WIFI_SMART_CONFIG
     wifi_config_t current_conf;
     esp_wifi_get_config(WIFI_IF_STA, &current_conf);
     if (strlen((const char *)current_conf.sta.ssid) == 0) {
-    */
+#endif
+        // Just for factory testing.
+        Serial.print("Use default WiFi SSID & PASSWORD!!");
+        Serial.print("SSID:"); Serial.println(WIFI_SSID);
+        Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
+        if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+            Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        }
+        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    // Just for factory testing.
-    Serial.print("Use default WiFi SSID & PASSWORD!!");
-    Serial.print("SSID:"); Serial.println(WIFI_SSID);
-    Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
-    if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
-        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
-    }
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-    // Uncomment will use WIFI configured with SmartConfig
-    /*
+    // Defining USE_WIFI_SMART_CONFIG will automatically use the WiFi ssid and password saved inside the chip
+#ifdef USE_WIFI_SMART_CONFIG
     } else {
-    Serial.println("Begin WiFi");
-    WiFi.begin();
+        Serial.println("Begin WiFi");
+        WiFi.begin();
     }
-    */
+#endif
 
     // Enable Watchdog
     enableLoopWDT();
