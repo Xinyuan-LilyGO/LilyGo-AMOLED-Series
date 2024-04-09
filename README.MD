@@ -40,6 +40,7 @@ examples/
 ├── AdjustBrightness                    # Adjust brightness example
 ├── DS18x20_Temperature                 # OneWire example
 ├── LumenMeter                          # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── LVGL_SD_Images                      # Display pictures saved in SD card
 ├── Lvgl_Images                         # Screen color test
 ├── PMU_ADC                             # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt                       # PMU interrupt example , only support 1.47-inch AMOLED
