@@ -93,6 +93,7 @@ void setup(void)
         lv_obj_t *btn = lv_btn_create(lv_scr_act());
         lv_obj_t *label = lv_label_create(btn);
         lv_label_set_text_fmt(label, "%d", i);
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
         lv_obj_center(btn);
         lv_obj_align(btn, align[i], 0, 0);
     }
@@ -140,11 +141,11 @@ void setup(void)
 
 void loop()
 {
-    static int16_t x, y;
-    uint8_t rotation = amoled.getRotation();
-    bool touched = amoled.getPoint(&x, &y);
-    if ( touched ) {
-        lv_label_set_text_fmt(label1, format_string, x, y, amoled.getRotation(), amoled.getName());
+    lv_indev_t *indev = lv_indev_get_next(NULL);
+    lv_point_t  point;
+    if ( indev->proc.state == LV_INDEV_STATE_PRESSED ) {
+        lv_indev_get_point(indev, &point);
+        lv_label_set_text_fmt(label1, format_string, point.x, point.y, amoled.getRotation(), amoled.getName());
     }
     lv_task_handler();
     button.check();
