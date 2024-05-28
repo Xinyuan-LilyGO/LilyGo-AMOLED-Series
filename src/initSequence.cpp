@@ -10,7 +10,7 @@
 #include "initSequence.h"
 
 
-const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGHT] = {
+const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGTH] = {
 
     // ===  CMD2 password  ===
     {0xfe00, {0x20}, 0x01},
@@ -501,7 +501,7 @@ const lcd_cmd_t sh8501_cmd[SH8501_INIT_SEQUENCE_LENGHT] = {
     {0x2900, {}, 0x80},
 };
 
-const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT] = {
+const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGTH] = {
     {0xFE00, {0x00}, 0x01}, //SET APGE 00H
     {0x1100, {0x00}, 0x80}, // Sleep Out
 
@@ -527,7 +527,7 @@ const lcd_cmd_t rm67162_cmd[RM67162_INIT_SEQUENCE_LENGHT] = {
 
 
 
-const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT] = {
+const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGTH] = {
     {0xFE00, {0x20}, 0x01},           //SET PAGE
     {0x2600, {0x0A}, 0x01},           //MIPI OFF
     {0x2400, {0x80}, 0x01},           //SPI write RAM
@@ -543,7 +543,7 @@ const lcd_cmd_t rm690b0_cmd[RM690B0_INIT_SEQUENCE_LENGHT] = {
     {0x5100, {0xFF}, 0x01},           //Write Display Brightness  MAX_VAL=0XFF
 };
 
-const lcd_cmd_t jd9613_cmd[JD9613_INIT_SEQUENCE_LENGHT] = {
+const lcd_cmd_t jd9613_cmd[JD9613_INIT_SEQUENCE_LENGTH] = {
     {0xfe, {0x01}, 0x02},
     {0xf7, {0x96, 0x13, 0xa9}, 0x04},
     {0x90, {0x01}, 0x02},

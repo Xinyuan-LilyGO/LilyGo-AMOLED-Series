@@ -140,7 +140,7 @@ static const DisplayConfigure_t SH8501_AMOLED  = {
     24,//address bit
     30000000,
     (lcd_cmd_t *)sh8501_cmd,
-    SH8501_INIT_SEQUENCE_LENGHT,
+    SH8501_INIT_SEQUENCE_LENGTH,
     SH8501_WIDTH, //width
     SH8501_HEIGHT, //height
     SH8501_WIDTH *SH8501_HEIGHT * sizeof(uint16_t), //frameBufferSize
@@ -162,7 +162,7 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     18,//BOARD_DISP_DATA0,
     7,//BOARD_DISP_DATA1,
     48,//BOARD_DISP_DATA2,
-    5,//BOARD_DISP_DATA3,
+    5,//BOARD_DISP_DATA3,           
     47,//BOARD_DISP_SCK,
     6,//BOARD_DISP_CS,
     BOARD_NONE_PIN,//DC
@@ -172,7 +172,7 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     24,//address bit
     75000000,
     (lcd_cmd_t *)rm67162_cmd,
-    RM67162_INIT_SEQUENCE_LENGHT,
+    RM67162_INIT_SEQUENCE_LENGTH,
     RM67162_WIDTH,//width
     RM67162_HEIGHT,//height
     0,//frameBufferSize
@@ -197,7 +197,7 @@ static const DisplayConfigure_t RM690B0_AMOLED  = {
     24,//address bit
     36000000,
     (lcd_cmd_t *)rm690b0_cmd,
-    RM690B0_INIT_SEQUENCE_LENGHT,
+    RM690B0_INIT_SEQUENCE_LENGTH,
     RM690B0_WIDTH,//width
     RM690B0_HEIGHT,//height
     0,//frameBufferSize
