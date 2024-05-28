@@ -56,6 +56,7 @@ examples/
 ├── TFT_eSPI_Sprite_Rotation            # Screen rotation, only available for 1.91, 2.41 inches
 ├── LVGL_Rotation                       # Screen rotation, only available for 1.91, 2.41 inches
 ├── Touchpad                            # Touchpad example
+├── TouchPaint                          # TouchPaint example
 └── lvgl                                # LVGL examples
     ├── event
     ├── get_started
