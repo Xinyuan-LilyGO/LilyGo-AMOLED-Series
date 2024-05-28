@@ -63,6 +63,8 @@ CoinMarketCapApiSubsribe coinSubsribe[] = {
     {52, &icon_xrp, "XPR"},
 };
 
+void createPaintUI(lv_obj_t *parent);
+
 static void update_date(lv_timer_t *e)
 {
     struct tm timeinfo;
@@ -826,7 +828,7 @@ void createWiFiConfigUI(lv_obj_t *parent)
     lv_label_set_text(tips_label, txt.c_str());
     lv_obj_align(tips_label, LV_ALIGN_TOP_MID, 0, 20);
 
-    const char *android_url = "https://github.com/EspressifApp/EsptouchForAndroid/releases/tag/v2.0.0/esptouch-v2.0.0.apk";
+    const char *android_url = "https://github.com/EspressifApp/EsptouchForAndroid/releases/download/v2.3.2/esptouch-v2.3.2.apk";
     const char *ios_url = "https://apps.apple.com/cn/app/espressif-esptouch/id1071176700";
 
 
@@ -915,8 +917,10 @@ void showCertification(uint32_t delay_ms)
         lv_timer_handler();
         delay(2);
     }
-    lv_obj_del(img); 
+    lv_obj_del(img);
 }
+
+uint16_t max_item_num = 6;
 
 void factoryGUI(void)
 {
@@ -948,10 +952,15 @@ void factoryGUI(void)
         createPixelsUI(t5);
         createWiFiConfigUI(t6);
         createDisplayBadPixelsTest(t7);
+        lv_obj_t *t8 = lv_tileview_add_tile(tileview, 7, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
+        createPaintUI(t8);
+        max_item_num = 8;
     } else {
         createWiFiConfigUI(t5);
         createDisplayBadPixelsTest(t6);
-        lv_obj_del(t7);
+        createPaintUI(t7);
+        max_item_num = 7;
+        // lv_obj_del(t7);
     }
 
 }
@@ -961,6 +970,202 @@ void selectNextItem()
 {
     static int id = 0;
     id++;
-    id %= 6;
+    id %= max_item_num;
     lv_obj_set_tile_id(tileview, id, 0, LV_ANIM_ON);
+}
+
+
+/////////////////////////////////////////////////////\
+
+struct {
+    /**
+     * root
+     *   -> toolbar
+     *     -> color
+     *     -> brush
+     *   -> Canvas
+     *   -> Colorwheel
+    */
+    lv_obj_t *root;
+    lv_obj_t *toolbarDiv;
+    lv_obj_t *brushColorButton;
+    lv_obj_t *brushButton;
+    lv_obj_t *refreshButton;
+    lv_obj_t *brushColorwheel;
+    lv_obj_t *brushWidthSlider;
+    lv_obj_t *canvas;
+    lv_draw_line_dsc_t brush;
+} ui;
+
+
+
+void onCanvasEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *obj = lv_event_get_target(e);
+    static lv_coord_t last_x, last_y = -32768;
+
+    if (code == LV_EVENT_PRESSING) {
+        lv_indev_t *indev = lv_indev_get_act();
+        if (indev == NULL) return;
+
+        lv_point_t point;
+        lv_indev_get_point(indev, &point);
+        lv_point_t points[2];
+        if ((last_x == -32768) || (last_y == -32768)) {
+            last_x = point.x;
+            last_y = point.y;
+        } else {
+            points[0].x = last_x;
+            points[0].y = last_y;
+            points[1].x = point.x;
+            points[1].y = point.y;
+            last_x = point.x;
+            last_y = point.y;
+            lv_canvas_draw_line(obj, points, 2, &ui.brush);
+        }
+    } else if (code == LV_EVENT_RELEASED) {
+        last_x = -32768;
+        last_y = -32768;
+    }
+
+}
+
+
+void onBrushColorLabelEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
+    }
+}
+
+
+void onBrushLabelEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_clear_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
+    }
+}
+
+
+void onBrushWidthSliderEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *slider = lv_event_get_target(e);
+    if (code == LV_EVENT_DEFOCUSED) {
+        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
+    } else if (code == LV_EVENT_VALUE_CHANGED) {
+        ui.brush.width = (lv_coord_t)lv_slider_get_value(slider);
+    }
+}
+
+
+
+void onBrushColorwheelEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *colorwheel = lv_event_get_target(e);
+    if (code == LV_EVENT_DEFOCUSED) {
+        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
+    } else if (code == LV_EVENT_VALUE_CHANGED) {
+        ui.brush.color = lv_colorwheel_get_rgb(colorwheel);
+    }
+}
+
+
+void onRefreshLabelEvent(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code == LV_EVENT_CLICKED) {
+
+        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+
+        lv_canvas_fill_bg(
+            ui.canvas,
+            lv_palette_lighten(LV_PALETTE_GREY, 3),
+            LV_OPA_COVER
+        );
+    }
+}
+
+void createPaintUI(lv_obj_t *parent)
+{
+    ui.root = (parent);
+    lv_obj_set_size(ui.root, lv_pct(100), lv_pct(100));
+
+    ui.toolbarDiv = lv_obj_create(ui.root);
+    lv_obj_align(ui.toolbarDiv, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_flex_grow(ui.toolbarDiv, 1);
+    lv_obj_set_flex_flow(ui.toolbarDiv, LV_FLEX_FLOW_ROW);
+    lv_obj_set_size(ui.toolbarDiv, LV_PCT(60), LV_PCT(20));
+    lv_obj_add_flag(ui.toolbarDiv, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_bg_opa(ui.toolbarDiv, LV_OPA_TRANSP, LV_PART_MAIN);
+
+    ui.brushColorButton  =  lv_btn_create(ui.toolbarDiv);
+    lv_obj_set_size(ui.brushColorButton, lv_pct(30), lv_pct(100));
+    lv_obj_t *label = lv_label_create(ui.brushColorButton);
+    lv_label_set_text(label, "Pen");
+    lv_obj_center(label);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_add_flag(ui.brushColorButton, LV_OBJ_FLAG_CLICKABLE);
+
+    ui.brushButton =  lv_btn_create(ui.toolbarDiv);
+    lv_obj_set_size(ui.brushButton, lv_pct(30), lv_pct(100));
+    label = lv_label_create(ui.brushButton);
+    lv_label_set_text(label, "Size");
+    lv_obj_center(label);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_add_flag(ui.brushButton, LV_OBJ_FLAG_CLICKABLE);
+
+    ui.refreshButton =  lv_btn_create(ui.toolbarDiv);
+    lv_obj_set_size(ui.refreshButton, lv_pct(30), lv_pct(100));
+    label = lv_label_create(ui.refreshButton);
+    lv_label_set_text(label, "Clear");
+    lv_obj_center(label);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_add_flag(ui.refreshButton, LV_OBJ_FLAG_CLICKABLE);
+
+    ui.brushColorwheel = lv_colorwheel_create(ui.root, true);
+    lv_obj_set_size(ui.brushColorwheel,  150, 150);
+    lv_obj_align_to(ui.brushColorwheel, ui.toolbarDiv, LV_ALIGN_OUT_BOTTOM_MID, 0, 30);
+    lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+
+    ui.brushWidthSlider = lv_slider_create(ui.root);
+    lv_slider_set_value(ui.brushWidthSlider, 10, LV_ANIM_OFF);
+    lv_obj_center(ui.brushWidthSlider);
+    lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+    lv_slider_set_range(ui.brushWidthSlider, 2, 20);
+
+    ui.canvas = lv_canvas_create(ui.root);
+    uint16_t w = amoled.width();
+    uint16_t h = amoled.height();
+    lv_color_t *buf = (lv_color_t *)ps_malloc(w * h * sizeof(lv_color_t));
+    lv_canvas_set_buffer(ui.canvas, buf, w, h, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_fill_bg(ui.canvas, lv_palette_lighten(LV_PALETTE_GREY, 3), LV_OPA_COVER);
+    lv_obj_move_background(ui.canvas);
+    lv_obj_add_flag(ui.canvas, LV_OBJ_FLAG_CLICKABLE);
+
+    lv_draw_line_dsc_init(&ui.brush);
+    ui.brush.width = 8;
+    ui.brush.round_start = true;
+    ui.brush.round_end = true;
+    ui.brush.color = lv_color_make(255, 0, 0);
+    ui.brush.opa = LV_OPA_COVER;
+
+
+    lv_obj_add_event_cb(ui.brushColorButton, onBrushColorLabelEvent, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui.brushButton, onBrushLabelEvent, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui.brushWidthSlider, onBrushWidthSliderEvent, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui.brushColorwheel, onBrushColorwheelEvent, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui.refreshButton, onRefreshLabelEvent, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
 }
