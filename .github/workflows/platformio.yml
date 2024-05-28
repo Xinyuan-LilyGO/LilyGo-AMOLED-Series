@@ -34,6 +34,7 @@ jobs:
           - examples/TFT_eSPI_Sprite_graphicstest_small
           - examples/TFT_eSPI_Sprite_RLE_Font
           - examples/Touchpad
+          - examples/TouchPaint
           - examples/LVGL_Rotation
           - examples/TFT_eSPI_Sprite_Rotation
           - examples/lvgl/event

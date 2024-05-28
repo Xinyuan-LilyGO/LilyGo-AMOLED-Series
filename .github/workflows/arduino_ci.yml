@@ -34,6 +34,7 @@ jobs:
           - examples/TFT_eSPI_Sprite_graphicstest_small/TFT_eSPI_Sprite_graphicstest_small.ino
           - examples/TFT_eSPI_Sprite_RLE_Font/TFT_eSPI_Sprite_RLE_Font.ino
           - examples/Touchpad/Touchpad.ino
+          - examples/TouchPaint/TouchPaint.ino
           - examples/LVGL_Rotation/LVGL_Rotation.ino
           - examples/TFT_eSPI_Sprite_Rotation/TFT_eSPI_Sprite_Rotation.ino
           - examples/lvgl/event/event.ino
@@ -91,7 +92,7 @@ jobs:
           arduino-cli config init ;
           arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json ;
           arduino-cli core update-index ;
-          arduino-cli core install esp32:esp32@2.0.14 ;
+          arduino-cli core install esp32:esp32@2.0.15 ;
 
       - name: Build examples
         run: |
