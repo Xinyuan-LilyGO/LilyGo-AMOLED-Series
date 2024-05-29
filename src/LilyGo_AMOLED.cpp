@@ -137,9 +137,9 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
 #if ESP_IDF_VERSION_VAL(4,4,7) < ESP_IDF_VERSION
-            esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-#else
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+#else
+            esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 #endif
             uint32_t v1 = 0,  raw = 0;
             raw = analogRead(boards->adcPins);
