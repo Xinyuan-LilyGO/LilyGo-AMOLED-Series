@@ -10,6 +10,7 @@
 #include "LilyGo_AMOLED.h"
 #include <esp_adc_cal.h>
 #include <driver/gpio.h>
+#include "RM67162_AMOLED_SPI.h"
 
 #define SEND_BUF_SIZE           (16384)
 #define TFT_SPI_MODE            SPI_MODE0
@@ -17,7 +18,9 @@
 
 LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL)
 {
+    panel_handle = NULL;
     pBuffer = NULL;
+    spi = NULL;
     _brightness = AMOLED_DEFAULT_BRIGHTNESS;
     // Prevent previously set hold
     switch (esp_sleep_get_wakeup_cause()) {
@@ -39,6 +42,11 @@ LilyGo_AMOLED::~LilyGo_AMOLED()
         free(pBuffer);
         pBuffer = NULL;
     }
+
+    if (panel_handle) {
+        esp_lcd_panel_del(*panel_handle);
+        panel_handle = NULL;
+    }
 }
 
 const char *LilyGo_AMOLED::getName()
@@ -49,6 +57,8 @@ const char *LilyGo_AMOLED::getName()
         return "1.91 inch";
     } else if (boards == &BOARD_AMOLED_241) {
         return "2.41 inch";
+    } else if (boards == &BOARD_AMOLED_191_SPI) {
+        return "1.91 inch(SPI Interface)";
     }
     return "Unknown";
 }
@@ -61,6 +71,8 @@ uint8_t LilyGo_AMOLED::getBoardID()
         return LILYGO_AMOLED_191;
     } else if (boards == &BOARD_AMOLED_241) {
         return LILYGO_AMOLED_241;
+    } else if (boards == &BOARD_AMOLED_191_SPI) {
+        return LILYGO_AMOLED_191_SPI;
     }
     return LILYGO_AMOLED_UNKNOWN;
 }
@@ -94,7 +106,7 @@ bool LilyGo_AMOLED::isPressed()
 {
     if (boards == &BOARD_AMOLED_147) {
         return TouchDrvCHSC5816::isPressed();
-    } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241) {
+    } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
         return TouchDrvCSTXXX::isPressed();
     }
     return false;
@@ -105,7 +117,7 @@ uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
     uint8_t point = 0;
     if (boards == &BOARD_AMOLED_147) {
         point =  TouchDrvCHSC5816::getPoint(x, y);
-    } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241) {
+    } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
         point =  TouchDrvCSTXXX::getPoint(x, y);
     }
     return point;
@@ -124,7 +136,11 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             }
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
+#if ESP_IDF_VERSION_VAL(4,4,7) < ESP_IDF_VERSION
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+#else
+            esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
+#endif
             uint32_t v1 = 0,  raw = 0;
             raw = analogRead(boards->adcPins);
             v1 = esp_adc_cal_raw_to_voltage(raw, &adc_chars) * 2;
@@ -382,7 +398,14 @@ bool LilyGo_AMOLED::begin()
     Wire.begin(3, 2);
     Wire.beginTransmission(CSTXXX_SLAVE_ADDRESS);
     if (Wire.endTransmission() == 0) {
-        return beginAMOLED_191(true);
+
+        // Check RTC Slave address
+        Wire.beginTransmission(0x51);
+        if (Wire.endTransmission() == 0) {
+            return beginAMOLED_191_SPI(true);
+        } else {
+            return beginAMOLED_191(true);
+        }
     }
     log_e("Unable to detect 1.91-inch touch board model!");
 
@@ -447,6 +470,60 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
     return true;
 }
 
+bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
+{
+    boards = &BOARD_AMOLED_191_SPI;
+
+    if (boards->PMICEnPins != -1) {
+        pinMode(boards->PMICEnPins, OUTPUT);
+        digitalWrite(boards->PMICEnPins, HIGH);
+    }
+
+    panel_handle = panel_rm67162_init_spi_bus(DEFAULT_SPI_HANDLER,
+                   boards->display.d0,
+                   -1,
+                   boards->display.sck,
+                   boards->display.d1,
+                   boards->display.cs,
+                   boards->display.rst,
+                   boards->display.freq
+                                             );
+    if (!panel_handle) {
+        while (1) {
+            Serial.println("attach spi bus failed !"); delay(1000);
+        }
+    }
+
+    if (touchFunc && boards->touch) {
+        if (boards->touch->sda != -1 && boards->touch->scl != -1) {
+            Wire.begin(boards->touch->sda, boards->touch->scl);
+            deviceScan(&Wire, &Serial);
+
+            // Try to find touch device
+            Wire.beginTransmission(CST816_SLAVE_ADDRESS);
+            if (Wire.endTransmission() == 0) {
+                TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
+                bool res = TouchDrvCSTXXX::begin(Wire, CST816_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
+                if (!res) {
+                    log_e("Failed to find CST816T - check your wiring!");
+                    // return false;
+                    _touchOnline = false;
+                } else {
+                    _touchOnline = true;
+                    TouchDrvCSTXXX::setCenterButtonCoordinate(600, 120);  //AMOLED 1.91 inch
+                }
+            }
+        }
+    } else {
+        _touchOnline = false;
+    }
+
+    setRotation(0);
+
+    return true;
+}
+
+
 
 bool LilyGo_AMOLED::beginAMOLED_241()
 {
@@ -481,7 +558,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         SPI.begin(boards->sd->sck, boards->sd->miso, boards->sd->mosi);
         // Set mount point to /fs
         if (!SD.begin(boards->sd->cs, SPI, 4000000U, "/fs")) {
-            log_e("Failed to dected SDCard!");
+            log_e("Failed to detect SD Card!");
         }
         if (SD.cardType() != CARD_NONE) {
             log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
@@ -535,7 +612,7 @@ bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
 
     // Set mount point to /fs
     if (!SD.begin(cs, SPI, 4000000U, "/fs")) {
-        log_e("Failed to dected SDCard!");
+        log_e("Failed to detect SD Card!!");
         return false;
     }
     if (SD.cardType() != CARD_NONE) {
@@ -609,17 +686,25 @@ bool LilyGo_AMOLED::beginAMOLED_147()
     return true;
 }
 
-void LilyGo_AMOLED::writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t lenght)
+void LilyGo_AMOLED::writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t length)
 {
+
+    // SPI
+    if (panel_handle) {
+        panel_rm67162_write_command(*panel_handle, cmd, pdat, length);
+        return;
+    }
+
+    // QSPI
     setCS();
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));
     t.flags = (SPI_TRANS_MULTILINE_CMD | SPI_TRANS_MULTILINE_ADDR);
     t.cmd = 0x02;
-    t.addr = cmd;
-    if (lenght != 0) {
+    t.addr = cmd << 8;
+    if (length != 0) {
         t.tx_buffer = pdat;
-        t.length = 8 * lenght;
+        t.length = 8 * length;
     } else {
         t.tx_buffer = NULL;
         t.length = 0;
@@ -631,7 +716,7 @@ void LilyGo_AMOLED::writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t lenght)
 void LilyGo_AMOLED::setBrightness(uint8_t level)
 {
     _brightness = level;
-    lcd_cmd_t t = {0x5100, {level}, 0x01};
+    lcd_cmd_t t = {LCD_CMD_BRIGHTNESS, {level}, 0x01};
     writeCommand(t.addr, t.param, t.len);
 }
 
@@ -648,7 +733,7 @@ void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_
     ye += _offset_y;
     lcd_cmd_t t[3] = {
         {
-            0x2A00, {
+            LCD_CMD_CASET, {
                 (uint8_t)((xs >> 8) & 0xFF),
                 (uint8_t)(xs & 0xFF),
                 (uint8_t)((xe >> 8) & 0xFF),
@@ -656,7 +741,7 @@ void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_
             }, 0x04
         },
         {
-            0x2B00, {
+            LCD_CMD_RASET, {
                 (uint8_t)((ys >> 8) & 0xFF),
                 (uint8_t)(ys & 0xFF),
                 (uint8_t)((ye >> 8) & 0xFF),
@@ -664,7 +749,7 @@ void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_
             }, 0x04
         },
         {
-            0x2C00, {
+            LCD_CMD_RAMWR, {
                 0x00
             }, 0x00
         },
@@ -678,6 +763,12 @@ void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_
 // Push (aka write pixel) colours to the TFT (use setAddrWindow() first)
 void LilyGo_AMOLED::pushColors(uint16_t *data, uint32_t len)
 {
+
+    if (panel_handle) {
+        panel_rm67162_tx_colors(*panel_handle, data, len * sizeof(uint16_t));
+        return;
+    }
+
     bool first_send = true;
     uint16_t *p = data;
     assert(p);
@@ -819,7 +910,7 @@ void LilyGo_AMOLED::sleep()
     assert(boards);
 
     //Wire amoled to sleep mode
-    lcd_cmd_t t = {0x1000, {0x00}, 1}; //Sleep in
+    lcd_cmd_t t = {LCD_CMD_SLPIN, {0x00}, 1}; //Sleep in
     writeCommand(t.addr, t.param, t.len);
 
     if (boards) {
@@ -833,7 +924,7 @@ void LilyGo_AMOLED::sleep()
             TouchDrvCSTXXX::sleep();
 
         } else if (boards == &BOARD_AMOLED_147) {
-            Serial.println("PMU Disbale AMOLED Power");
+            Serial.println("PMU Disable AMOLED Power");
 
             // Turn off Sensor
             SensorCM32181::powerDown();
@@ -872,7 +963,7 @@ void LilyGo_AMOLED::sleep()
 
 void LilyGo_AMOLED::wakeup()
 {
-    lcd_cmd_t t = {0x1100, {0x00}, 1};// Sleep Out
+    lcd_cmd_t t = {0x11, {0x00}, 1};// Sleep Out
     writeCommand(t.addr, t.param, t.len);
 }
 
@@ -891,7 +982,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
     uint8_t data = 0x00;
     rotation %= 4;
     _rotation = rotation;
-    if (boards == &BOARD_AMOLED_191) {
+    if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_191_SPI) {
         switch (_rotation) {
         case 1:
             data = RM67162_MADCTL_RGB;
@@ -934,7 +1025,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             }
             break;
         }
-        writeCommand(0x3600, &data, 1);
+        writeCommand(LCD_CMD_MADCTL, &data, 1);
     } else if (boards == &BOARD_AMOLED_241) {
         switch (_rotation) {
         case 1:
@@ -986,7 +1077,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             }
             break;
         }
-        writeCommand(0x3600, &data, 1);
+        writeCommand(LCD_CMD_MADCTL, &data, 1);
     } else {
         Serial.println("The screen you are currently using does not support screen rotation!!!");
     }

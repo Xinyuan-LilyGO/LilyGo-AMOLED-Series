@@ -32,6 +32,9 @@
 #include <driver/temperature_sensor.h>
 #endif
 
+#include <esp_lcd_types.h>
+
+
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
 #endif
@@ -63,7 +66,7 @@
 #define DEFAULT_SCK_SPEED   (30 * 1000 * 1000)
 
 typedef struct __DisplayConfigure {
-    int d0;
+    int d0; 
     int d1;
     int d2;
     int d3;
@@ -162,7 +165,7 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     18,//BOARD_DISP_DATA0,
     7,//BOARD_DISP_DATA1,
     48,//BOARD_DISP_DATA2,
-    5,//BOARD_DISP_DATA3,           
+    5,//BOARD_DISP_DATA3,
     47,//BOARD_DISP_SCK,
     6,//BOARD_DISP_CS,
     BOARD_NONE_PIN,//DC
@@ -179,6 +182,28 @@ static const DisplayConfigure_t RM67162_AMOLED  = {
     false //fullRefresh
 };
 
+// LILYGO 1.91 Inch AMOLED(RM67162) S3R8
+// https://www.lilygo.cc/products/t-display-s3-amoled
+static const DisplayConfigure_t RM67162_AMOLED_SPI  = {
+    18,//BOARD_DISP_DATA0,          //MOSI
+    7,//BOARD_DISP_DATA1,           //DC
+    -1,//BOARD_DISP_DATA2,
+    -1,//BOARD_DISP_DATA3,
+    47,//BOARD_DISP_SCK,            //SCK
+    6,//BOARD_DISP_CS,              //CS
+    BOARD_NONE_PIN,//DC
+    17,//BOARD_DISP_RESET,          //RST
+    9, //BOARD_DISP_TE,
+    8, //command bit
+    24,//address bit
+    40000000,
+    (lcd_cmd_t *)rm67162_cmd,
+    RM67162_INIT_SEQUENCE_LENGTH,
+    RM67162_WIDTH,//width
+    RM67162_HEIGHT,//height
+    0,//frameBufferSize
+    false //fullRefresh
+};
 
 
 // LILYGO 2.41 Inch AMOLED(RM690B0) S3R8
@@ -212,6 +237,21 @@ static const BoardSDCardPins_t AMOLED_241_SD_PINS =  {4/*MISO*/, 2/*MOSI*/, 3/*S
 static const  BoardsConfigure_t BOARD_AMOLED_191 = {
     // RM67162 Driver
     RM67162_AMOLED,
+    &AMOLED_191_TOUCH_PINS,     //Touch CST816T
+    NULL,//PMU
+    NULL,//SENSOR
+    NULL,//SDCard
+    AMOLED_191_BUTTONTS,//Button Pins
+    1, //Button Number
+    -1,//pixelsPins
+    4, //adcPins
+    38,//PMICEnPins
+    false,//framebuffer
+};
+
+static const  BoardsConfigure_t BOARD_AMOLED_191_SPI = {
+    // RM67162 Driver
+    RM67162_AMOLED_SPI,
     &AMOLED_191_TOUCH_PINS,     //Touch CST816T
     NULL,//PMU
     NULL,//SENSOR
@@ -262,6 +302,7 @@ enum AmoledBoardID {
     LILYGO_AMOLED_147 = 0x01,
     LILYGO_AMOLED_191,
     LILYGO_AMOLED_241,
+    LILYGO_AMOLED_191_SPI,
     LILYGO_AMOLED_UNKNOWN,
 };
 
@@ -287,11 +328,15 @@ public:
     // https://www.lilygo.cc/products/t-display-s3-amoled
     bool beginAMOLED_191(bool touchFunc = true);
 
+    // LILYGO 1.91 Inc AMOLED(RM67162 SPI Interface) S3R8
+    bool beginAMOLED_191_SPI(bool touchFunc = true);
+
     // LILYGO 1.47 Inc AMOLED(SH8501) S3R8
     // https://www.lilygo.cc/products/t-display-amoled
     bool beginAMOLED_147();
 
-
+    // LILYGO 2.41 Inc AMOLED(RM690B0) S3R8
+    // https://www.lilygo.cc/products/t4-s3
     bool beginAMOLED_241();
 
 
@@ -348,13 +393,15 @@ private:
     bool initPMU();
     void inline setCS();
     void inline clrCS();
-    void writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t lenght);
+    void writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t length);
     uint16_t *pBuffer;
     spi_device_handle_t spi;
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
     bool _touchOnline;
     uint16_t _width, _height;
+
+    esp_lcd_panel_handle_t *panel_handle;
 
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;
