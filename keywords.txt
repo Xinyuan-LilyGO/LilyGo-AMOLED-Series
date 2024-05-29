@@ -28,7 +28,7 @@ beginCore	KEYWORD2
 width	KEYWORD2
 height	KEYWORD2
 getPoint	KEYWORD2
-getBoarsdConfigure	KEYWORD2
+getBoardsConfigure	KEYWORD2
 isPressed	KEYWORD2
 getBattVoltage	KEYWORD2
 getVbusVoltage	KEYWORD2
@@ -40,8 +40,8 @@ attachPMU	KEYWORD2
 readPMU	KEYWORD2
 clearPMU	KEYWORD2
 enablePMUInterrupt	KEYWORD2
-diablePMUInterrupt	KEYWORD2
-getBoarsdConfigure	KEYWORD2
+disablePMUInterrupt	KEYWORD2
+getBoardsConfigure	KEYWORD2
 getName	KEYWORD2
 getBoardID	KEYWORD2
 sleep	KEYWORD2

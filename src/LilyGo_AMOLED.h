@@ -377,9 +377,9 @@ public:
     uint64_t readPMU();
     void clearPMU();
     void enablePMUInterrupt(uint32_t params);
-    void diablePMUInterrupt(uint32_t params);
+    void disablePMUInterrupt(uint32_t params);
 
-    const BoardsConfigure_t *getBoarsdConfigure();
+    const BoardsConfigure_t *getBoardsConfigure();
     const char *getName();
     uint8_t getBoardID();
 

@@ -77,7 +77,7 @@ uint8_t LilyGo_AMOLED::getBoardID()
     return LILYGO_AMOLED_UNKNOWN;
 }
 
-const BoardsConfigure_t *LilyGo_AMOLED::getBoarsdConfigure()
+const BoardsConfigure_t *LilyGo_AMOLED::getBoardsConfigure()
 {
     return boards;
 }
@@ -895,7 +895,7 @@ void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
         }
     }
 }
-void LilyGo_AMOLED::diablePMUInterrupt(uint32_t params)
+void LilyGo_AMOLED::disablePMUInterrupt(uint32_t params)
 {
     if (boards) {
         if (boards->pmu && (boards == &BOARD_AMOLED_147)) {

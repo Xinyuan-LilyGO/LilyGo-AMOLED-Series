@@ -37,7 +37,7 @@ void setup()
     amoled.attachPMU(setFlag);
 
     // Disable all interrupts
-    amoled.diablePMUInterrupt(XPOWERS_AXP2101_ALL_IRQ);
+    amoled.disablePMUInterrupt(XPOWERS_AXP2101_ALL_IRQ);
 
     // Print interrupt register
     amoled.printIntRegister(&Serial);

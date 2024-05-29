@@ -115,7 +115,7 @@ void buttonHandleEvent(AceButton *button,
     // Serial.print(F("; buttonState: "));
     // Serial.println(buttonState);
 
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     id = amoled.getBoardID();
 
     switch (eventType) {
@@ -191,7 +191,7 @@ void buttonHandleEvent(AceButton *button,
 
 void buttonHandlerTask(void *ptr)
 {
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     while (1) {
         for (int i = 0; i < boards->buttonNum; ++i) {
             button[i].check();
@@ -245,7 +245,7 @@ void setup()
     // Register lvgl helper
     beginLvglHelper(amoled);
 
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
 
     //Set button on/off charge led , just for test button ,only 1.47 inch amoled available
     if (boards->buttonNum) {

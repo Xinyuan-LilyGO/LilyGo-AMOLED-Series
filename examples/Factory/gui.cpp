@@ -300,7 +300,7 @@ void createBrightnessUI(lv_obj_t *parent)
 
 
     //SDCard
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     if (boards->sd) {
         label = lv_label_create(cont);
         if (SD.cardType() != CARD_NONE) {
@@ -539,7 +539,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
 
 
     //SDCard
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     if (boards->sd) {
         lv_obj_t *img_sd = lv_img_create(cont);
         lv_img_set_src(img_sd, &icon_micro_sd);
@@ -561,7 +561,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
         uint16_t vol =   amoled.getBattVoltage();
         lv_label_set_text_fmt(p[0], "%u mV", vol);
 
-        const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+        const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
         if (boards->pmu) {
             vol =   amoled.getVbusVoltage();
             lv_label_set_text_fmt(p[1], "%u mV", vol);
@@ -947,7 +947,7 @@ void factoryGUI(void)
     createDeviceInfoUI(t3);
     createBrightnessUI(t4);
 
-    const  BoardsConfigure_t *boards = amoled.getBoarsdConfigure();
+    const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     if (boards->pixelsPins != -1) {
         createPixelsUI(t5);
         createWiFiConfigUI(t6);
