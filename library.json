@@ -1,6 +1,6 @@
 {
   "name": "LilyGo-AMOLED-Series",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "LilyGo AMOLED Arduino library",
   "keywords": "lilygo,amoled",
   "authors": [
@@ -49,7 +49,7 @@
     {
       "owner": "lvgl",
       "name": "lvgl",
-      "version": "8.3.9"
+      "version": "8.3.11"
     },
     {
       "owner": "lewisxhe",
@@ -59,7 +59,7 @@
     {
       "owner": "lewisxhe",
       "name": "SensorLib",
-      "version": "0.1.6"
+      "version": "0.2.0"
     }
   ],
   "examples": ["examples/*/*.ino"],
