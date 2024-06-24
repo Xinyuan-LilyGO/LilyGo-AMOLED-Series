@@ -33,6 +33,8 @@
 #endif
 
 #include <esp_lcd_types.h>
+#include "SensorPCF85063.hpp"
+
 
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
@@ -157,7 +159,8 @@ static const BoardSensorPins_t AMOLED_147_SENSOR_PINS =  {1/*SDA*/, 2/*SCL*/, 8/
 
 static const int AMOLED_191_BUTTONTS[1] = {0};
 static const BoardTouchPins_t AMOLED_191_TOUCH_PINS = {3 /*SDA*/, 2 /*SCL*/, 21/*IRQ*/, -1/*RST*/};
-
+static const BoardSDCardPins_t AMOLED_191_SPI_SD_PINS =  {13/*MISO*/, 12/*MOSI*/, 14/*SCK*/, 11/*CS*/};
+static const BoardPmuPins_t AMOLED_191_SPI_PMU_PINS =  {3/*SDA*/, 2/*SCL*/, 1/*IRQ*/};
 
 // LILYGO 1.91 Inch AMOLED(RM67162) S3R8
 // https://www.lilygo.cc/products/t-display-s3-amoled
@@ -253,10 +256,10 @@ static const  BoardsConfigure_t BOARD_AMOLED_191_SPI = {
     // RM67162 Driver
     RM67162_AMOLED_SPI,
     &AMOLED_191_TOUCH_PINS,     //Touch CST816T
-    NULL,//PMU
-    NULL,//SENSOR
-    NULL,//SDCard
-    AMOLED_191_BUTTONTS,//Button Pins
+    &AMOLED_191_SPI_PMU_PINS,   //PMU
+    NULL,                       //SENSOR
+    &AMOLED_191_SPI_SD_PINS,    //SDCard
+    AMOLED_191_BUTTONTS,        //Button Pins
     1, //Button Number
     -1,//pixelsPins
     4, //adcPins
@@ -312,7 +315,8 @@ class LilyGo_AMOLED:
     public TouchDrvCHSC5816,
     public SensorCM32181,
     public TouchDrvCSTXXX,
-    public PowersSY6970
+    public PowersSY6970,
+    public SensorPCF85063
 {
 public:
     LilyGo_AMOLED();
@@ -351,7 +355,15 @@ public:
     void pushColors(uint16_t *data, uint32_t len);
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
 
-
+    /**
+     * @brief   Hang on SD card
+     * @note   If the specified Pin is not passed in, the default Pin will be used as the SPI
+     * @param  miso: 1.91 Inch [GPIO13] 1.47 Inch [GPIO47]    2.41 Inch defaults to onboard SD slot
+     * @param  mosi: 1.91 Inch [GPIO12] 1.47 Inch [GPIO39]    2.41 Inch defaults to onboard SD slot
+     * @param  sclk: 1.91 Inch [GPIO14] 1.47 Inch [GPIO38]    2.41 Inch defaults to onboard SD slot
+     * @param  cs:   1.91 Inch [GPIO11] 1.47 Inch [GPIO9]     2.41 Inch defaults to onboard SD slot
+     * @retval Returns true if successful, otherwise false
+     */
     bool installSD(int miso = -1, int mosi = -1, int sclk = -1, int cs = -1);
 
     void uninstallSD();

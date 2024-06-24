@@ -130,7 +130,7 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             if (boards->pmu) {
                 if (boards == &BOARD_AMOLED_147) {
                     return XPowersAXP2101::getBattVoltage();
-                } else  if (boards == &BOARD_AMOLED_241) {
+                } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                     return PowersSY6970::getBattVoltage();
                 }
             }
@@ -156,7 +156,7 @@ uint16_t LilyGo_AMOLED::getVbusVoltage(void)
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::getVbusVoltage();
-            } else  if (boards == &BOARD_AMOLED_241) {
+            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                 return PowersSY6970::getVbusVoltage();
             }
         }
@@ -170,7 +170,7 @@ bool LilyGo_AMOLED::isBatteryConnect(void)
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isBatteryConnect();
-            } else  if (boards == &BOARD_AMOLED_241) {
+            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                 return PowersSY6970::isBatteryConnect();
             }
         }
@@ -184,7 +184,7 @@ uint16_t LilyGo_AMOLED::getSystemVoltage(void)
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::getSystemVoltage();
-            } else  if (boards == &BOARD_AMOLED_241) {
+            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                 return PowersSY6970::getSystemVoltage();
             }
         }
@@ -198,7 +198,7 @@ bool LilyGo_AMOLED::isCharging(void)
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isCharging();
-            } else  if (boards == &BOARD_AMOLED_241) {
+            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                 return PowersSY6970::isCharging();
             }
         }
@@ -212,7 +212,7 @@ bool LilyGo_AMOLED::isVbusIn(void)
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isVbusIn();
-            } else  if (boards == &BOARD_AMOLED_241) {
+            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
                 return PowersSY6970::isVbusIn();
             }
         }
@@ -402,8 +402,10 @@ bool LilyGo_AMOLED::begin()
         // Check RTC Slave address
         Wire.beginTransmission(0x51);
         if (Wire.endTransmission() == 0) {
+            log_i("Detect 1.91-inch SPI board model!");
             return beginAMOLED_191_SPI(true);
         } else {
+            log_i("Detect 1.91-inch QSPI board model!");
             return beginAMOLED_191(true);
         }
     }
@@ -490,8 +492,23 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
                                              );
     if (!panel_handle) {
         while (1) {
-            Serial.println("attach spi bus failed !"); delay(1000);
+            log_e("attach spi bus failed !"); delay(1000);
         }
+    }
+
+    if (boards->pmu) {
+        Wire.begin(boards->pmu->sda, boards->pmu->scl);
+        deviceScan(&Wire, &Serial);
+        if (PowersSY6970::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS)) {
+            PowersSY6970::enableADCMeasure();
+            PowersSY6970::disableOTG();
+        } else {
+            log_e("begin sy6970 failed !");
+        }
+    }
+
+    if (!SensorPCF85063::init(Wire, boards->pmu->sda, boards->pmu->scl)) {
+        log_e("begin rtc failed!");
     }
 
     if (touchFunc && boards->touch) {
@@ -519,6 +536,8 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
     }
 
     setRotation(0);
+
+    installSD();
 
     return true;
 }
@@ -571,10 +590,10 @@ bool LilyGo_AMOLED::beginAMOLED_241()
 }
 
 // Default SPI Pin
-#define AMOLED_191_DEFAULT_MISO  15
-#define AMOLED_191_DEFAULT_MOSI  14
-#define AMOLED_191_DEFAULT_SCLK  13
-#define AMOLED_191_DEFAULT_CS    12
+#define AMOLED_191_DEFAULT_MISO  13
+#define AMOLED_191_DEFAULT_MOSI  12
+#define AMOLED_191_DEFAULT_SCLK  14
+#define AMOLED_191_DEFAULT_CS    11
 
 #define AMOLED_147_DEFAULT_MISO  47
 #define AMOLED_147_DEFAULT_MOSI  39
@@ -583,15 +602,15 @@ bool LilyGo_AMOLED::beginAMOLED_241()
 /**
  * @brief   Hang on SD card
  * @note   If the specified Pin is not passed in, the default Pin will be used as the SPI
- * @param  miso: 1.91 Inch [GPIO15] 1.47 Inch [GPIO47]    2.41 Inch defaults to onboard SD slot
- * @param  mosi: 1.91 Inch [GPIO14] 1.47 Inch [GPIO39]    2.41 Inch defaults to onboard SD slot
- * @param  sclk: 1.91 Inch [GPIO13] 1.47 Inch [GPIO38]    2.41 Inch defaults to onboard SD slot
- * @param  cs:   1.91 Inch [GPIO12] 1.47 Inch [GPIO9]     2.41 Inch defaults to onboard SD slot
+ * @param  miso: 1.91 Inch [GPIO13] 1.47 Inch [GPIO47]    2.41 Inch defaults to onboard SD slot
+ * @param  mosi: 1.91 Inch [GPIO12] 1.47 Inch [GPIO39]    2.41 Inch defaults to onboard SD slot
+ * @param  sclk: 1.91 Inch [GPIO14] 1.47 Inch [GPIO38]    2.41 Inch defaults to onboard SD slot
+ * @param  cs:   1.91 Inch [GPIO11] 1.47 Inch [GPIO9]     2.41 Inch defaults to onboard SD slot
  * @retval Returns true if successful, otherwise false
  */
 bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
 {
-    if (boards == &BOARD_AMOLED_241) {
+    if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
         miso = boards->sd->miso;
         mosi = boards->sd->mosi;
         sclk = boards->sd->sck;
@@ -915,7 +934,7 @@ void LilyGo_AMOLED::sleep()
 
     if (boards) {
 
-        if (boards == &BOARD_AMOLED_241) {
+        if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
             PowersSY6970::disableADCMeasure();
             PowersSY6970::disableOTG();
 
