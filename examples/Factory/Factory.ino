@@ -230,7 +230,7 @@ void setup()
     // Automatically determine the access device
     rslt = amoled.begin();
     Serial.println("============================================");
-    Serial.print("    Board Nmae:LilyGo AMOLED "); Serial.println(amoled.getName());
+    Serial.print("    Board Name:LilyGo AMOLED "); Serial.println(amoled.getName());
     Serial.println("============================================");
 
 
