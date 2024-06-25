@@ -10,7 +10,30 @@
 #include "LilyGo_AMOLED.h"
 #include <esp_adc_cal.h>
 #include <driver/gpio.h>
-#include "RM67162_AMOLED_SPI.h"
+
+#ifndef LCD_CMD_MADCTL
+#define LCD_CMD_MADCTL       (0x36)     // Memory data access control
+#endif
+#ifndef LCD_CMD_CASET
+#define LCD_CMD_CASET        (0x2A) // Set column address
+#endif
+
+#ifndef LCD_CMD_RASET
+#define LCD_CMD_RASET        (0x2B) // Set row address
+#endif
+
+#ifndef LCD_CMD_RAMWR
+#define LCD_CMD_RAMWR        (0x2C) // Write frame memory
+#endif
+
+
+#ifndef LCD_CMD_SLPIN
+#define LCD_CMD_SLPIN        (0x10) // Go into sleep mode (DC/DC, oscillator, scanning stopped, but memory keeps content)
+#endif
+
+#ifndef LCD_CMD_BRIGHTNESS
+#define LCD_CMD_BRIGHTNESS   (0x51)
+#endif
 
 #define SEND_BUF_SIZE           (16384)
 #define TFT_SPI_MODE            SPI_MODE0
