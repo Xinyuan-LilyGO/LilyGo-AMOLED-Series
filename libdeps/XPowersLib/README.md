@@ -9,8 +9,9 @@
  /_/ \_\    |_|   \___/ \_/\_/ \___|_|  |___/______|_|_.__/
 
 ```
-[![PlatformIO CI](https://github.com/lewisxhe/XPowersLib/actions/workflows/pio.yml/badge.svg)](https://github.com/lewisxhe/XPowersLib/actions/workflows/pio.yml)
-[![Arduino CI](https://github.com/lewisxhe/XPowersLib/actions/workflows/arduino_ci.yml/badge.svg)](https://github.com/lewisxhe/XPowersLib/actions/workflows/arduino_ci.yml)
+[![Build esp-idf](https://github.com/lewisxhe/XPowersLib/actions/workflows/esp-idf.yml/badge.svg)](https://github.com/lewisxhe/XPowersLib/actions/workflows/esp-idf.yml)
+[![Build PlatformIO](https://github.com/lewisxhe/XPowersLib/actions/workflows/pio.yml/badge.svg)](https://github.com/lewisxhe/XPowersLib/actions/workflows/pio.yml)
+[![Build Arduino](https://github.com/lewisxhe/XPowersLib/actions/workflows/arduino_ci.yml/badge.svg)](https://github.com/lewisxhe/XPowersLib/actions/workflows/arduino_ci.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/XPowersLib.svg?)](https://www.ardu-badge.com/XPowersLib)
 
 [![LICENSE](https://img.shields.io/github/license/lewisxhe/XPowersLib)](https://github.com/lewisxhe/XPowersLib/blob/master/LICENSE)
