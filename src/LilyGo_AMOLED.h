@@ -11,7 +11,11 @@
 #include <Arduino.h>
 
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2,0,5)
-#error "Please update Arduino Core ESP32 to the latest version, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
+#error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
+#endif
+
+#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0)
+#error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
 #endif
 
 #include <driver/spi_master.h>
@@ -32,7 +36,6 @@
 #include <driver/temperature_sensor.h>
 #endif
 
-#include <esp_lcd_types.h>
 #include "SensorPCF85063.hpp"
 
 
@@ -45,30 +48,14 @@
 #error "Detected that PSRAM is not turned on. Please set PSRAM to OPI PSRAM in ArduinoIDE"
 #endif //BOARD_HAS_PSRAM
 
-#define BOARD_DISP_CS       (4)
-#define BOARD_DISP_SCK      (5)
-#define BOARD_DISP_DATA0    (7)
-#define BOARD_DISP_DATA1    (10)
-#define BOARD_DISP_DATA2    (11)
-#define BOARD_DISP_DATA3    (12)
-#define BOARD_DISP_RESET    (40)
-#define BOARD_DISP_TE       (6)
-#define BOARD_I2C_SDA       (1)
-#define BOARD_I2C_SCL       (2)
-#define BOARD_PMU_IRQ       (3)
-#define BOARD_SENSOR_IRQ    (8)
-#define BOARD_TOUCH_IRQ     (13)
-#define BOARD_TOUCH_RST     (14)
-#define BOARD_BOOT_PIN      (0)
-#define BOARD_BUTTON1_PIN   (0)
-#define BOARD_BUTTON2_PIN   (21)
+
 #define BOARD_NONE_PIN      (-1)
-#define BOARD_PIXELS_PIN    (18)
+#define BOARD_PIXELS_PIN    (18)        //only 1.47 inch
 #define BOARD_PIXELS_NUM    (1)
 #define DEFAULT_SCK_SPEED   (30 * 1000 * 1000)
 
 typedef struct __DisplayConfigure {
-    int d0; 
+    int d0;
     int d1;
     int d2;
     int d3;
@@ -200,8 +187,8 @@ static const DisplayConfigure_t RM67162_AMOLED_SPI  = {
     8, //command bit
     24,//address bit
     40000000,
-    (lcd_cmd_t *)rm67162_cmd,
-    RM67162_INIT_SEQUENCE_LENGTH,
+    (lcd_cmd_t *)rm67162_spi_cmd,
+    RM67162_INIT_SPI_SEQUENCE_LENGTH,
     RM67162_WIDTH,//width
     RM67162_HEIGHT,//height
     0,//frameBufferSize
@@ -315,7 +302,7 @@ class LilyGo_AMOLED:
     public TouchDrvCHSC5816,
     public SensorCM32181,
     public TouchDrvCSTXXX,
-    public PowersSY6970,
+    public XPowersPPM,
     public SensorPCF85063
 {
 public:
@@ -401,7 +388,13 @@ public:
 
     bool needFullRefresh();
 private:
-    bool initBUS();
+
+    enum DriverBusType {
+        QSPI_DRIVER,
+        SPI_DRIVER,
+    };
+
+    bool initBUS(DriverBusType type = QSPI_DRIVER);
     bool initPMU();
     void inline setCS();
     void inline clrCS();
@@ -413,11 +406,11 @@ private:
     bool _touchOnline;
     uint16_t _width, _height;
 
-    esp_lcd_panel_handle_t *panel_handle;
-
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;
 #endif
+
+    SPIClass *spiDev;
 };
 
 #ifndef LilyGo_Class

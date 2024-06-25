@@ -54,7 +54,7 @@ extern const lcd_cmd_t jd9613_cmd[JD9613_INIT_SEQUENCE_LENGTH];
 #define JD9613_HEIGHT                           126
 
 
-#define RM67162_INIT_SPI_SEQUENCE_LENGTH        19
+#define RM67162_INIT_SPI_SEQUENCE_LENGTH        18
 extern const lcd_cmd_t rm67162_spi_cmd[RM67162_INIT_SPI_SEQUENCE_LENGTH];
 
 

@@ -18,7 +18,7 @@
 
 LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL)
 {
-    panel_handle = NULL;
+    spiDev = NULL;
     pBuffer = NULL;
     spi = NULL;
     _brightness = AMOLED_DEFAULT_BRIGHTNESS;
@@ -43,9 +43,9 @@ LilyGo_AMOLED::~LilyGo_AMOLED()
         pBuffer = NULL;
     }
 
-    if (panel_handle) {
-        esp_lcd_panel_del(*panel_handle);
-        panel_handle = NULL;
+    if (spiDev) {
+        spiDev->end();
+        spiDev = NULL;
     }
 }
 
@@ -131,12 +131,12 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
                 if (boards == &BOARD_AMOLED_147) {
                     return XPowersAXP2101::getBattVoltage();
                 } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                    return PowersSY6970::getBattVoltage();
+                    return XPowersPPM::getBattVoltage();
                 }
             }
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
-#if ESP_IDF_VERSION_VAL(4,4,7) < ESP_IDF_VERSION
+#if ESP_IDF_VERSION_VAL(4,4,7) >= ESP_IDF_VERSION
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 #else
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
@@ -157,7 +157,7 @@ uint16_t LilyGo_AMOLED::getVbusVoltage(void)
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::getVbusVoltage();
             } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return PowersSY6970::getVbusVoltage();
+                return XPowersPPM::getVbusVoltage();
             }
         }
     }
@@ -171,7 +171,7 @@ bool LilyGo_AMOLED::isBatteryConnect(void)
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isBatteryConnect();
             } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return PowersSY6970::isBatteryConnect();
+                return XPowersPPM::isBatteryConnect();
             }
         }
     }
@@ -185,7 +185,7 @@ uint16_t LilyGo_AMOLED::getSystemVoltage(void)
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::getSystemVoltage();
             } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return PowersSY6970::getSystemVoltage();
+                return XPowersPPM::getSystemVoltage();
             }
         }
     }
@@ -199,7 +199,7 @@ bool LilyGo_AMOLED::isCharging(void)
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isCharging();
             } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return PowersSY6970::isCharging();
+                return XPowersPPM::isCharging();
             }
         }
     }
@@ -213,7 +213,7 @@ bool LilyGo_AMOLED::isVbusIn(void)
             if (boards == &BOARD_AMOLED_147) {
                 return XPowersAXP2101::isVbusIn();
             } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return PowersSY6970::isVbusIn();
+                return XPowersPPM::isVbusIn();
             }
         }
     }
@@ -288,7 +288,7 @@ bool LilyGo_AMOLED::initPMU()
     return res;
 }
 
-bool LilyGo_AMOLED::initBUS()
+bool LilyGo_AMOLED::initBUS(DriverBusType type)
 {
     assert(boards);
     log_i("=====CONFIGURE======");
@@ -327,38 +327,45 @@ bool LilyGo_AMOLED::initBUS()
     digitalWrite(boards->display.rst, HIGH);
     delay(200);
 
-    spi_bus_config_t buscfg = {
-        .data0_io_num = boards->display.d0,
-        .data1_io_num = boards->display.d1,
-        .sclk_io_num = boards->display.sck,
-        .data2_io_num = boards->display.d2,
-        .data3_io_num = boards->display.d3,
-        .data4_io_num = BOARD_NONE_PIN,
-        .data5_io_num = BOARD_NONE_PIN,
-        .data6_io_num = BOARD_NONE_PIN,
-        .data7_io_num = BOARD_NONE_PIN,
-        .max_transfer_sz = (SEND_BUF_SIZE * 16) + 8,
-        .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS,
-    };
+    if (type == QSPI_DRIVER) {
+        spi_bus_config_t buscfg = {
+            .data0_io_num = boards->display.d0,
+            .data1_io_num = boards->display.d1,
+            .sclk_io_num = boards->display.sck,
+            .data2_io_num = boards->display.d2,
+            .data3_io_num = boards->display.d3,
+            .data4_io_num = BOARD_NONE_PIN,
+            .data5_io_num = BOARD_NONE_PIN,
+            .data6_io_num = BOARD_NONE_PIN,
+            .data7_io_num = BOARD_NONE_PIN,
+            .max_transfer_sz = (SEND_BUF_SIZE * 16) + 8,
+            .flags = SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_GPIO_PINS,
+        };
 
-    spi_device_interface_config_t devcfg = {
-        .command_bits = boards->display.cmdBit,
-        .address_bits = boards->display.addBit,
-        .mode = TFT_SPI_MODE,
-        .clock_speed_hz = boards->display.freq,
-        .spics_io_num = -1,
-        .flags = SPI_DEVICE_HALFDUPLEX,
-        .queue_size = 17,
-    };
-    esp_err_t ret = spi_bus_initialize(DEFAULT_SPI_HANDLER, &buscfg, SPI_DMA_CH_AUTO);
-    if (ret != ESP_OK) {
-        log_e("spi_bus_initialize fail!");
-        return false;
-    }
-    ret = spi_bus_add_device(DEFAULT_SPI_HANDLER, &devcfg, &spi);
-    if (ret != ESP_OK) {
-        log_e("spi_bus_add_device fail!");
-        return false;
+        spi_device_interface_config_t devcfg = {
+            .command_bits = boards->display.cmdBit,
+            .address_bits = boards->display.addBit,
+            .mode = TFT_SPI_MODE,
+            .clock_speed_hz = boards->display.freq,
+            .spics_io_num = -1,
+            .flags = SPI_DEVICE_HALFDUPLEX,
+            .queue_size = 17,
+        };
+        esp_err_t ret = spi_bus_initialize(DEFAULT_SPI_HANDLER, &buscfg, SPI_DMA_CH_AUTO);
+        if (ret != ESP_OK) {
+            log_e("spi_bus_initialize fail!");
+            return false;
+        }
+        ret = spi_bus_add_device(DEFAULT_SPI_HANDLER, &devcfg, &spi);
+        if (ret != ESP_OK) {
+            log_e("spi_bus_add_device fail!");
+            return false;
+        }
+    } else {
+        pinMode(boards->display.d1, OUTPUT);    //set dc output
+        spiDev = new SPIClass(HSPI);
+        assert(spiDev);
+        spiDev->begin(boards->display.sck, -1 /*miso */, boards->display.d0);
     }
     // prevent initialization failure
     int retry = 2;
@@ -476,34 +483,31 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
 {
     boards = &BOARD_AMOLED_191_SPI;
 
-    if (boards->PMICEnPins != -1) {
-        pinMode(boards->PMICEnPins, OUTPUT);
-        digitalWrite(boards->PMICEnPins, HIGH);
-    }
-
-    panel_handle = panel_rm67162_init_spi_bus(DEFAULT_SPI_HANDLER,
-                   boards->display.d0,
-                   -1,
-                   boards->display.sck,
-                   boards->display.d1,
-                   boards->display.cs,
-                   boards->display.rst,
-                   boards->display.freq
-                                             );
-    if (!panel_handle) {
-        while (1) {
-            log_e("attach spi bus failed !"); delay(1000);
-        }
-    }
+    initBUS(SPI_DRIVER);
 
     if (boards->pmu) {
+        uint8_t slaveAddress = 0;
         Wire.begin(boards->pmu->sda, boards->pmu->scl);
         deviceScan(&Wire, &Serial);
-        if (PowersSY6970::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS)) {
-            PowersSY6970::enableADCMeasure();
-            PowersSY6970::disableOTG();
+
+        Wire.beginTransmission(SY6970_SLAVE_ADDRESS);
+        if (Wire.endTransmission() == 0) {
+            slaveAddress = SY6970_SLAVE_ADDRESS;
+            log_i("Detected Ti SY6970 PPM chip");
+        }
+        Wire.beginTransmission(BQ25896_SLAVE_ADDRESS);
+        if (Wire.endTransmission() == 0) {
+            slaveAddress = BQ25896_SLAVE_ADDRESS;
+            log_i("Detected Ti BQ25896 PPM chip");
+        }
+        if (slaveAddress == 0) {
+            return false;
+        }
+        if (XPowersPPM::init(Wire, boards->pmu->sda, boards->pmu->scl, slaveAddress)) {
+            XPowersPPM::enableADCMeasure();
+            XPowersPPM::disableOTG();
         } else {
-            log_e("begin sy6970 failed !");
+            log_e("begin pmu failed !");
         }
     }
 
@@ -552,10 +556,9 @@ bool LilyGo_AMOLED::beginAMOLED_241()
 
     if (boards->pmu) {
         Wire.begin(boards->pmu->sda, boards->pmu->scl);
-        deviceScan(&Wire, &Serial);
-        PowersSY6970::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
-        PowersSY6970::enableADCMeasure();
-        PowersSY6970::disableOTG();
+        XPowersPPM::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
+        XPowersPPM::enableADCMeasure();
+        XPowersPPM::disableOTG();
     }
 
     if (boards->touch) {
@@ -707,10 +710,25 @@ bool LilyGo_AMOLED::beginAMOLED_147()
 
 void LilyGo_AMOLED::writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t length)
 {
+    if (spiDev) {
+        // Write spi command
+        setCS();
+        spiDev->beginTransaction(SPISettings(boards->display.freq, MSBFIRST, TFT_SPI_MODE));
+        digitalWrite(boards->display.d1, LOW);
+        spiDev->write(cmd);
+        digitalWrite(boards->display.d1, HIGH);
+        spiDev->endTransaction();
+        clrCS();
 
-    // SPI
-    if (panel_handle) {
-        panel_rm67162_write_command(*panel_handle, cmd, pdat, length);
+        // Write spi data
+        if (pdat && length) {
+            setCS();
+            spiDev->beginTransaction(SPISettings(boards->display.freq, MSBFIRST, TFT_SPI_MODE));
+            digitalWrite(boards->display.d1, HIGH);
+            spiDev->writeBytes(pdat, length);
+            spiDev->endTransaction();
+            clrCS();
+        }
         return;
     }
 
@@ -782,9 +800,13 @@ void LilyGo_AMOLED::setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_
 // Push (aka write pixel) colours to the TFT (use setAddrWindow() first)
 void LilyGo_AMOLED::pushColors(uint16_t *data, uint32_t len)
 {
-
-    if (panel_handle) {
-        panel_rm67162_tx_colors(*panel_handle, data, len * sizeof(uint16_t));
+    if (spiDev) {
+        setCS();
+        spiDev->beginTransaction(SPISettings(boards->display.freq, MSBFIRST, TFT_SPI_MODE));
+        digitalWrite(boards->display.d1, HIGH);
+        spiDev->writeBytes((uint8_t *)data, len * sizeof(uint16_t));
+        spiDev->endTransaction();
+        clrCS();
         return;
     }
 
@@ -878,20 +900,21 @@ float LilyGo_AMOLED::readCoreTemp()
 
 void LilyGo_AMOLED::attachPMU(void(*cb)(void))
 {
-    if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            pinMode(BOARD_PMU_IRQ, INPUT_PULLUP);
-            attachInterrupt(BOARD_PMU_IRQ, cb, FALLING);
-        }
+    assert(boards);
+    if (boards->pmu) {
+        pinMode(boards->pmu->irq, INPUT_PULLUP);
+        attachInterrupt(boards->pmu->irq, cb, FALLING);
     }
 }
 
 uint64_t LilyGo_AMOLED::readPMU()
 {
-    if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            return XPowersAXP2101::getIrqStatus();
-        }
+    assert(boards);
+    if (!boards->pmu) {
+        return 0;
+    }
+    if (boards == &BOARD_AMOLED_147) {
+        return XPowersAXP2101::getIrqStatus();
     }
     return 0;
 }
@@ -935,15 +958,15 @@ void LilyGo_AMOLED::sleep()
     if (boards) {
 
         if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-            PowersSY6970::disableADCMeasure();
-            PowersSY6970::disableOTG();
+            XPowersPPM::disableADCMeasure();
+            XPowersPPM::disableOTG();
 
             // Disable amoled power
             digitalWrite(boards->PMICEnPins, LOW);
             TouchDrvCSTXXX::sleep();
 
         } else if (boards == &BOARD_AMOLED_147) {
-            Serial.println("PMU Disable AMOLED Power");
+            log_i("PMU Disable AMOLED Power");
 
             // Turn off Sensor
             SensorCM32181::powerDown();
@@ -956,7 +979,7 @@ void LilyGo_AMOLED::sleep()
             disableSystemVoltageMeasure();
             setChargingLedMode(XPOWERS_CHG_LED_OFF);
 
-            // Disbale amoled power
+            // Disable amoled power
             disableBLDO1();
             disableALDO3();
 
@@ -1098,7 +1121,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
         }
         writeCommand(LCD_CMD_MADCTL, &data, 1);
     } else {
-        Serial.println("The screen you are currently using does not support screen rotation!!!");
+        log_e("The screen you are currently using does not support screen rotation!!!");
     }
 }
 
