@@ -300,10 +300,11 @@ void setup()
             Serial.println("[Error] : WiFi ssid and password are not configured correctly");
             Serial.println("[Error] : WiFi ssid and password are not configured correctly");
             Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        } else {
+            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
         }
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-    // Defining USE_WIFI_SMART_CONFIG will automatically use the WiFi ssid and password saved inside the chip
+        // Defining USE_WIFI_SMART_CONFIG will automatically use the WiFi ssid and password saved inside the chip
 #ifdef USE_WIFI_SMART_CONFIG
     } else {
         Serial.println("Begin WiFi");
@@ -335,12 +336,42 @@ void setup()
 
 }
 
+uint32_t last_check_connected = 0;
+
 void loop()
 {
+    if (last_check_connected < millis()) {
+        if (WiFi.status() != WL_CONNECTED) {
+            if (String(WIFI_SSID) != "Your WiFi SSID" || String(WIFI_PASSWORD) != "Your WiFi PASSWORD" ) {
+                WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+                Serial.println("Reconnecting ...");
+            }
+        }
+        last_check_connected = millis() + 5000;
+    }
+
     lv_task_handler();
     delay(1);
 }
 
+
+// Callback function (get's called when time adjusts via NTP)
+void time_available(struct timeval *t)
+{
+    Serial.println("Got time adjustment from NTP, Write the hardware clock");
+
+    // Write synchronization time to hardware rtc chip
+    if (amoled.hasRTC()) {
+        amoled.hwClockWrite();
+
+
+        //Read hardware clock
+        struct tm hwTimeinfo;
+        amoled.getDateTime(&hwTimeinfo);
+        Serial.print("Hardware clock :");
+        Serial.println(&hwTimeinfo, "%A, %B %d %Y %H:%M:%S");
+    }
+}
 
 void WiFiEvent(WiFiEvent_t event)
 {
@@ -372,7 +403,24 @@ void WiFiEvent(WiFiEvent_t event)
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:
         Serial.print("Obtained IP address: ");
         Serial.println(WiFi.localIP());
-        configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
+
+        // set notification call-back function
+        sntp_set_time_sync_notification_cb( time_available );
+
+        /**
+         * This will set configured ntp servers and constant TimeZone/daylightOffset
+         * should be OK if your time zone does not need to adjust daylightOffset twice a year,
+         * in such a case time adjustment won't be handled automagicaly.
+         */
+        // configTime(GMT_OFFSET_SEC, DAY_LIGHT_OFFSET_SEC, NTP_SERVER1, NTP_SERVER2);
+
+        /**
+         * A more convenient approach to handle TimeZones with daylightOffset
+         * would be to specify a environmnet variable with TimeZone definition including daylight adjustmnet rules.
+         * A list of rules for your zone could be obtained from https://github.com/esp8266/Arduino/blob/master/cores/esp8266/TZ.h
+         */
+        configTzTime(DEFAULT_TIMEZONE, NTP_SERVER1, NTP_SERVER2);
+
 
         if (!vUpdateDateTimeTaskHandler) {
             xTaskCreate(datetimeSyncTask, "sync", 10 * 1024, NULL, 12, &vUpdateDateTimeTaskHandler);

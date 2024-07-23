@@ -69,8 +69,15 @@ static void update_date(lv_timer_t *e)
 {
     struct tm timeinfo;
     time_t now;
-    time(&now);
-    localtime_r(&now, &timeinfo);
+
+    if (amoled.hasRTC()) {
+        // When a real-time clock chip is present, the hardware time is used
+        amoled.getDateTime(&timeinfo);
+    } else {
+        // When the real-time clock chip does not exist, the ESP32 internal time is used
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
     lv_label_set_text_fmt(time_label, "%02d%s%02d", timeinfo.tm_hour, colon != 0 ? "#ffffff :#" : "#000000 :#", timeinfo.tm_min);
     colon = !colon;
     lv_label_set_text_fmt(day_label, "%d", timeinfo.tm_mday);
@@ -330,6 +337,39 @@ void createBrightnessUI(lv_obj_t *parent)
     lv_obj_set_style_text_color(slider_label, lv_color_white(), LV_PART_MAIN);
     lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
     lv_obj_align_to(slider_label, slider, LV_ALIGN_CENTER, 0, 0);
+
+
+
+    uint8_t board_id = amoled.getBoardID();
+    if (board_id == LILYGO_AMOLED_191_SPI) {
+        lv_obj_t *btn_charge = lv_btn_create(parent);
+        label = lv_label_create(btn_charge);
+        lv_label_set_text(label, "ChargeOFF");
+        lv_obj_add_flag(btn_charge, LV_OBJ_FLAG_CHECKABLE);
+        lv_obj_add_event_cb(btn_charge, [](lv_event_t *e) {
+            lv_obj_t *btn = lv_event_get_target(e);
+            lv_obj_t *label = (lv_obj_t *)lv_event_get_user_data(e);
+            lv_state_t  state =  lv_obj_get_state(btn);
+            switch (state) {
+            case 2 :
+                // OFF
+                amoled.disableCharge();
+                lv_label_set_text(label, "ChargeOFF");
+                break;
+            case 3:
+                // ON
+                amoled.enableCharge();
+                lv_label_set_text(label, "ChargeON");
+                break;
+            default:
+                break;
+            }
+
+        }, LV_EVENT_CLICKED, label);
+
+        lv_obj_align(btn_charge, LV_ALIGN_RIGHT_MID, -20, -10 );
+    }
+
 }
 
 
