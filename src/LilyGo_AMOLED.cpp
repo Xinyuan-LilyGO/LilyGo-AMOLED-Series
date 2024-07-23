@@ -39,7 +39,7 @@
 #define TFT_SPI_MODE            SPI_MODE0
 #define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
-LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL) , _hasRTC(false)
+LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false)
 {
     spiDev = NULL;
     pBuffer = NULL;
@@ -159,7 +159,7 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             }
         } else if (boards->adcPins != -1) {
             esp_adc_cal_characteristics_t adc_chars;
-#if ESP_IDF_VERSION_VAL(4,4,7) >= ESP_IDF_VERSION
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,4,7)
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
 #else
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 1100, &adc_chars);
@@ -972,7 +972,7 @@ void LilyGo_AMOLED::disablePMUInterrupt(uint32_t params)
 }
 
 
-void LilyGo_AMOLED::sleep()
+void LilyGo_AMOLED::sleep(bool touchpad_sleep_enable)
 {
     assert(boards);
 
@@ -988,7 +988,10 @@ void LilyGo_AMOLED::sleep()
 
             // Disable amoled power
             digitalWrite(boards->PMICEnPins, LOW);
-            TouchDrvCSTXXX::sleep();
+
+            if (touchpad_sleep_enable) {
+                TouchDrvCSTXXX::sleep();
+            }
 
         } else if (boards == &BOARD_AMOLED_147) {
             log_i("PMU Disable AMOLED Power");
@@ -1012,17 +1015,21 @@ void LilyGo_AMOLED::sleep()
             // disableALDO1();
 
             // Keep touch reset to HIGH
-            digitalWrite(boards->touch->rst, HIGH);
-            gpio_hold_en((gpio_num_t )boards->touch->rst);
-            gpio_deep_sleep_hold_en();
-            // Enter sleep mode
-            TouchDrvCHSC5816::sleep();
+            if (touchpad_sleep_enable) {
+                digitalWrite(boards->touch->rst, HIGH);
+                gpio_hold_en((gpio_num_t )boards->touch->rst);
+                gpio_deep_sleep_hold_en();
+                // Enter sleep mode
+                TouchDrvCHSC5816::sleep();
+            }
 
         } else {
             if (boards->PMICEnPins != -1) {
                 // Disable amoled power
                 digitalWrite(boards->PMICEnPins, LOW);
-                TouchDrvCSTXXX::sleep();
+                if (touchpad_sleep_enable) {
+                    TouchDrvCSTXXX::sleep();
+                }
             }
         }
     }
@@ -1163,7 +1170,7 @@ bool LilyGo_AMOLED::needFullRefresh()
     return false;
 }
 
- bool LilyGo_AMOLED::hasRTC()
- {
+bool LilyGo_AMOLED::hasRTC()
+{
     return _hasRTC;
- }
+}

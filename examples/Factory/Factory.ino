@@ -93,6 +93,7 @@ LilyGo_Class amoled;
 double latitude;
 double longitude;
 String timezone = "";
+volatile bool sleep_flag = false;
 
 static OpenWeatherMapApi weatherApi;
 static TaskHandle_t  vUpdateDateTimeTaskHandler = NULL;
@@ -145,13 +146,28 @@ void buttonHandleEvent(AceButton *button,
             vTaskDelete(vUpdateWeatherTaskHandler);
         }
 
+        sleep_flag = true;
+
         WiFi.disconnect();
         WiFi.removeEvent(WiFiEvent);
         WiFi.mode(WIFI_OFF);
 
         Serial.println();
 
-        amoled.sleep();
+        {
+
+            bool touchpad_sleep = true;
+
+            if (id == LILYGO_AMOLED_191 || id == LILYGO_AMOLED_191_SPI) {
+                /*
+                * 1.91 inch the touch screen cannot be awakened after being put into sleep mode.
+                * You need to power off and then power on again to enable the touch screen.
+                * */
+                touchpad_sleep = false;
+            }
+            amoled.sleep(touchpad_sleep);
+
+        }
 
         if (boards->pixelsPins != -1) {
             pixels.clear();
@@ -165,16 +181,12 @@ void buttonHandleEvent(AceButton *button,
             amoled.clearPMU();
             amoled.enableWakeup();
             // The 1.47-inch screen does not have an external pull-up resistor, so it cannot be woken up by pressing the button.
-            // Use Tiemr wakeup .
+            // Use Timer wakeup .
             esp_sleep_enable_timer_wakeup(60 * 1000000ULL);  //60S
 
         } else {
-            uint64_t gpio0_mask = 0;
-#if ESP_IDF_VERSION >=  ESP_IDF_VERSION_VAL(4,4,6)
-            esp_sleep_enable_ext1_wakeup(gpio0_mask, ESP_EXT1_WAKEUP_ANY_LOW);
-#else
-            esp_sleep_enable_ext1_wakeup(gpio0_mask, ESP_EXT1_WAKEUP_ALL_LOW);
-#endif
+            // Set BOOT button as wakeup source
+            esp_sleep_enable_ext0_wakeup(GPIO_NUM_0, LOW);
         }
 
         Wire.end();
@@ -340,6 +352,9 @@ uint32_t last_check_connected = 0;
 
 void loop()
 {
+    if (sleep_flag) {
+        return;
+    }
     if (last_check_connected < millis()) {
         if (WiFi.status() != WL_CONNECTED) {
             if (String(WIFI_SSID) != "Your WiFi SSID" || String(WIFI_PASSWORD) != "Your WiFi PASSWORD" ) {

@@ -382,7 +382,7 @@ public:
     const char *getName();
     uint8_t getBoardID();
 
-    void sleep();
+    void sleep(bool touchpad_sleep_enable = false);
     void wakeup();
     bool hasTouch();
 
