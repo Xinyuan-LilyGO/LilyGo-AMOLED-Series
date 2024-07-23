@@ -39,7 +39,7 @@
 #define TFT_SPI_MODE            SPI_MODE0
 #define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
-LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL)
+LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL) , _hasRTC(false)
 {
     spiDev = NULL;
     pBuffer = NULL;
@@ -516,7 +516,7 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
         Wire.beginTransmission(SY6970_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
             slaveAddress = SY6970_SLAVE_ADDRESS;
-            log_i("Detected Ti SY6970 PPM chip");
+            log_i("Detected SY6970 PPM chip");
         }
         Wire.beginTransmission(BQ25896_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
@@ -529,12 +529,14 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
         if (XPowersPPM::init(Wire, boards->pmu->sda, boards->pmu->scl, slaveAddress)) {
             XPowersPPM::enableADCMeasure();
             XPowersPPM::disableOTG();
+            XPowersPPM::disableCharge();    //Default disable charge function
         } else {
             log_e("begin pmu failed !");
         }
     }
 
-    if (!SensorPCF85063::init(Wire, boards->pmu->sda, boards->pmu->scl)) {
+    _hasRTC = SensorPCF85063::init(Wire, boards->pmu->sda, boards->pmu->scl);
+    if (!_hasRTC) {
         log_e("begin rtc failed!");
     }
 
@@ -1160,3 +1162,8 @@ bool LilyGo_AMOLED::needFullRefresh()
     }
     return false;
 }
+
+ bool LilyGo_AMOLED::hasRTC()
+ {
+    return _hasRTC;
+ }

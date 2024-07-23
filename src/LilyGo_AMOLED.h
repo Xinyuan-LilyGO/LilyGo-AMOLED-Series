@@ -387,6 +387,9 @@ public:
     bool hasTouch();
 
     bool needFullRefresh();
+
+
+    bool hasRTC();
 private:
 
     enum DriverBusType {
@@ -409,6 +412,8 @@ private:
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;
 #endif
+
+    bool  _hasRTC;
 
     SPIClass *spiDev;
 };
