@@ -14,21 +14,26 @@
 
 ## 1️⃣Support Product
 
-| Product(PinMap)            | SOC        | Flash | PSRAM    | Resolution | Size      |
-| -------------------------- | ---------- | ----- | -------- | ---------- | --------- |
-| [T-Display-AMOLED-Lite][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    | 1.47 Inch |
-| [T-Display-S3 AMOLED][2]   | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
-| [T4-S3][3]                 | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
+| Product(PinMap)               | SOC        | Flash | PSRAM    | Resolution | Size      |
+| ----------------------------- | ---------- | ----- | -------- | ---------- | --------- |
+| [T-Display-AMOLED-Lite][1]    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 194x368    | 1.47 Inch |
+| [T-Display-S3 AMOLED][2]      | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
+| [T4-S3][3]                    | ESP32-S3R8 | 16MB  | 8MB(OPI) | 450x600    | 2.41 Inch |
+| [T-Display-S3 AMOLED Plus][4] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 240x536    | 1.91 Inch |
 
-| Current consumption        | Working current             | sleep current | sleep mode      |
-| -------------------------- | --------------------------- | ------------- | --------------- |
-| [T-Display-AMOLED-Lite][1] | (240MHz) WiFi On 90~230+ mA | About 1.1mA   | timer wakeup    |
-| [T-Display-S3 AMOLED][2]   | (240MHz) WiFi On 90~230+ mA | About 160uA   | external wakeup |
-| [T4-S3][3]                 | (240MHz) WiFi On 90~230+ mA | About 160uA   | external wakeup |
+
+| Current consumption           | Working current             | sleep current           | sleep mode            |
+| ----------------------------- | --------------------------- | ----------------------- | --------------------- |
+| [T-Display-AMOLED-Lite][1]    | (240MHz) WiFi On 90~230+ mA | About 1.1mA             | timer wakeup          |
+| [T-Display-S3 AMOLED][2]      | (240MHz) WiFi On 90~230+ mA | About 230uA             | external gpio0 wakeup |
+| [T4-S3][3]                    | (240MHz) WiFi On 90~230+ mA | About 230uA             | external gpio0 wakeup |
+| [T-Display-S3 AMOLED Plus][4] | (240MHz) WiFi On 90~230+ mA | About 230~700uA dynamic | external gpio0 wakeup |
+
 
 [1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
+[4]: https://www.lilygo.cc/products/t-display-s3-amoled
 
 - This code supports T-Display-S3 AMOLED both touch and non-touch versions
 
