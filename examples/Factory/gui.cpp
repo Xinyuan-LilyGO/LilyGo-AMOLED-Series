@@ -282,14 +282,22 @@ void createBrightnessUI(lv_obj_t *parent)
     label = lv_label_create(cont);
     lv_label_set_text(label, "IP:NONE" );
     lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_msg_subsribe_obj(WIFI_MSG_ID, label, NULL);
+    // lv_msg_subsribe_obj(WIFI_MSG_ID, label, NULL);
 
     // Added got ip address message cb
-    lv_obj_add_event_cb( label, [](lv_event_t *e) {
-        lv_obj_t *label = (lv_obj_t *)lv_event_get_target(e);
-        Serial.print("-->>IP:"); Serial.println(WiFi.localIP());
-        lv_label_set_text_fmt(label, "IP:%s",  WiFi.isConnected() ? (WiFi.localIP().toString().c_str()) : ("NONE") );
-    }, LV_EVENT_MSG_RECEIVED, NULL);
+    // lv_obj_add_event_cb( label, [](lv_event_t *e) {
+    //     lv_obj_t *label = (lv_obj_t *)lv_event_get_target(e);
+    //     Serial.print("-->>IP:"); Serial.println(WiFi.localIP());
+    // }, LV_EVENT_MSG_RECEIVED, NULL);
+
+    lv_timer_create([](lv_timer_t *t) {
+        lv_obj_t *label = (lv_obj_t *)t->user_data;
+        if (WiFi.isConnected()) {
+            lv_label_set_text_fmt(label, "IP:%s RSSI:%d",  (WiFi.localIP().toString().c_str()), WiFi.RSSI());
+        } else {
+            lv_label_set_text(label, "IP:NONE");
+        }
+    }, 2000, label);
 
 
     // Temperature
