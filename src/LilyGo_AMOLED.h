@@ -15,7 +15,7 @@
 #endif
 
 #if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0)
-#error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
+// #error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
 #endif
 
 #include <driver/spi_master.h>

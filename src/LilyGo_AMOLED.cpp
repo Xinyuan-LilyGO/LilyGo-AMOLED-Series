@@ -8,8 +8,12 @@
  */
 
 #include "LilyGo_AMOLED.h"
-#include <esp_adc_cal.h>
 #include <driver/gpio.h>
+
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
+#include <esp_adc_cal.h>
+#endif
+
 
 #ifndef LCD_CMD_MADCTL
 #define LCD_CMD_MADCTL       (0x36)     // Memory data access control
@@ -158,6 +162,7 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
                 }
             }
         } else if (boards->adcPins != -1) {
+#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
             esp_adc_cal_characteristics_t adc_chars;
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,4,7)
             esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
@@ -167,6 +172,10 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             uint32_t v1 = 0,  raw = 0;
             raw = analogRead(boards->adcPins);
             v1 = esp_adc_cal_raw_to_voltage(raw, &adc_chars) * 2;
+#else
+            uint32_t v1 = analogReadMilliVolts(boards->adcPins);
+            v1 *= 2;   //The hardware voltage divider resistor is half of the actual voltage, multiply it by 2 to get the true voltage
+#endif
             return v1;
         }
     }
