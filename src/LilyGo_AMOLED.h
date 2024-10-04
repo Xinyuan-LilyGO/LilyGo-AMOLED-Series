@@ -207,7 +207,7 @@ static const DisplayConfigure_t RM690B0_AMOLED  = {
     11,//BOARD_DISP_CS,
     BOARD_NONE_PIN,//DC
     13,//BOARD_DISP_RESET,
-    -1, //BOARD_DISP_TE,
+    18, //BOARD_DISP_TE,
     8, //command bit
     24,//address bit
     36000000,
