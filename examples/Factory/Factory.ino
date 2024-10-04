@@ -80,7 +80,7 @@ using namespace ace_button;
 #define COINMARKETCAP_HOST    "pro-api.coinmarketcap.com"
 #define DEFAULT_TIMEZONE      "CST-8"         //When the time zone cannot be obtained, the default time zone is used
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(BOARD_PIXELS_NUM, BOARD_PIXELS_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel *pixels = NULL;
 
 void WiFiEvent(WiFiEvent_t event);
 void datetimeSyncTask(void *ptr);
@@ -170,8 +170,8 @@ void buttonHandleEvent(AceButton *button,
         }
 
         if (boards->pixelsPins != -1) {
-            pixels.clear();
-            pixels.show();
+            pixels->clear();
+            pixels->show();
         }
 
         if (boards->pmu && id == LILYGO_AMOLED_147) {
@@ -275,15 +275,16 @@ void setup()
         }
 
         if (boards->pixelsPins != -1) {
-            pixels.begin(); // This initializes the NeoPixel library.
-            pixels.setBrightness(15);
+            pixels = new Adafruit_NeoPixel(BOARD_PIXELS_NUM, boards->pixelsPins, NEO_GRB + NEO_KHZ800);
+            pixels->begin(); // This initializes the NeoPixel library.
+            pixels->setBrightness(15);
 
             // Test pixels color
-            pixels.setPixelColor(0, pixels.Color(255, 0, 0)); pixels.show(); delay(500);
-            pixels.setPixelColor(0, pixels.Color(0, 255, 0)); pixels.show(); delay(500);
-            pixels.setPixelColor(0, pixels.Color(0, 0, 255)); pixels.show(); delay(500);
-            pixels.clear();
-            pixels.show();
+            pixels->setPixelColor(0, pixels->Color(255, 0, 0)); pixels->show(); delay(500);
+            pixels->setPixelColor(0, pixels->Color(0, 255, 0)); pixels->show(); delay(500);
+            pixels->setPixelColor(0, pixels->Color(0, 0, 255)); pixels->show(); delay(500);
+            pixels->clear();
+            pixels->show();
         }
     }
 
