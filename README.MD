@@ -100,7 +100,7 @@ examples/
 ## 4️⃣ Install from Arduino Library Manager (recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
+2. Install [Arduino ESP32 V2.0.5 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install`
@@ -135,7 +135,7 @@ examples/
 ## 5️⃣ Arduino IDE Manual installation (not recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
+2. Install [Arduino ESP32 V2.0.5 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE ,`Tools` , Make your selection according to the table below
