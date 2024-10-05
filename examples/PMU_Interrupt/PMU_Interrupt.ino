@@ -150,16 +150,16 @@ void loop()
 
         if (amoled.isBatteryConnect()) {
             if (amoled.isBatChargeDoneIrq()) {
-                Serial.println("isBatChagerDone");
-                lv_label_set_text(label1, "isBatChagerDone");
+                Serial.println("isBatChargeDone");
+                lv_label_set_text(label1, "isBatChargeDone");
             }
             if (amoled.isBatChargeStartIrq()) {
-                Serial.println("isBatChagerStart");
-                lv_label_set_text(label1, "isBatChagerStart");
+                Serial.println("isBatChargeStart");
+                lv_label_set_text(label1, "isBatChargeStart");
             }
             if (amoled.isChargeOverTimeoutIrq()) {
-                Serial.println("isChagerOverTimeout");
-                lv_label_set_text(label1, "isChagerOverTimeout");
+                Serial.println("isChargeOverTimeout");
+                lv_label_set_text(label1, "isChargeOverTimeout");
             }
         }
 
