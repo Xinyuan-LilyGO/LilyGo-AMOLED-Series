@@ -34,6 +34,13 @@ void serialOut(const char *item, int32_t v, uint32_t d, bool clear);
 
 void setup()
 {
+    Serial.begin(115200);
+    
+    delay(3000);
+
+    Serial.println("The sketch is only compatible with T-Display-AMOLED 1.91 inches, other sizes are not supported");
+
+
     /**
      * * The difference between the touch and non-touch versions is that the display 
      * * power supply of the touch version is controlled by IO38

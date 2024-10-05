@@ -98,6 +98,11 @@ void setup()
             Serial.println("There is a problem with the device!~"); delay(1000);
         }
     }
+
+    Serial.println("The sketch is only compatible with T-Display-AMOLED 1.91 inches, other sizes are not supported");
+
+    amoled.setRotation(1);
+
     amoled.pushColors(0, 240, 240, 296, (uint16_t *)gImage_title);
 }
 
