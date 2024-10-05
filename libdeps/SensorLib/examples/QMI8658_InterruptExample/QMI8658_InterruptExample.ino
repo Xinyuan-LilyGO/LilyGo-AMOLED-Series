@@ -70,7 +70,7 @@ void setup()
 #else
 
 #ifndef CONFIG_IDF_TARGET_ESP32
-//Use tbeams3 defalut spi pin
+//Use LilyGo-T-Beam-S3 default spi pin
 #define SPI_MOSI                    (35)
 #define SPI_SCK                     (36)
 #define SPI_MISO                    (37)
@@ -83,7 +83,7 @@ void setup()
     if (!qmi.begin(IMU_CS, SPI_MOSI, SPI_MISO, SPI_SCK)) {
 
 #else
-//Use esp32dev module defalut spi pin
+//Use esp32dev module default spi pin
 #define IMU_CS                      (5)
 #define IMU_INT1                    (15)
 #define IMU_INT2                    (22)
@@ -126,10 +126,9 @@ void setup()
         *  LPF_MODE_1     //3.63% of ODR
         *  LPF_MODE_2     //5.39% of ODR
         *  LPF_MODE_3     //13.37% of ODR
+        *  LPF_OFF        // OFF Low-Pass Fitter
         * */
-        SensorQMI8658::LPF_MODE_0,
-        // selfTest enable
-        true);
+        SensorQMI8658::LPF_MODE_0);
 
 
     qmi.configGyroscope(
@@ -160,14 +159,17 @@ void setup()
         *  LPF_MODE_1     //3.63% of ODR
         *  LPF_MODE_2     //5.39% of ODR
         *  LPF_MODE_3     //13.37% of ODR
+        *  LPF_OFF        // OFF Low-Pass Fitter
         * */
-        SensorQMI8658::LPF_MODE_3,
-        // selfTest enable
-        true);
+        SensorQMI8658::LPF_MODE_3);
 
 
-    // In 6DOF mode (accelerometer and gyroscope are both enabled),
-    // the output data rate is derived from the nature frequency of gyroscope
+    /*
+    * If both the accelerometer and gyroscope sensors are turned on at the same time,
+    * the output frequency will be based on the gyroscope output frequency.
+    * The example configuration is 896.8HZ output frequency,
+    * so the acceleration output frequency is also limited to 896.8HZ
+    * */
     qmi.enableGyroscope();
     qmi.enableAccelerometer();
 
@@ -177,9 +179,9 @@ void setup()
     pinMode(IMU_INT2, INPUT);
 #endif
 
-    // qmi.enableINT(SensorQMI8658::IntPin1); //no use
+    // qmi.enableINT(SensorQMI8658::INTERRUPT_PIN_1); //no use
     // Enable data ready to interrupt pin2
-    qmi.enableINT(SensorQMI8658::IntPin2);
+    qmi.enableINT(SensorQMI8658::INTERRUPT_PIN_2);
     qmi.enableDataReadyINT();
 
     // Print register configuration information
@@ -223,7 +225,11 @@ void readSensorData(const char *name)
             Serial.print(gyr.z);
             Serial.println("}");
         }
-        Serial.printf("\t\t\t\t > %lu  %.2f *C\n", qmi.getTimestamp(), qmi.getTemperature_C());
+        Serial.print("\t\t\t\t > ");
+        Serial.print(qmi.getTimestamp());
+        Serial.print("  ");
+        Serial.print(qmi.getTemperature_C());
+        Serial.println("*C");
     }
 
 }

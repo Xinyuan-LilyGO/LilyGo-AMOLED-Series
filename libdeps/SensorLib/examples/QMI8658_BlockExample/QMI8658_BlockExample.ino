@@ -30,7 +30,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <SPI.h>
-#ifndef ARDUINO_ARCH_RP2040
+
+#ifdef ARDUINO_ARCH_ESP32
 #include "SensorQMI8658.hpp"
 #include <MadgwickAHRS.h>       //MadgwickAHRS from https://github.com/arduino-libraries/MadgwickAHRS
 #include "SH1106Wire.h"         //Oled display from https://github.com/ThingPulse/esp8266-oled-ssd1306
@@ -88,7 +89,7 @@ void setup()
 #else
 
 #ifndef CONFIG_IDF_TARGET_ESP32
-//Use tbeams3 defalut spi pin
+//Use LilyGo-T-Beam-S3 default spi pin
 #define SPI_MOSI                    (35)
 #define SPI_SCK                     (36)
 #define SPI_MISO                    (37)
@@ -101,7 +102,7 @@ void setup()
     if (!qmi.begin(IMU_CS, SPI_MOSI, SPI_MISO, SPI_SCK)) {
 
 #else
-//Use esp32dev module defalut spi pin
+//Use esp32dev module default spi pin
 #define IMU_CS                      (5)
 #define IMU_INT1                    (15)
 #define IMU_INT2                    (22)
@@ -147,9 +148,7 @@ void setup()
         *  LPF_MODE_2     //5.39% of ODR
         *  LPF_MODE_3     //13.37% of ODR
         * */
-        SensorQMI8658::LPF_MODE_0,
-        // selfTest enable
-        true);
+        SensorQMI8658::LPF_MODE_0);
 
 
     qmi.configGyroscope(
@@ -181,13 +180,15 @@ void setup()
         *  LPF_MODE_2     //5.39% of ODR
         *  LPF_MODE_3     //13.37% of ODR
         * */
-        SensorQMI8658::LPF_MODE_3,
-        // selfTest enable
-        true);
+        SensorQMI8658::LPF_MODE_3);
 
 
-    // In 6DOF mode (accelerometer and gyroscope are both enabled),
-    // the output data rate is derived from the nature frequency of gyroscope
+    /*
+    * If both the accelerometer and gyroscope sensors are turned on at the same time,
+    * the output frequency will be based on the gyroscope output frequency.
+    * The example configuration is 896.8HZ output frequency,
+    * so the acceleration output frequency is also limited to 896.8HZ
+    * */
     qmi.enableGyroscope();
     qmi.enableAccelerometer();
 
@@ -255,7 +256,7 @@ void setup()
 
 void loop()
 {
-    Serial.println("display lib not support RP2040"); delay(1000);
+    Serial.println("The graphics library may not be supported on the current platform"); delay(1000);
 }
 #endif
 

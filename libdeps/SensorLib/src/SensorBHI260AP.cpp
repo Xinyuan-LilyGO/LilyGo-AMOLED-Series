@@ -2,7 +2,7 @@
  *
  * @license MIT License
  *
- * Copyright (c) 2022 lewis he
+ * Copyright (c) 2024 lewis he
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,67 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @file      BAM423_Accelerometer.ino
+ * @file      SensorBHI260AP.cpp
  * @author    Lewis He (lewishe@outlook.com)
- * @date      2023-04-01
+ * @date      2024-05-27
  *
  */
-#include <Wire.h>
-#include <SPI.h>
-#include <Arduino.h>
-#include "SensorBMA423.hpp"
+#include "SensorBHI260AP.hpp"
 
-#ifndef SENSOR_SDA
-#define SENSOR_SDA  21
+#if defined(ARDUINO)
+volatile bool SensorBHI260AP::__data_available;
 #endif
-
-#ifndef SENSOR_SCL
-#define SENSOR_SCL  22
-#endif
-
-#ifndef SENSOR_IRQ
-#define SENSOR_IRQ  39
-#endif
-
-SensorBMA423 accel;
-uint32_t lastMillis;
-
-void setup()
-{
-    Serial.begin(115200);
-    while (!Serial);
-
-    pinMode(SENSOR_IRQ, INPUT);
-
-    if (!accel.begin(Wire, BMA423_SLAVE_ADDRESS, SENSOR_SDA, SENSOR_SCL)) {
-        Serial.println("Failed to find BMA423 - check your wiring!");
-        while (1) {
-            delay(1000);
-        }
-    }
-    Serial.println("Init BAM423 Sensor success!");
-
-    //Default 4G ,200HZ
-    accel.configAccelerometer();
-
-    accel.enableAccelerometer();
-}
-
-
-void loop()
-{
-    int16_t x, y, z;
-    accel.getAccelerometer(x, y, z);
-    Serial.print("X:");
-    Serial.print(x); Serial.print(" ");
-    Serial.print("Y:");
-    Serial.print(y); Serial.print(" ");
-    Serial.print("Z:");
-    Serial.print(z);
-    Serial.println();
-
-    delay(50);
-}
-
 
 

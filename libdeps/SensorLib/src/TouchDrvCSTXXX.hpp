@@ -28,6 +28,8 @@
  * @date      last 2023-10-05
  *
  */
+#pragma once
+
 #include "REG/CSTxxxConstants.h"
 #include "touch/TouchClassCST226.h"
 #include "touch/TouchClassCST816.h"
@@ -130,9 +132,9 @@ public:
 #endif//ARDUINO
 
 
-    void setGpioCallback(gpio_mode_fprt_t mode_cb,
-                         gpio_write_fprt_t write_cb,
-                         gpio_read_fprt_t read_cb)
+    void setGpioCallback(gpio_mode_fptr_t mode_cb,
+                         gpio_write_fptr_t write_cb,
+                         gpio_read_fptr_t read_cb)
     {
         __set_gpio_level = write_cb;
         __get_gpio_level = read_cb;
@@ -283,9 +285,9 @@ public:
     }
 
 private:
-    gpio_write_fprt_t   __set_gpio_level        = NULL;
-    gpio_read_fprt_t    __get_gpio_level        = NULL;
-    gpio_mode_fprt_t    __set_gpio_mode         = NULL;
+    gpio_write_fptr_t   __set_gpio_level        = NULL;
+    gpio_read_fptr_t    __get_gpio_level        = NULL;
+    gpio_mode_fptr_t    __set_gpio_mode         = NULL;
     TouchDrvInterface *drv = NULL;
 };
 

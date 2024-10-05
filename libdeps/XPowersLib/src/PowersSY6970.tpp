@@ -56,14 +56,17 @@ enum PowersSY6970ChargeStatus {
 } ;
 
 enum PowersSY6970NTCStatus {
-    POWERS_SY_BUCK_NTC_NORMAL,
-    POWERS_SY_BUCK_NTC_WARM,
-    POWERS_SY_BUCK_NTC_COOL,
-    POWERS_SY_BUCK_NTC_COLD,
-    POWERS_SY_BUCK_NTC_HOT,
-    POWERS_SY_BOOST_NTC_NORMAL,
-    POWERS_SY_BOOST_NTC_COLD,
-    POWERS_SY_BOOST_NTC_HOT,
+    POWERS_SY_BUCK_NTC_NORMAL = 0,
+    POWERS_SY_BUCK_NTC_WARM = 2,
+    POWERS_SY_BUCK_NTC_COOL = 3,
+    POWERS_SY_BUCK_NTC_COLD = 5,
+    POWERS_SY_BUCK_NTC_HOT = 6,
+};
+
+enum PowersSY6970BoostNTCStatus {
+    POWERS_SY_BOOST_NTC_NORMAL = 0,
+    POWERS_SY_BOOST_NTC_COLD = 5,
+    POWERS_SY_BOOST_NTC_HOT = 6,
 };
 
 enum SY6970_WDT_Timeout {
@@ -83,8 +86,8 @@ enum BoostFreq {
 };
 
 enum RequestRange {
-    RANGE_0_9V,
-    RANGE_1_12V,
+    REQUEST_9V,
+    REQUEST_12V,
 };
 
 enum FastChargeTimer {
@@ -162,6 +165,11 @@ public:
     {
         int res = readRegister(POWERS_SY6970_REG_14H);
         return (res & 0x03);
+    }
+
+    void resetDefault()
+    {
+        setRegisterBit(POWERS_SY6970_REG_14H, 7);
     }
 
     bool init()
@@ -439,7 +447,16 @@ public:
     {
         int val =  readRegister(POWERS_SY6970_REG_0BH);
         if (val == -1)return POWERS_SY_CHARGE_UNKOWN;
-        return (PowersSY6970ChargeStatus)((val >> 3) & 0x03);
+        PowersSY6970ChargeStatus status =  (PowersSY6970ChargeStatus)((val >> 3) & 0x03);
+
+        /*
+        * Directly obtaining the register cannot produce accurate results.
+        * Add check to determine whether there is charging current to determine whether it is in the charging state.
+        * */
+        if (getChargeCurrent() > 0 && status != POWERS_SY_NO_CHARGE) {
+            return status;
+        }
+        return POWERS_SY_NO_CHARGE;
     }
 
     const char *getChargeStatusString()
@@ -459,62 +476,44 @@ public:
         }
     }
 
-    PowersSY6970NTCStatus getNTCStatus()
+    uint8_t getNTCStatus()
     {
-        int val =  readRegister(POWERS_SY6970_REG_0CH);
-        return (PowersSY6970NTCStatus)(val & 0x07);
+        return (__irq_mask & 0x07);
     }
 
     const char *getNTCStatusString()
     {
-        PowersSY6970NTCStatus status = getNTCStatus();
-        switch (status) {
-        case POWERS_SY_BUCK_NTC_NORMAL:
-            return "Buck mode NTC normal";
-        case POWERS_SY_BUCK_NTC_WARM:
-            return "Buck mode NTC warm";
-        case POWERS_SY_BUCK_NTC_COOL:
-            return "Buck mode NTC cool";
-        case POWERS_SY_BUCK_NTC_COLD:
-            return "Buck mode NTC cold";
-        case POWERS_SY_BUCK_NTC_HOT:
-            return "Buck mode NTC hot";
-        case POWERS_SY_BOOST_NTC_NORMAL:
-            return "Boost mode NTC hot";
-        case POWERS_SY_BOOST_NTC_COLD:
-            return "Boost mode NTC cold";
-        case POWERS_SY_BOOST_NTC_HOT:
-            return "Boost mode NTC hot";
-        default:
-            return "Unknown";
+        uint8_t status = getNTCStatus();
+
+        if (isOTG()) {
+            // Boost mode
+            switch (status) {
+            case POWERS_SY_BOOST_NTC_NORMAL:
+                return "Boost mode NTC normal";
+            case POWERS_SY_BOOST_NTC_COLD:
+                return "Boost mode NTC cold";
+            case POWERS_SY_BOOST_NTC_HOT:
+                return "Boost mode NTC hot";
+            default:
+                break;
+            }
+        } else {
+            // Buck mode
+            switch (status) {
+            case POWERS_SY_BUCK_NTC_NORMAL:
+                return "Buck mode NTC normal";
+            case POWERS_SY_BUCK_NTC_WARM:
+                return "Buck mode NTC warm";
+            case POWERS_SY_BUCK_NTC_COOL:
+            case POWERS_SY_BUCK_NTC_COLD:
+                return "Buck mode NTC cold";
+            case POWERS_SY_BUCK_NTC_HOT:
+                return "Buck mode NTC hot";
+            default:
+                break;
+            }
         }
-    }
-
-    bool isWatchdogNormal()
-    {
-        return getRegisterBit(POWERS_SY6970_REG_0CH, 7) == false;
-    }
-
-    bool isBoostNormal()
-    {
-        return getRegisterBit(POWERS_SY6970_REG_0CH, 6) == false;
-    }
-
-    bool isChargeNormal()
-    {
-        int val = readRegister(POWERS_SY6970_REG_0CH);
-        return ((val & 0x30) >> 3) == 0;
-    }
-
-    bool isBatteryNormal()
-    {
-        return getRegisterBit(POWERS_SY6970_REG_0CH, 3) == false;
-    }
-
-    bool isNtcNormal()
-    {
-        int val = readRegister(POWERS_SY6970_REG_0CH);
-        return (val & 0x7) == 0;
+        return "Unknown";
     }
 
     bool enableADCMeasure(ADCMeasure mode = SY6970_ADC_CONTINUOUS)
@@ -588,10 +587,10 @@ public:
     void setHighVoltageRequestedRange(RequestRange range)
     {
         switch (range) {
-        case RANGE_0_9V:
+        case REQUEST_9V:
             clrRegisterBit(POWERS_SY6970_REG_02H, 2);
             break;
-        case RANGE_1_12V:
+        case REQUEST_12V:
             setRegisterBit(POWERS_SY6970_REG_02H, 2);
             break;
         default:
@@ -601,7 +600,7 @@ public:
 
     RequestRange getHighVoltageRequestedRange()
     {
-        return getRegisterBit(POWERS_SY6970_REG_02H, 2) ? RANGE_1_12V : RANGE_0_9V;
+        return getRegisterBit(POWERS_SY6970_REG_02H, 2) ? REQUEST_12V : REQUEST_9V;
     }
 
     // Enable Force DP/DM detection
@@ -716,7 +715,14 @@ public:
         int val = readRegister(POWERS_SY6970_REG_0EH);
         val = POWERS_SY6970_VBAT_MASK_VAL(val);
         if (val == 0)return 0;
-        return (val * POWERS_SY6970_VBAT_VOL_STEP) + POWERS_SY6970_VBAT_BASE_VAL;
+        /*
+        * Directly obtaining the register cannot produce accurate results.
+        * Adding check to determine whether there is charging current determines whether there is a battery.
+        * */
+        if (getChargeCurrent() != 0) {
+            return (val * POWERS_SY6970_VBAT_VOL_STEP) + POWERS_SY6970_VBAT_BASE_VAL;
+        }
+        return 0;
     }
 
     uint16_t getSystemVoltage()
@@ -903,7 +909,7 @@ public:
         };
         Serial.println();
         Serial.println("-------------------------");
-        for (int i = 0; i < sizeof(regis) / sizeof(regis[0]); ++i) {
+        for (uint32_t i = 0; i < sizeof(regis) / sizeof(regis[0]); ++i) {
             int val = readRegister(regis[i]);
             if (val == -1) {
                 continue;
@@ -986,7 +992,7 @@ private:
             return false;
         }
         // Set the minimum operating voltage. Below this voltage, the PMU will protect
-        setSysPowerDownVoltage(3300);
+        // setSysPowerDownVoltage(3300);
 
         //Default disable Watchdog
         disableWatchdog();

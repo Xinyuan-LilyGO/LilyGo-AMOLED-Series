@@ -26,6 +26,7 @@
  * @author    Lewis He (lewishe@outlook.com)
  * @date      2023-10-06
  */
+#pragma once
 
 #include "../TouchDrvInterface.hpp"
 #include "../SensorCommon.tpp"
@@ -73,9 +74,9 @@ public:
 
     void setHomeButtonCallback(home_button_callback_t cb, void *user_data);
 
-    void setGpioCallback(gpio_mode_fprt_t mode_cb,
-                         gpio_write_fprt_t write_cb,
-                         gpio_read_fprt_t read_cb);
+    void setGpioCallback(gpio_mode_fptr_t mode_cb,
+                         gpio_write_fptr_t write_cb,
+                         gpio_read_fptr_t read_cb);
 
 private:
     bool initImpl();

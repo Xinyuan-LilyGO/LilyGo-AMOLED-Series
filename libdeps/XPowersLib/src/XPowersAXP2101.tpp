@@ -83,7 +83,7 @@ typedef enum {
     XPOWERS_AXP2101_CHG_CC_STATE,    //constant charge
     XPOWERS_AXP2101_CHG_CV_STATE,    //constant voltage
     XPOWERS_AXP2101_CHG_DONE_STATE,  //charge done
-    XPOWERS_AXP2101_CHG_STOP_STATE,  //not chargin
+    XPOWERS_AXP2101_CHG_STOP_STATE,  //not charge
 } xpowers_chg_status_t;
 
 typedef enum {
@@ -134,27 +134,6 @@ typedef enum {
     XPOWERS_AXP2101_WDT_TIMEOUT_64S,
     XPOWERS_AXP2101_WDT_TIMEOUT_128S,
 } xpowers_wdt_timeout_t;
-
-
-
-typedef enum {
-    XPOWERS_AXP2101_VBUS_VOL_LIM_3V88,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_3V96,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V04,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V12,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V20,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V28,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V36,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V44,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V52,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V60,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V68,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V76,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V84,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_4V92,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_5V,
-    XPOWERS_AXP2101_VBUS_VOL_LIM_5V08,
-} xpower_vbus_vol_limit_t;
 
 typedef enum {
     XPOWERS_AXP2101_VSYS_VOL_4V1,
@@ -295,7 +274,7 @@ public:
         return  getRegisterBit(XPOWERS_AXP2101_STATUS1, 1);
     }
 
-    bool getCurrnetLimitStatus(void)
+    bool getCurrentLimitStatus(void)
     {
         return getRegisterBit(XPOWERS_AXP2101_STATUS1, 0);
     }
@@ -488,9 +467,13 @@ public:
         return (val & 0x70) >> 4;
     }
 
-    // Set the minimum common working voltage of the PMU VBUS input,
-    // below this value will turn off the PMU
-    void setVbusVoltageLimit(xpower_vbus_vol_limit_t opt)
+
+    /**
+     * @brief  Set VBUS Voltage Input Limit.
+     * @param  opt: View the related chip type xpowers_axp2101_vbus_vol_limit_t enumeration
+     *              parameters in "XPowersParams.hpp"
+     */
+    void setVbusVoltageLimit(uint8_t opt)
     {
         int val = readRegister(XPOWERS_AXP2101_INPUT_VOL_LIMIT_CTRL);
         if (val == -1)return;
@@ -498,6 +481,11 @@ public:
         writeRegister(XPOWERS_AXP2101_INPUT_VOL_LIMIT_CTRL, val | (opt & 0x0F));
     }
 
+    /**
+    * @brief  Get VBUS Voltage Input Limit.
+    * @retval View the related chip type xpowers_axp2101_vbus_vol_limit_t enumeration
+    *              parameters in "XPowersParams.hpp"
+    */
     uint8_t getVbusVoltageLimit(void)
     {
         return (readRegister(XPOWERS_AXP2101_INPUT_VOL_LIMIT_CTRL) & 0x0F);
@@ -569,7 +557,7 @@ public:
         return clrRegisterBit(XPOWERS_AXP2101_CHARGE_GAUGE_WDT_CTRL, 2);
     }
 
-    bool isEanbleButtonBatteryCharge()
+    bool isEnableButtonBatteryCharge()
     {
         return getRegisterBit(XPOWERS_AXP2101_CHARGE_GAUGE_WDT_CTRL, 2);
     }
@@ -958,7 +946,7 @@ public:
     }
 
     // POWEROFF Delay 4ms after PWROK enable
-    void eanblePowerOffDelay()
+    void enablePowerOffDelay()
     {
         setRegisterBit(XPOWERS_AXP2101_PWROK_SEQU_CTRL, 3);
     }
@@ -970,7 +958,7 @@ public:
     }
 
     // POWEROFF Sequence Control the reverse of the Startup
-    void eanblePowerSequence()
+    void enablePowerSequence()
     {
         setRegisterBit(XPOWERS_AXP2101_PWROK_SEQU_CTRL, 2);
     }
@@ -1315,12 +1303,12 @@ public:
     }
 
     // DCDC 120%(130%) high voltage turn off PMIC function
-    void setDCHighVoltagePowerDowm(bool en)
+    void setDCHighVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 5) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 5);
     }
 
-    bool getDCHighVoltagePowerDowmEn()
+    bool getDCHighVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 5);
     }
@@ -1385,7 +1373,7 @@ public:
         clrRegisterBit(XPOWERS_AXP2101_DC_ONOFF_DVM_CTRL, 6);
     }
 
-    bool isEanbleCCM()
+    bool isenableCCM()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_ONOFF_DVM_CTRL, 6);
     }
@@ -1446,12 +1434,12 @@ public:
 
 
     // DCDC1 85% low voltage turn off PMIC function
-    void setDC1LowVoltagePowerDowm(bool en)
+    void setDC1LowVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 0) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 0);
     }
 
-    bool getDC1LowVoltagePowerDowmEn()
+    bool getDC1LowVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 0);
     }
@@ -1514,12 +1502,12 @@ public:
         return getRegisterBit(XPOWERS_AXP2101_DCDC2_VOL_STEPS2, 7);
     }
 
-    void setDC2LowVoltagePowerDowm(bool en)
+    void setDC2LowVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 1) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 1);
     }
 
-    bool getDC2LowVoltagePowerDowmEn()
+    bool getDC2LowVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 1);
     }
@@ -1599,12 +1587,12 @@ public:
     }
 
     // DCDC3 85% low voltage turn off PMIC function
-    void setDC3LowVoltagePowerDowm(bool en)
+    void setDC3LowVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 2) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 2);
     }
 
-    bool getDC3LowVoltagePowerDowmEn()
+    bool getDC3LowVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 2);
     }
@@ -1670,12 +1658,12 @@ public:
     }
 
     // DCDC4 85% low voltage turn off PMIC function
-    void setDC4LowVoltagePowerDowm(bool en)
+    void setDC4LowVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 3) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 3);
     }
 
-    bool getDC4LowVoltagePowerDowmEn()
+    bool getDC4LowVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 3);
     }
@@ -1747,12 +1735,12 @@ public:
     }
 
     // DCDC4 85% low voltage turn off PMIC function
-    void setDC5LowVoltagePowerDowm(bool en)
+    void setDC5LowVoltagePowerDown(bool en)
     {
         en ? setRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 4) : clrRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 4);
     }
 
-    bool getDC5LowVoltagePowerDowmEn()
+    bool getDC5LowVoltagePowerDownEn()
     {
         return getRegisterBit(XPOWERS_AXP2101_DC_OVP_UVP_CTRL, 4);
     }
@@ -2589,7 +2577,7 @@ public:
 #endif
 
     /**
-     * @brief  Eanble PMU interrupt control mask .
+     * @brief  Enable PMU interrupt control mask .
      * @param  opt: View the related chip type xpowers_axp2101_irq_t enumeration
      *              parameters in "XPowersParams.hpp"
      * @retval
@@ -2776,7 +2764,7 @@ public:
         return false;
     }
 
-    bool isBatChagerDoneIrq(void)
+    bool isBatChargeDoneIrq(void)
     {
         uint8_t mask = XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  >> 16;
         if (intRegister[2] & mask) {
@@ -2785,7 +2773,7 @@ public:
         return false;
     }
 
-    bool isBatChagerStartIrq(void)
+    bool isBatChargeStartIrq(void)
     {
         uint8_t mask = XPOWERS_AXP2101_BAT_CHG_START_IRQ  >> 16;
         if (intRegister[2] & mask) {
@@ -2803,7 +2791,7 @@ public:
         return false;
     }
 
-    bool isChagerOverTimeoutIrq(void)
+    bool isChargeOverTimeoutIrq(void)
     {
         uint8_t mask = XPOWERS_AXP2101_CHAGER_TIMER_IRQ  >> 16;
         if (intRegister[2] & mask) {
@@ -2976,7 +2964,7 @@ protected:
         case XPOWERS_DLDO2:
             return isEnableDLDO2();
         case XPOWERS_VBACKUP:
-            return isEanbleButtonBatteryCharge();
+            return isEnableButtonBatteryCharge();
         case XPOWERS_CPULDO:
             return isEnableCPUSLDO();
         default:

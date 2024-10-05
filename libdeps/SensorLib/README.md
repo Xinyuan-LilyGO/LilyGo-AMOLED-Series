@@ -19,22 +19,35 @@
 
 [![LICENSE](https://img.shields.io/github/license/lewisxhe/SensorLib)](https://github.com/lewisxhe/SensorLib/blob/master/LICENSE)
 [![ISSUES](https://img.shields.io/github/issues/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/issues)
-[![FROK](https://img.shields.io/github/forks/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/graphs/contributors)
+[![FORK](https://img.shields.io/github/forks/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/graphs/contributors)
 [![STAR](https://img.shields.io/github/stars/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/stargazers)
 [![releases](https://img.shields.io/github/release/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorLib/releases)
 
-![PCF8563](https://img.shields.io/badge/PCB8563-GREEN)
+## RTC
+![PCF8563](https://img.shields.io/badge/PCF8563-GREEN)
 ![PCF85063](https://img.shields.io/badge/PCF85063-GREEN)
 ![HYM8563](https://img.shields.io/badge/HYM8563-GREEN)
+
+## Motion Sensor
+
 ![QMI8658](https://img.shields.io/badge/QMI8658-blue)
 ![BMM150](https://img.shields.io/badge/BMM150-blue)
 ![QMC6310](https://img.shields.io/badge/QMC6310-blue)
 ![BMA423](https://img.shields.io/badge/BMA423-blue)
 ![BHI260AP](https://img.shields.io/badge/BHI260AP-blue)
+
+## GPIO Expansion
 ![XL9555](https://img.shields.io/badge/XL9555-yellow)
+![XL9535](https://img.shields.io/badge/XL9535-yellow)
+
+## Haptic Driver
 ![DRV2605](https://img.shields.io/badge/DRV2605-teal)
+
+## Light Sensor
 ![CM32181](https://img.shields.io/badge/CM32181-brown)
 ![LTR553](https://img.shields.io/badge/LTR553-brown)
+
+## Touchpad
 ![FT5206](https://img.shields.io/badge/FT5206-red)
 ![FT6206](https://img.shields.io/badge/FT6206-red)
 ![FT6236](https://img.shields.io/badge/FT6236-red)
@@ -46,6 +59,9 @@
 ![CST226SE](https://img.shields.io/badge/CST226SE-red)
 ![CHSC5816](https://img.shields.io/badge/CHSC5816-red)
 ![GT911](https://img.shields.io/badge/GT911-red)
+![CST9217](https://img.shields.io/badge/CST9217-red)
+![CST9220](https://img.shields.io/badge/CST9220-red)
+![GT9895](https://img.shields.io/badge/GT9895-red)
 
 Support list:
 
@@ -71,3 +87,7 @@ Support list:
 | CST226SE        | Capacitive touch         | ✔️   | ❌   |
 | CHSC5816        | Capacitive touch         | ✔️   | ❌   |
 | GT911           | Capacitive touch         | ✔️   | ❌   |
+| CST9217         | Capacitive touch         | ✔️   | ❌   |
+| CST9220         | Capacitive touch         | ✔️   | ❌   |
+| GT9895          | Capacitive touch         | ✔️   | ❌   |
+

@@ -27,7 +27,7 @@
  * @date      2023-04-12
  *
  */
-
+#pragma once
 
 #include "REG/CHSC5816Constants.h"
 #include "TouchDrvInterface.hpp"
@@ -223,9 +223,9 @@ public:
         return false;
     }
 
-    void  setGpioCallback(gpio_mode_fprt_t mode_cb,
-                          gpio_write_fprt_t write_cb,
-                          gpio_read_fprt_t read_cb)
+    void  setGpioCallback(gpio_mode_fptr_t mode_cb,
+                          gpio_write_fptr_t write_cb,
+                          gpio_read_fptr_t read_cb)
     {
         SensorCommon::setGpioModeCallback(mode_cb);
         SensorCommon::setGpioWriteCallback(write_cb);

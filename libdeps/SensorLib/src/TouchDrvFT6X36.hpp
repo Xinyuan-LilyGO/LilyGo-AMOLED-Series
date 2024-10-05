@@ -27,7 +27,7 @@
  * @date      2023-04-01
  *
  */
-
+#pragma once
 
 #include "REG/FT6X36Constants.h"
 #include "TouchDrvInterface.hpp"
@@ -42,7 +42,7 @@ public:
 
 
     enum GesTrue {
-        NO_GESTRUE,
+        NO_GESTURE,
         MOVE_UP,
         MOVE_LEFT,
         MOVE_DOWN,
@@ -153,27 +153,27 @@ public:
         default:
             break;
         }
-        return NO_GESTRUE;
+        return NO_GESTURE;
     }
 
-    void setTheshold(uint8_t value)
+    void setThreshold(uint8_t value)
     {
-        writeRegister(FT6X36_REG_THRESHHOLD, value);
+        writeRegister(FT6X36_REG_THRESHOLD, value);
     }
 
     uint8_t getThreshold(void)
     {
-        return readRegister(FT6X36_REG_THRESHHOLD);
+        return readRegister(FT6X36_REG_THRESHOLD);
     }
 
     uint8_t getMonitorTime(void)
     {
-        return readRegister(FT6X36_REG_MONITORTIME);
+        return readRegister(FT6X36_REG_MONITOR_TIME);
     }
 
     void setMonitorTime(uint8_t sec)
     {
-        writeRegister(FT6X36_REG_MONITORTIME, sec);
+        writeRegister(FT6X36_REG_MONITOR_TIME, sec);
     }
 
     // Calibration useless actually,
@@ -194,7 +194,7 @@ public:
     uint16_t getLibraryVersion()
     {
         uint8_t buffer[2];
-        readRegister(FT6X36_REG_LIB_VERSIONH, buffer, 2);
+        readRegister(FT6X36_REG_LIB_VERSION_H, buffer, 2);
         return (buffer[0] << 8) | buffer[1];
     }
 
@@ -225,9 +225,12 @@ public:
 
         // uint8_t mode = buffer[0];
         //REG 0x01
-        // uint8_t gestrue = buffer[1];
+        // uint8_t gesture = buffer[1];
         //REG 0x02
         uint8_t point = buffer[2] & 0x0F;
+        if (point == 0 || point == 0x0F) {
+            return 0;
+        }
 
         //REG 0x03 ~ 0x04
         // uint8_t eventFlag = (buffer[3] & 0xC0) >> 6;
@@ -236,10 +239,6 @@ public:
         uint16_t posY = ((buffer[5] & 0x0F) << 8) | buffer[6] ;
 
 
-        if (point == 0) {
-            return 0;
-        }
-
         x_array[0] = posX;
         y_array[0] = posY;
 
@@ -247,7 +246,7 @@ public:
         LOG_PORT.println("----------------------------------------------------------------------------");
         LOG_PORT.println("Touched Gesture EvenFlag    [0]PosX    [0]PosY  [1]PosX    [1]PosY");
         LOG_PORT.print(point); LOG_PORT.print("\t");
-        // LOG_PORT.print(gestrue); LOG_PORT.print("\t");
+        // LOG_PORT.print(gesture); LOG_PORT.print("\t");
         // LOG_PORT.print(eventFlag); LOG_PORT.print("\t");
         LOG_PORT.print(posX); LOG_PORT.print("\t");
         LOG_PORT.print(posY); LOG_PORT.print("\t");
@@ -312,7 +311,7 @@ public:
 
     uint32_t getChipID(void)
     {
-        return readRegister(FT6X36_REG_CHIPID);
+        return readRegister(FT6X36_REG_CHIP_ID);
     }
 
     uint8_t getVendorID(void)
@@ -327,12 +326,12 @@ public:
 
     const char *getModelName()
     {
-        switch (chipID) {
-        case FT6206_CHIPID: return "FT6206";
-        case FT6236_CHIPID: return "FT6236";
-        case FT6236U_CHIPID: return "FT6236U";
-        case FT3267_CHIPID: return "FT3267";
-        default: return "UNKOWN";
+        switch (__chipID) {
+        case FT6206_CHIP_ID: return "FT6206";
+        case FT6236_CHIP_ID: return "FT6236";
+        case FT6236U_CHIP_ID: return "FT6236U";
+        case FT3267_CHIP_ID: return "FT3267";
+        default: return "UNKNOWN";
         }
     }
 
@@ -345,20 +344,22 @@ public:
     void reset()
     {
         if (__rst != SENSOR_PIN_NONE) {
-
+            this->setGpioMode(__rst, OUTPUT);
             this->setGpioLevel(__rst, HIGH);
             delay(10);
             this->setGpioLevel(__rst, LOW);
             delay(30);
             this->setGpioLevel(__rst, HIGH);
-            delay(5);
+            // For the variant of GPIO extended RST,
+            // communication and delay are carried out simultaneously, and 160ms is measured in T-RGB esp-idf new api
+            delay(160);
         }
     }
 
 
-    void  setGpioCallback(gpio_mode_fprt_t mode_cb,
-                          gpio_write_fprt_t write_cb,
-                          gpio_read_fprt_t read_cb)
+    void  setGpioCallback(gpio_mode_fptr_t mode_cb,
+                          gpio_write_fptr_t write_cb,
+                          gpio_read_fptr_t read_cb)
     {
         SensorCommon::setGpioModeCallback(mode_cb);
         SensorCommon::setGpioWriteCallback(write_cb);
@@ -368,36 +369,45 @@ public:
 private:
     bool initImpl()
     {
+        if (__irq != SENSOR_PIN_NONE) {
+            this->setGpioMode(__irq, INPUT);
+        }
+
+        reset();
+
         uint8_t vendId = readRegister(FT6X36_REG_VENDOR1_ID);
-        chipID = readRegister(FT6X36_REG_CHIPID);
 
-        log_i("Vend ID: 0x%X", vendId);
-        log_i("Chip ID: 0x%X", chipID);
-        log_i("Firm Version: 0x%X", readRegister(FT6X36_REG_FIRMVERS));
-        log_i("Point Rate Hz: %u", readRegister(FT6X36_REG_PERIODACTIVE));
-        log_i("Thresh : %u", readRegister(FT6X36_REG_THRESHHOLD));
 
-        // change threshhold to be higher/lower
-        writeRegister(FT6X36_REG_THRESHHOLD, 60);
-
-        if (vendId != FT6X36_VENDID) {
-            log_e("Vendor id is not match!");
+        if (vendId != FT6X36_VEND_ID) {
+            log_e("Vendor id is 0x%X not match!", vendId);
             return false;
         }
-        if ((chipID != FT6206_CHIPID) &&
-                (chipID != FT6236_CHIPID) &&
-                (chipID != FT6236U_CHIPID)  &&
-                (chipID != FT3267_CHIPID)
+
+        __chipID = readRegister(FT6X36_REG_CHIP_ID);
+
+        if ((__chipID != FT6206_CHIP_ID) &&
+                (__chipID != FT6236_CHIP_ID) &&
+                (__chipID != FT6236U_CHIP_ID)  &&
+                (__chipID != FT3267_CHIP_ID)
            ) {
             log_e("Vendor id is not match!");
-            log_e("ChipID:0x%x should be 0x06 or 0x36 or 0x64\n", chipID);
+            log_e("ChipID:0x%lx should be 0x06 or 0x36 or 0x64", __chipID);
             return false;
         }
 
-        log_i("Chip library version : 0x%x\n", getLibraryVersion());
+        log_i("Vend ID: 0x%X", vendId);
+        log_i("Chip ID: 0x%lx", __chipID);
+        log_i("Firm Version: 0x%X", readRegister(FT6X36_REG_FIRM_VERS));
+        log_i("Point Rate Hz: %u", readRegister(FT6X36_REG_PERIOD_ACTIVE));
+        log_i("Thresh : %u", readRegister(FT6X36_REG_THRESHOLD));
+
+        // change threshold to be higher/lower
+        writeRegister(FT6X36_REG_THRESHOLD, 60);
+
+        log_i("Chip library version : 0x%x", getLibraryVersion());
 
         // This register describes period of monitor status, it should not less than 30.
-        log_i("Chip period of monitor status : 0x%x\n", readRegister(FT6X36_REG_PERIODMONITOR));
+        log_i("Chip period of monitor status : 0x%x", readRegister(FT6X36_REG_PERIOD_MONITOR));
 
         // This register describes the period of active status, it should not less than 12
 
@@ -410,8 +420,6 @@ private:
         return -1;
     }
 
-protected:
-    uint8_t chipID;
 };
 
 

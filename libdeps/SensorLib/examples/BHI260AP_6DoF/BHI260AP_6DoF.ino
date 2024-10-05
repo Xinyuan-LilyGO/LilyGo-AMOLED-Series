@@ -25,7 +25,7 @@
  * @file      BHI260AP_6DoF.ino
  * @author    Lewis He (lewishe@outlook.com)
  * @date      2023-09-06
- *
+ * @note      Changed from Boschsensortec API https://github.com/boschsensortec/BHY2_SensorAPI
  */
 #include <Wire.h>
 #include <SPI.h>
@@ -48,7 +48,7 @@
 
 
 SensorBHI260AP bhy;
-void accel_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len)
+void accel_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp)
 {
     struct bhy2_data_xyz data;
     float scaling_factor = get_sensor_default_scaling(sensor_id);
@@ -63,7 +63,7 @@ void accel_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len)
 }
 
 
-void gyro_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len)
+void gyro_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp)
 {
     struct bhy2_data_xyz data;
     float scaling_factor = get_sensor_default_scaling(sensor_id);

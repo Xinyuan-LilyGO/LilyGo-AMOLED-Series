@@ -33,19 +33,11 @@
 
 #include "SensorLib.h"
 
-typedef union  {
-    struct {
-        uint8_t low;
-        uint8_t high;
-    } bits;
-    uint16_t full;
-} RegData_t;
-
 typedef int     (*iic_fptr_t)(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len);
-typedef void    (*gpio_write_fprt_t)(uint32_t gpio, uint8_t value);
-typedef int     (*gpio_read_fprt_t)(uint32_t gpio);
-typedef void    (*gpio_mode_fprt_t)(uint32_t gpio, uint8_t mode);
-typedef void    (*delay_ms_fprt_t)(uint32_t ms);
+typedef void    (*gpio_write_fptr_t)(uint32_t gpio, uint8_t value);
+typedef int     (*gpio_read_fptr_t)(uint32_t gpio);
+typedef void    (*gpio_mode_fptr_t)(uint32_t gpio, uint8_t mode);
+typedef void    (*delay_ms_fptr_t)(uint32_t ms);
 
 template <class chipType>
 class SensorCommon
@@ -70,20 +62,27 @@ public:
 
     bool begin(PLATFORM_WIRE_TYPE &w, uint8_t addr, int sda, int scl)
     {
-        log_i("Using Arduino Wire interface.\n");
+        log_i("Using Arduino Wire interface.");
         if (__has_init)return thisChip().initImpl();
         __wire = &w;
         __sda = sda;
         __scl = scl;
-#if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
+#if defined(ARDUINO_ARCH_NRF52)
+        if (__sda != 0xFF && __scl != 0xFF) {
+            __wire->setPins(__sda, __scl);
+        }
         __wire->begin();
-#elif defined(ARDUINO_ARCH_RP2040)
-        __wire->end();
-        __wire->setSDA(__sda);
-        __wire->setSCL(__scl);
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_STM32)
+        if (__sda != 0xFF && __scl != 0xFF) {
+            __wire->end();
+            __wire->setSDA(__sda);
+            __wire->setSCL(__scl);
+        }
         __wire->begin();
-#else
+#elif defined(ARDUINO_ARCH_ESP32)
         __wire->begin(__sda, __scl);
+#else
+        __wire->begin();
 #endif
         __addr = addr;
         __spi = NULL;
@@ -97,7 +96,7 @@ public:
                PLATFORM_SPI_TYPE &spi = SPI
               )
     {
-        log_i("Using Arduino SPI interface.\n");
+        log_i("Using Arduino SPI interface.");
         if (__has_init)return thisChip().initImpl();
         __cs  = cs;
         __spi = &spi;
@@ -108,12 +107,17 @@ public:
             return false;
         }
         if (mosi != -1 && miso != -1 && sck != -1) {
-#if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
+#if defined(ARDUINO_ARCH_NRF52)
             __spi->begin();
 #elif defined(ARDUINO_ARCH_RP2040)
             __spi->setSCK(sck);
             __spi->setRX(miso);
             __spi->setTX(mosi);
+            __spi->begin();
+#elif defined(ARDUINO_ARCH_STM32)
+            __spi->setSCLK(sck);
+            __spi->setMISO(miso);
+            __spi->setMOSI(mosi);
             __spi->begin();
 #else
             __spi->begin(sck, miso, mosi);
@@ -135,12 +139,13 @@ public:
 
     bool begin(i2c_master_bus_handle_t i2c_dev_bus_handle, uint8_t addr)
     {
-        log_i("Using ESP-IDF Driver interface.\n");
+        log_i("Using ESP-IDF Driver interface.");
         if (i2c_dev_bus_handle == NULL) return false;
         if (__has_init)return thisChip().initImpl();
 
         __i2c_master_read = NULL;
         __i2c_master_write = NULL;
+        __addr = addr;
 
         /*
         i2c_master_bus_config_t i2c_bus_config;
@@ -155,18 +160,31 @@ public:
         */
         bus_handle = i2c_dev_bus_handle;
 
-        i2c_device_config_t i2c_dev_conf = {
-            .dev_addr_length = I2C_ADDR_BIT_LEN_7,
-            .device_address = addr,
-            .scl_speed_hz = SENSORLIB_I2C_MASTER_SEEED,
-        };
-
+        __i2c_dev_conf.dev_addr_length = I2C_ADDR_BIT_LEN_7;
+        __i2c_dev_conf.device_address = __addr;
+        __i2c_dev_conf.scl_speed_hz = SENSORLIB_I2C_MASTER_SEEED;
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,3,0))
+#if (ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,4,0))
+        // New fields since esp-idf-v5.3-beta1
+        __i2c_dev_conf.scl_wait_us = 0;
+#endif
+        __i2c_dev_conf.flags.disable_ack_check = 0;
+#endif
         if (ESP_OK != i2c_master_bus_add_device(bus_handle,
-                                                &i2c_dev_conf,
+                                                &__i2c_dev_conf,
                                                 &__i2c_device)) {
+            log_i("i2c_master_bus_add_device failed !");
             return false;
         }
+        log_i("Added Device Address : 0x%X  New Dev Address: %p Speed :%lu ", __addr, __i2c_device, __i2c_dev_conf.scl_speed_hz);
         __has_init = thisChip().initImpl();
+
+        if (!__has_init) {
+            // Initialization failed, delete device
+            log_i("i2c_master_bus_rm_device  !");
+            i2c_master_bus_rm_device(__i2c_device);
+        }
+
         return __has_init;
     }
 
@@ -175,7 +193,7 @@ public:
     bool begin(i2c_port_t port_num, uint8_t addr, int sda, int scl)
     {
         __i2c_num = port_num;
-        log_i("Using ESP-IDF Driver interface.\n");
+        log_i("Using ESP-IDF Driver interface.");
         if (__has_init)return thisChip().initImpl();
         __sda = sda;
         __scl = scl;
@@ -212,7 +230,7 @@ public:
 
     bool begin(uint8_t addr, iic_fptr_t readRegCallback, iic_fptr_t writeRegCallback)
     {
-        log_i("Using Custom interface.\n");
+        log_i("Using Custom interface.");
         if (__has_init)return thisChip().initImpl();
         __i2c_master_read = readRegCallback;
         __i2c_master_write = writeRegCallback;
@@ -224,22 +242,22 @@ public:
         return __has_init;
     }
 
-    void setGpioWriteCallback(gpio_write_fprt_t cb)
+    void setGpioWriteCallback(gpio_write_fptr_t cb)
     {
         __set_gpio_level = cb;
     }
 
-    void setGpioReadCallback(gpio_read_fprt_t cb)
+    void setGpioReadCallback(gpio_read_fptr_t cb)
     {
         __get_gpio_level = cb;
     }
 
-    void setGpioModeCallback(gpio_mode_fprt_t cb)
+    void setGpioModeCallback(gpio_mode_fptr_t cb)
     {
         __set_gpio_mode = cb;
     }
 
-    void setDelayCallback(delay_ms_fprt_t cb)
+    void setDelayCallback(delay_ms_fptr_t cb)
     {
         __delay_ms = cb;
     }
@@ -276,7 +294,24 @@ protected:
 #endif
     }
 
-
+    bool probe(uint8_t address)
+    {
+#if defined(ARDUINO)
+        if (__wire) {
+            __wire->beginTransmission(address);
+            return __wire->endTransmission() == 0;
+        }
+        return false;
+#elif defined(ESP_PLATFORM)
+#if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
+        return i2c_master_probe(bus_handle, address, 1000);
+#else
+        return true;
+#endif
+#else
+        return true;
+#endif
+    }
 
     bool probe()
     {
@@ -314,12 +349,22 @@ protected:
         return writeRegister(reg, &val, 1);
     }
 
-    int writeRegister(int reg, RegData_t data)
+
+    template<typename T>
+    int writeThenRead(T write_register, uint8_t *read_buffer, size_t read_len)
     {
-        return writeRegister(reg, (uint8_t *)&data.full, 2);
+        constexpr size_t write_len = sizeof(T);
+        uint8_t write_buffer[write_len] = {0};
+        for (size_t i = 0; i < write_len; ++i) {
+            // Big Endian
+            // write_buffer[i] = reinterpret_cast<uint8_t *>(&write_register)[i];
+            // Little Endian
+            write_buffer[i] = reinterpret_cast<uint8_t *>(&write_register)[write_len - 1 - i];
+        }
+        return writeThenRead(write_buffer, write_len, read_buffer, read_len);
     }
 
-    int writeThenRead(uint8_t *write_buffer, uint8_t write_len, uint8_t *read_buffer, uint8_t read_len)
+    int writeThenRead(uint8_t *write_buffer, size_t write_len, uint8_t *read_buffer, size_t read_len)
     {
 #if defined(ARDUINO)
         if (__wire) {
@@ -393,7 +438,7 @@ protected:
         return  DEV_WIRE_ERR;
     }
 
-    int writeRegister(int reg, uint8_t *buf, uint8_t length)
+    int writeRegister(int reg, uint8_t *buf, size_t length)
     {
         if (__i2c_master_write) {
             return __i2c_master_write(__addr, reg, buf, length);
@@ -449,12 +494,7 @@ protected:
         return readRegister(reg, &val, 1) == -1 ? -1 : val;
     }
 
-    int readRegister(int reg, RegData_t *data)
-    {
-        return readRegister(reg, (uint8_t *)data, 2);
-    }
-
-    int readRegister(int reg, uint8_t *buf, uint8_t length)
+    int readRegister(int reg, uint8_t *buf, size_t length)
     {
         if (__i2c_master_read) {
             return __i2c_master_read(__addr, reg, buf, length);
@@ -487,15 +527,21 @@ protected:
                     __spi->transfer(reg >> (8 * ((__reg_addr_len - 1) - i)));
                 }
             }
+
+#if defined(ARDUINO_ARCH_ESP32)
+            __spi->transferBytes(NULL, buf, length);
+#else
             for (size_t i = 0; i < length; i++) {
                 buf[i] = __spi->transfer(0x00);
             }
+#endif
+
             digitalWrite(__cs, HIGH);
             __spi->endTransaction();
             return DEV_WIRE_NONE;
         }
 #elif defined(ESP_PLATFORM)
-
+        //TODO:SPI INTERFACE
 #if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
         if (ESP_OK == i2c_master_transmit_receive(
                     __i2c_device,
@@ -504,7 +550,7 @@ protected:
                     buf,
                     length,
                     -1)) {
-            return 0;
+            return DEV_WIRE_NONE;
         }
 #else //ESP_IDF_VERSION
         if (ESP_OK == i2c_master_write_read_device(__i2c_num,
@@ -528,7 +574,7 @@ protected:
         if (val == DEV_WIRE_ERR) {
             return false;
         }
-        return  writeRegister(registers, (val & (~_BV(bit)))) == 0;
+        return  writeRegister(registers, (val & (~_BV(bit)))) == DEV_WIRE_NONE;
     }
 
     bool inline setRegisterBit(int registers, uint8_t bit)
@@ -537,7 +583,7 @@ protected:
         if (val == DEV_WIRE_ERR) {
             return false;
         }
-        return  writeRegister(registers, (val | (_BV(bit)))) == 0;
+        return  writeRegister(registers, (val | (_BV(bit)))) == DEV_WIRE_NONE;
     }
 
     bool inline getRegisterBit(int registers, uint8_t bit)
@@ -549,83 +595,44 @@ protected:
         return val & _BV(bit);
     }
 
-    uint16_t inline readRegisterH8L4(uint8_t highReg, uint8_t lowReg)
-    {
-        int h8 = readRegister(highReg);
-        int l4 = readRegister(lowReg);
-        if (h8 == DEV_WIRE_ERR || l4 == DEV_WIRE_ERR)return 0;
-        return (h8 << 4) | (l4 & 0x0F);
-    }
-
-    uint16_t inline readRegisterH8L5(uint8_t highReg, uint8_t lowReg)
-    {
-        int h8 = readRegister(highReg);
-        int l5 = readRegister(lowReg);
-        if (h8 == DEV_WIRE_ERR || l5 == DEV_WIRE_ERR)return 0;
-        return (h8 << 5) | (l5 & 0x1F);
-    }
-
-    uint16_t inline readRegisterH6L8(uint8_t highReg, uint8_t lowReg)
-    {
-        int h6 = readRegister(highReg);
-        int l8 = readRegister(lowReg);
-        if (h6 == DEV_WIRE_ERR || l8 == DEV_WIRE_ERR)return 0;
-        return ((h6 & 0x3F) << 8) | l8;
-    }
-
-    uint16_t inline readRegisterH5L8(uint8_t highReg, uint8_t lowReg)
-    {
-        int h5 = readRegister(highReg);
-        int l8 = readRegister(lowReg);
-        if (h5 == DEV_WIRE_ERR || l8 == DEV_WIRE_ERR)return 0;
-        return ((h5 & 0x1F) << 8) | l8;
-    }
-
-    void setRegAddressLenght(uint8_t len)
+    void setRegAddressLength(uint8_t len)
     {
         __reg_addr_len = len;
     }
-
 
     void setReadRegisterSendStop(bool sendStop)
     {
         __sendStop = sendStop;
     }
 
+    bool reallocBuffer(size_t realloc_size)
+    {
+#if defined(ARDUINO)
 
+#ifdef ARDUINO_ARCH_ESP32
+        // ESP32  I2C BUFFER : 128 Bytes
+        if (__wire) {
+            if (__wire->setBufferSize(realloc_size) != realloc_size) {
+                log_e("realloc I2C buffer failed!");
+                return false;
+            }
+        }
+#elif defined(ARDUINO_ARCH_RP2040)
+        // RP2040 I2C BUFFER : 256 Bytes
+
+#elif defined(ARDUINO_ARCH_NRF52)
+        // NRF52840 I2C BUFFER : 64 Bytes
+// #warning "NRF Platform I2C Buffer expansion is not implemented"
+        //TODO:"NRF Platform I2C Buffer expansion is not implemented"
+#endif
+#endif
+        return true;
+    }
 
     /*
      * CRTP Helper
      */
 protected:
-
-//     bool begin()
-//     {
-// #if defined(ARDUINO)
-//         if (__has_init) return thisChip().initImpl();
-//         __has_init = true;
-
-//         if (__wire) {
-//             log_i("SDA:%d SCL:%d", __sda, __scl);
-// #if defined(NRF52840_XXAA) || defined(NRF52832_XXAA)
-//             __wire->begin();
-// #elif defined(ARDUINO_ARCH_RP2040)
-//             __wire->end();
-//             __wire->setSDA(__sda);
-//             __wire->setSCL(__scl);
-//             __wire->begin();
-// #else
-//             __wire->begin(__sda, __scl);
-// #endif
-//         }
-//         if (__spi) {
-//             // int cs, int mosi = -1, int miso = -1, int sck = -1, SPIClass &spi = SPI
-//             begin(__cs, __mosi, __miso, __sck, *__spi);
-//         }
-
-// #endif  /*ARDUINO*/
-//         return thisChip().initImpl();
-//     }
 
     void end()
     {
@@ -666,6 +673,7 @@ protected:
 #if ((ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)) && defined(CONFIG_SENSORLIB_ESP_IDF_NEW_API))
     i2c_master_bus_handle_t  bus_handle;
     i2c_master_dev_handle_t  __i2c_device;
+    i2c_device_config_t     __i2c_dev_conf;
 #endif //ESP_IDF_VERSION
 
 #endif //ESP_PLATFORM
@@ -682,9 +690,9 @@ protected:
     uint8_t             __reg_addr_len          = 1;
     iic_fptr_t          __i2c_master_read       = NULL;
     iic_fptr_t          __i2c_master_write      = NULL;
-    gpio_write_fprt_t   __set_gpio_level        = NULL;
-    gpio_read_fprt_t    __get_gpio_level        = NULL;
-    gpio_mode_fprt_t    __set_gpio_mode         = NULL;
-    delay_ms_fprt_t     __delay_ms              = NULL;
+    gpio_write_fptr_t   __set_gpio_level        = NULL;
+    gpio_read_fptr_t    __get_gpio_level        = NULL;
+    gpio_mode_fptr_t    __set_gpio_mode         = NULL;
+    delay_ms_fptr_t     __delay_ms              = NULL;
 
 };

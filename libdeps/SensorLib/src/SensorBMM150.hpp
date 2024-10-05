@@ -28,6 +28,7 @@
  * @note      Most source code references come from the https://github.com/boschsensortec/BMM150-Sensor-API
  *            Simplification for Arduino
  */
+#pragma once
 
 #include "bosch/common/bosch_interfaces.h"
 #include "bosch/BMM150/bmm150.h"
@@ -104,7 +105,7 @@ public:
         return initImpl();
     }
 
-    bool init( PLATFORM_SPI_TYPE &spi, int cs, int mosi = MOSI, int miso = MISO, int sck = SCK)
+    bool init( PLATFORM_SPI_TYPE &spi, int cs, int mosi = -1, int miso = -1, int sck = -1)
     {
         __handler.u.spi_dev.cs = cs;
         __handler.u.spi_dev.miso = miso;
@@ -179,13 +180,13 @@ public:
         return bmm150_set_sensor_settings(BMM150_SEL_INT_PIN_EN, &settings, dev) == BMM150_OK;
     }
 
-    bool enabledDtatReady()
+    bool enabledDataReady()
     {
         settings.int_settings.drdy_pin_en = BMM150_INT_ENABLE;
         return bmm150_set_sensor_settings(BMM150_SEL_DRDY_PIN_EN, &settings, dev) == BMM150_OK;
     }
 
-    bool disabledDtatReady()
+    bool disabledDataReady()
     {
         settings.int_settings.drdy_pin_en = BMM150_INT_DISABLE;
         return bmm150_set_sensor_settings(BMM150_SEL_DRDY_PIN_EN, &settings, dev) == BMM150_OK;
@@ -196,7 +197,7 @@ public:
         return dev->chip_id;
     }
 
-    uint8_t getInterruptStatus()
+    uint8_t getIrqStatus()
     {
         bmm150_get_interrupt_status(dev);
         return dev->int_status;
@@ -219,7 +220,7 @@ public:
 
     struct bmm150_mag_data getMag()
     {
-        struct bmm150_mag_data data = {0};
+        struct bmm150_mag_data data = {0, 0, 0};
         bmm150_read_mag_data(&data, dev);
         return data;
     }
@@ -238,9 +239,10 @@ public:
 
 private:
 
-    static void IRAM_ATTR handleISR(void *available)
+    static void  handleISR(/*void *available*/)
     {
-        *(bool *)(available) = true;
+        // *(bool *)(available) = true;
+        __data_available = true;
     }
 
     bool initImpl()
@@ -305,10 +307,19 @@ private:
         bmm150_get_sensor_settings(&settings, dev);
 
         if (__handler.irq != SENSOR_PIN_NONE) {
+            /*
+            #if defined(ARDUINO_ARCH_RP2040)
+                        attachInterruptParam((pin_size_t)(__handler.irq), handleISR, (PinStatus )RISING, (void *)&__data_available);
+            #else
+                        attachInterruptArg(__handler.irq, handleISR, (void *)&__data_available, RISING);
+            #endif
+            */
 #if defined(ARDUINO_ARCH_RP2040)
-            attachInterruptParam((pin_size_t)(__handler.irq), handleISR, (PinStatus )RISING, (void *)&__data_available);
+            attachInterrupt((pin_size_t)(__handler.irq), handleISR, (PinStatus )RISING);
+#elif defined(ARDUINO_ARCH_NRF52) || defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_STM32) 
+            attachInterrupt(__handler.irq, handleISR, RISING);
 #else
-            attachInterruptArg(__handler.irq, handleISR, (void *)&__data_available, RISING);
+#error "Interrupt registration not implemented"
 #endif
         }
 
@@ -320,7 +331,7 @@ protected:
     struct bmm150_dev *dev = NULL;
     SensorLibConfigure __handler;
     int8_t           __error_code;
-    volatile bool    __data_available;
+    static volatile bool    __data_available;
 };
 
 

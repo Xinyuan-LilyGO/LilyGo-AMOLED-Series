@@ -114,6 +114,12 @@ uint8_t TouchClassCST816::getPoint(int16_t *x_array, int16_t *y_array, uint8_t g
     // }
 
     uint8_t point = buffer[2] & 0x0F;
+
+    // CST816 only supports single touch
+    if (point > 1) {
+        return 0;
+    }
+
 #ifdef LOG_PORT
     LOG_PORT.print("RAW:");
     for (int i = 0; i < 13; ++i) {
@@ -267,9 +273,9 @@ void TouchClassCST816::enableAutoSleep()
     }
 }
 
-void TouchClassCST816::setGpioCallback(gpio_mode_fprt_t mode_cb,
-                                       gpio_write_fprt_t write_cb,
-                                       gpio_read_fprt_t read_cb)
+void TouchClassCST816::setGpioCallback(gpio_mode_fptr_t mode_cb,
+                                       gpio_write_fptr_t write_cb,
+                                       gpio_read_fptr_t read_cb)
 {
     SensorCommon::setGpioModeCallback(mode_cb);
     SensorCommon::setGpioWriteCallback(write_cb);
@@ -281,6 +287,10 @@ bool TouchClassCST816::initImpl()
 
     if (__rst != SENSOR_PIN_NONE) {
         this->setGpioMode(__rst, OUTPUT);
+    }
+
+    if (__irq != SENSOR_PIN_NONE) {
+        this->setGpioMode(__irq, INPUT);
     }
 
     reset();
