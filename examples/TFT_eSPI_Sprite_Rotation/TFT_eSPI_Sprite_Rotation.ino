@@ -8,8 +8,6 @@
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  * @note      Screen rotation only supports 2.41 Inch or 1.91-inch touch and non-touch versions
  */
-#include "esp_arduino_version.h"
-#if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 #include <TFT_eSPI.h>   //https://github.com/Bodmer/TFT_eSPI
@@ -75,20 +73,3 @@ void loop()
     spr.setSwapBytes(1);
 }
 
-
-#else
-
-#include <Arduino.h>
-
-void setup()
-{
-    Serial.begin(115200);
-}
-
-void loop()
-{
-    Serial.println("The current arduino version of TFT_eSPI does not support arduino 3.0, please change the version to below 3.0");
-    delay(1000);
-}
-
-#endif
