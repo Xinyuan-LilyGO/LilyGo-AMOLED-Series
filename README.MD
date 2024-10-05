@@ -9,7 +9,7 @@
 
 ## News
 
-- `LilyGo-AMOLED-Series` depends on lvgl **v8.3.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.3.x**
+- `LilyGo-AMOLED-Series` depends on lvgl **v8.4.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.4.x**
 - `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
 - `T4-S3` **GPIO18** has been assigned to the display TE Pin, please do not use this Pin
 
@@ -103,7 +103,7 @@ examples/
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
-5. `Library Search` -> `lvgl` -> `v8.3.11` -> `Install`
+5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install`
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. `Tools` , Look at the picture to choose
    | Arduino IDE Setting                  | Value                             |
@@ -246,7 +246,7 @@ examples/
 
 - [XPowersLib](https://github.com/lewisxhe/XPowersLib)
 - [SensorLib](https://github.com/lewisxhe/SensorsLib)
-- [lvgl 8.3.11](https://github.com/lvgl/lvgl)
+- [lvgl 8.4.0](https://github.com/lvgl/lvgl)
 - [AceButton](https://github.com/bxparks/AceButton)
 - [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
 - [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlusl)
