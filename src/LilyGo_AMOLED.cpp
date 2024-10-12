@@ -582,7 +582,7 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
 
 
 
-bool LilyGo_AMOLED::beginAMOLED_241()
+bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
 {
     boards = &BOARD_AMOLED_241;
 
@@ -593,6 +593,9 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         XPowersPPM::init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
         XPowersPPM::enableADCMeasure();
         XPowersPPM::disableOTG();
+        if (disable_state_led) {
+            XPowersPPM::disableStatLed();
+        }
     }
 
     if (boards->touch) {
@@ -610,7 +613,7 @@ bool LilyGo_AMOLED::beginAMOLED_241()
         }
     }
 
-    if (boards->sd) {
+    if (boards->sd && !disable_sd) {
         SPI.begin(boards->sd->sck, boards->sd->miso, boards->sd->mosi);
         // Set mount point to /fs
         if (!SD.begin(boards->sd->cs, SPI, 4000000U, "/fs")) {

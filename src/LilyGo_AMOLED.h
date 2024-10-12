@@ -328,7 +328,12 @@ public:
 
     // LILYGO 2.41 Inc AMOLED(RM690B0) S3R8
     // https://www.lilygo.cc/products/t4-s3
-    bool beginAMOLED_241();
+    /**
+     * @brief  beginAMOLED_241
+     * @param  disable_sd:  true : disable sd card init , false: Init SD in begin
+     * @param  disable_state_led: true: disable charge led , false: default state
+     */
+    bool beginAMOLED_241(bool disable_sd = false, bool disable_state_led = false);
 
 
     void setBrightness(uint8_t level);
