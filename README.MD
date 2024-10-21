@@ -215,11 +215,12 @@ examples/
 
 # 8️⃣ Resource
 
-| Product(PinMap)            | schematic                                                | Dimensions                                        | PCB 3D                                                  | Shell                                  |
-| -------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
-| [T-Display-AMOLED-Lite][1] | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     | x                                      |
-| [T-Display-S3 AMOLED][2]   | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) | [STP](./shell/T-Display-S3-AMOLED.zip) |
-| [T4-S3][3]                 | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              | [STP](./shell/T4-S3-AMOLED.zip)        |
+| Product(PinMap)               | schematic                                                | Dimensions                                        | PCB 3D                                                  | Shell                                  |
+| ----------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| [T-Display-AMOLED-Lite][1]    | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     | x                                      |
+| [T-Display-S3 AMOLED][2]      | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) | [STP](./shell/T-Display-S3-AMOLED.zip) |
+| [T4-S3][3]                    | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              | [STP](./shell/T4-S3-AMOLED.zip)        |
+| [T-Display-S3 AMOLED Plus][4] | [schematic](./schematic/T-Display-S3-AMOLED-Plus.pdf)    | [DWG](./dimensions/T-Display-S3-AMOLED-Plus.DXF)  | [STP](./dimensions/T-Display-S3-AMOLED-Plus.7Z)         | [STP](./shell/T-Display-S3-AMOLED.zip) |
 
 ##### T-Display-AMOLED-Lite datasheet
 
