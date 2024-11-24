@@ -366,6 +366,11 @@ public:
     uint16_t  width();
     uint16_t  height();
 
+    // Disable touch, just return the touch press touch point Set to 0, does not actually disable touch
+    // https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/issues/70
+    void disableTouch();
+    void enableTouch();
+
     // override
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1) override;
     bool isPressed() override;
@@ -421,6 +426,8 @@ private:
 #endif
 
     bool  _hasRTC;
+
+    bool _disableTouch;
 
     SPIClass *spiDev;
 };

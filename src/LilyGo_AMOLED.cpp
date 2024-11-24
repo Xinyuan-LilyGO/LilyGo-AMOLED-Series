@@ -43,7 +43,7 @@
 #define TFT_SPI_MODE            SPI_MODE0
 #define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
-LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false)
+LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false), _disableTouch(false)
 {
     spiDev = NULL;
     pBuffer = NULL;
@@ -139,6 +139,16 @@ bool LilyGo_AMOLED::isPressed()
     return false;
 }
 
+void LilyGo_AMOLED::disableTouch()
+{
+    _disableTouch = true;
+}
+
+void LilyGo_AMOLED::enableTouch()
+{
+    _disableTouch = false;
+}
+
 uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 {
     uint8_t point = 0;
@@ -146,6 +156,12 @@ uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
         point =  TouchDrvCHSC5816::getPoint(x, y);
     } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
         point =  TouchDrvCSTXXX::getPoint(x, y);
+    }
+
+    // Disable touch, just return the touch press touch point Set to 0, does not actually disable touch
+    // https://github.com/Xinyuan-LilyGO/LilyGo-AMOLED-Series/issues/70
+    if (_disableTouch) {
+        return 0;
     }
     return point;
 }
