@@ -1047,7 +1047,13 @@ void LilyGo_AMOLED::sleep(bool touchpad_sleep_enable)
     }
 }
 
-void LilyGo_AMOLED::wakeup()
+void LilyGo_AMOLED::disp_sleep()
+{
+    lcd_cmd_t t = {LCD_CMD_SLPIN, {0x00}, 1};// Sleep in
+    writeCommand(t.addr, t.param, t.len);
+}
+
+void LilyGo_AMOLED::disp_wakeup()
 {
     lcd_cmd_t t = {0x11, {0x00}, 1};// Sleep Out
     writeCommand(t.addr, t.param, t.len);

@@ -388,7 +388,9 @@ public:
     uint8_t getBoardID();
 
     void sleep(bool touchpad_sleep_enable = false);
-    void wakeup();
+
+    void disp_sleep();
+    void disp_wakeup();
     bool hasTouch();
 
     bool needFullRefresh();
