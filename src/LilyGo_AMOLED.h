@@ -390,6 +390,7 @@ public:
     void sleep(bool touchpad_sleep_enable = false);
     void wakeup();
     bool hasTouch();
+    bool hasOTG();
 
     bool needFullRefresh();
 

@@ -1063,6 +1063,15 @@ bool LilyGo_AMOLED::hasTouch()
     return false;
 }
 
+bool LilyGo_AMOLED::hasOTG()
+{
+    uint8_t board = getBoardID();
+    if (board == LILYGO_AMOLED_241 || board == LILYGO_AMOLED_191_SPI) {
+        return true;
+    }
+    return false;
+}
+
 void LilyGo_AMOLED::setRotation(uint8_t rotation)
 {
     uint8_t data = 0x00;
