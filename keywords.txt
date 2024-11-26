@@ -45,7 +45,8 @@ getBoardsConfigure	KEYWORD2
 getName	KEYWORD2
 getBoardID	KEYWORD2
 sleep	KEYWORD2
-wakeup	KEYWORD2
+disp_sleep	KEYWORD2
+disp_wakeup	KEYWORD2
 #######################################
 # Constants (LITERAL1)
 #######################################
