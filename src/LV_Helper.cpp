@@ -17,6 +17,11 @@
 static lv_disp_draw_buf_t draw_buf;
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t  indev_drv;
+static lv_indev_t  *mouse_indev = NULL;
+static lv_indev_t  *kb_indev = NULL;
+static lv_indev_drv_t indev_mouse;
+static lv_indev_drv_t indev_keypad;
+static struct InputParams params_copy;
 
 /* Display flushing */
 static void disp_flush( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
@@ -54,6 +59,44 @@ void lv_log_print_g_cb(const char *buf)
     Serial.flush();
 }
 #endif
+
+static void mouse_read(lv_indev_drv_t *indev, lv_indev_data_t *data)
+{
+    static int16_t last_x;
+    static int16_t last_y;
+    struct InputData msg;
+    const lv_img_dsc_t *cur = (const lv_img_dsc_t *)params_copy.icon;
+    uint16_t _maxX = lv_disp_get_hor_res(NULL) - cur->header.w;
+    uint16_t _maxY = lv_disp_get_ver_res(NULL) - cur->header.h;
+
+    if (xQueueReceive(params_copy.queue, &msg, pdTICKS_TO_MS(30)) == pdPASS) {
+        if (msg.id == 'm') {
+            last_x = constrain(msg.x, 0, _maxX);
+            last_y = constrain(msg.y, 0, _maxY);
+            data->state = (msg.left || msg.right) ? LV_INDEV_STATE_PRESSED : LV_INDEV_STATE_RELEASED;
+        }
+    }
+    data->point.x = last_x;
+    data->point.y = last_y;
+}
+
+static void keypad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
+{
+    static uint32_t last_key = 0;
+    uint32_t act_key ;
+    struct InputData msg;
+    if (xQueueReceive(params_copy.queue, &msg, pdTICKS_TO_MS(30)) == pdPASS) {
+        if (msg.id == 'k') {
+            last_key =  msg.key;
+            data->key = msg.key;
+            data->state = LV_INDEV_STATE_PR;
+            return;
+        }
+    }
+    data->state = LV_INDEV_STATE_REL;
+    data->key = last_key;
+}
+
 
 static void lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
 {
@@ -107,4 +150,34 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
         indev_drv.user_data = &board;
         lv_indev_drv_register( &indev_drv );
     }
+
+    lv_group_set_default(lv_group_create());
 }
+
+void beginLvglInputDevice(struct InputParams prams)
+{
+    memcpy(&params_copy, &prams, sizeof(struct InputParams));
+
+    if (!mouse_indev) {
+        /*Register a mouse input device*/
+        lv_indev_drv_init( &indev_mouse );
+        indev_mouse.type = LV_INDEV_TYPE_POINTER;
+        indev_mouse.read_cb = mouse_read;
+        mouse_indev = lv_indev_drv_register( &indev_mouse );
+    }
+
+    lv_obj_t *cursor = lv_img_create(lv_scr_act());
+    lv_img_set_src(cursor, params_copy.icon);
+    lv_indev_set_cursor(mouse_indev, cursor);
+
+    /*Register a keypad input device*/
+    if (!kb_indev) {
+        lv_indev_drv_init(&indev_keypad);
+        indev_keypad.type = LV_INDEV_TYPE_KEYPAD;
+        indev_keypad.read_cb = keypad_read;
+        kb_indev = lv_indev_drv_register(&indev_keypad);
+        lv_indev_set_group(kb_indev, lv_group_get_default());
+    }
+}
+
+

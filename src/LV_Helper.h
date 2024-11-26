@@ -10,6 +10,11 @@
 #pragma once
 #include <lvgl.h>
 #include "LilyGo_Display.h"
+#include "InputParams.h"
 
 
 void beginLvglHelper(LilyGo_Display &board, bool debug = false);
+
+void beginLvglInputDevice(struct InputParams prams);
+
+
