@@ -29,6 +29,16 @@
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
+
+#if ARDUINO_USB_MODE != 1
+#error "Arduino IDE setting <USB Mode> must set <Hardware CDC and JTAG>"
+#endif
+
+#if ARDUINO_USB_CDC_ON_BOOT
+#error "Arduino IDE setting <USB CDC On Boot> must set <Disabled>"
+#endif
+
+
 using namespace ace_button;
 AceButton button;
 
