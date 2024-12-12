@@ -30,6 +30,7 @@
 
 #define CST2xx_REG_STATUS           (0x00)
 #define CST226SE_BUFFER_NUM         (28)
+#define CST226SE_CHIPTYPE           (0xA8)
 
 #if defined(ARDUINO)
 TouchClassCST226::TouchClassCST226()
@@ -192,7 +193,9 @@ uint8_t TouchClassCST226::getSupportTouchPoint()
 
 bool TouchClassCST226::getResolution(int16_t *x, int16_t *y)
 {
-    return false;
+    *x = __resX;
+    *y = __resY;
+    return true;
 }
 
 void TouchClassCST226::setHomeButtonCallback(home_button_callback_t cb, void *user_data)
@@ -238,14 +241,14 @@ bool TouchClassCST226::initImpl()
     checkcode <<= 8;
     checkcode |= buffer[0];
 
-    log_i("Chip checkcode:0x%lx.\r\n", checkcode);
+    log_i("Chip checkcode:0x%lx.", checkcode);
 
     write_buffer[0] = {0xD1};
     write_buffer[1] = {0xF8};
     writeThenRead(write_buffer, 2, buffer, 4);
     __resX = ( buffer[1] << 8) | buffer[0];
     __resY = ( buffer[3] << 8) | buffer[2];
-    log_i("Chip resolution X:%u Y:%u\r\n", __resX, __resY);
+    log_i("Chip resolution X:%u Y:%u", __resX, __resY);
 
     write_buffer[0] = {0xD2};
     write_buffer[1] = {0x04};
@@ -258,7 +261,7 @@ bool TouchClassCST226::initImpl()
     uint32_t ProjectID = buffer[1];
     ProjectID <<= 8;
     ProjectID |= buffer[0];
-    log_i("Chip type :0x%lx, ProjectID:0X%lx\r\n",
+    log_i("Chip type :0x%lx, ProjectID:0X%lx",
           chipType, ProjectID);
 
 
@@ -283,15 +286,20 @@ bool TouchClassCST226::initImpl()
     checksum <<= 8;
     checksum |= buffer[4];
 
-    log_i("Chip ic version:0x%lx, checksum:0x%lx\n",
+    log_i("Chip ic version:0x%lx, checksum:0x%lx",
           fwVersion, checksum);
 
     if (fwVersion == 0xA5A5A5A5) {
-        log_i("Chip ic don't have firmware. \n");
+        log_e("Chip ic don't have firmware.");
         return false;
     }
     if ((checkcode & 0xffff0000) != 0xCACA0000) {
-        log_i("Firmware info read error .\n");
+        log_e("Firmware info read error.");
+        return false;
+    }
+
+    if (chipType != CST226SE_CHIPTYPE) {
+        log_e("Chip ID does not match, should be 0x%2X", CST226SE_CHIPTYPE);
         return false;
     }
 
@@ -299,6 +307,7 @@ bool TouchClassCST226::initImpl()
 
     // Exit Command mode
     writeRegister(0xD1, 0x09);
+
     return true;
 }
 

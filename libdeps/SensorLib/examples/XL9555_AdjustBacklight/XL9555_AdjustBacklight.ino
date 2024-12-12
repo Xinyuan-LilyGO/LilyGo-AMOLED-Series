@@ -22,13 +22,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * @file      XL9555_ExtensionIOWirte.ino
+ * @file      XL9555_AdjustBacklight.ino
  * @author    Lewis He (lewishe@outlook.com)
- * @date      2024-09-14
- *
+ * @date      2024-11-22
+ * @note      Use XL9555 to drive AW9364 led driver, use esp32 to test, the highest I2C communication rate must reach 1MHz, otherwise it will not work
  */
 #include <Arduino.h>
 #include "ExtensionIOXL9555.hpp"
+#include "AW9364LedDriver.hpp"
+
+#ifdef ENABLE_TFT
+#include "TFT_eSPI.h"
+TFT_eSPI tft;
+#endif
 
 #ifndef SENSOR_SDA
 #define SENSOR_SDA  17
@@ -42,7 +48,12 @@
 #define SENSOR_IRQ  -1
 #endif
 
+// Drive LED  pin, corresponding to XL9555 GPIO2
+#define BACKLIGHT_PIN   2
+
 ExtensionIOXL9555 io;
+AW9364LedDriver ledDriver;
+uint8_t level = 0;
 
 void setup()
 {
@@ -52,6 +63,12 @@ void setup()
     if (SENSOR_IRQ > 0) {
         pinMode(SENSOR_IRQ, INPUT_PULLUP);
     }
+
+#ifdef ENABLE_TFT
+    tft.begin();
+    tft.setRotation(1);
+    tft.fillScreen(TFT_GREEN);
+#endif
 
     /*
     *
@@ -79,33 +96,18 @@ void setup()
         }
     }
 
-    // Set PORT0 as output ,mask = 0x00 = all pin output
-    io.configPort(ExtensionIOXL9555::PORT0, 0x00);
-    // Set PORT1 as output ,mask = 0x00 = all pin output
-    io.configPort(ExtensionIOXL9555::PORT1, 0x00);
+    ledDriver.begin(&io, BACKLIGHT_PIN);
+
 }
 
 void loop()
 {
-    // Set all PORTs to 1, and the parameters here are mask values, corresponding to the 0~7 bits
-    Serial.println("Set port HIGH");
-    io.writePort(ExtensionIOXL9555::PORT0, 0xFF);
+    // 16 dimming levels
+    Serial.printf("level:%u\n", level);
+    ledDriver.setBrightness(level);
+    level++;
+    level %= MAX_BRIGHTNESS_STEPS;
     delay(1000);
-
-    Serial.println("Set port LOW");
-    // Set all PORTs to 0, and the parameters here are mask values, corresponding to the 0~7 bits
-    io.writePort(ExtensionIOXL9555::PORT1, 0x00);
-    delay(1000);
-
-    Serial.println("digitalWrite");
-    io.digitalWrite(ExtensionIOXL9555::IO0, HIGH);
-    delay(1000);
-
-    Serial.println("digitalToggle");
-    io.digitalToggle(ExtensionIOXL9555::IO0);
-    delay(1000);
-
-
 }
 
 
