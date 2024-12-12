@@ -278,6 +278,35 @@ bool LilyGo_AMOLED::isVbusIn(void)
     return false;
 }
 
+void LilyGo_AMOLED::disableCharge(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                // XPowersAXP2101::disableCharge();
+            } else  if (boards == &BOARD_AMOLED_241 ) {
+                SY.disableCharge();
+            } else  if (boards == &BOARD_AMOLED_191_SPI) {
+                BQ.disableCharge();
+            }
+        }
+    }
+}
+
+void LilyGo_AMOLED::enableCharge(void)
+{
+    if (boards) {
+        if (boards->pmu) {
+            if (boards == &BOARD_AMOLED_147) {
+                // XPowersAXP2101::enableCharge();
+            } else  if (boards == &BOARD_AMOLED_241 ) {
+                SY.enableCharge();
+            } else  if (boards == &BOARD_AMOLED_191_SPI) {
+                BQ.enableCharge();
+            }
+        }
+    }
+}
 
 uint32_t deviceScan(TwoWire *_port, Stream *stream)
 {

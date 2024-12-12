@@ -384,6 +384,9 @@ public:
     bool isCharging(void) override;
     bool isVbusIn(void) override;
 
+    void disableCharge(void) ;
+    void enableCharge(void) ;
+
     // PMU Function , only 1.47' inches support
     void attachPMU(void(*cb)(void));
     uint64_t readPMU();
