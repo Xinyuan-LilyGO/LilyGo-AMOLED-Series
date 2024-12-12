@@ -130,7 +130,7 @@ void loop()
     if (pmu_flag) {
         pmu_flag = false;
         // Get PMU Interrupt Status Register
-        uint32_t status = power.getIrqStatus();
+        power.getIrqStatus();
         if (power.isPekeyShortPressIrq()) {
             if (adc_switch) {
                 adcOn(); Serial.println("Enable ADC\n\n\n");

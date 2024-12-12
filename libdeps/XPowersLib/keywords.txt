@@ -507,7 +507,7 @@ chargeStatus	KEYWORD2
 getChargeStatusString	KEYWORD2
 getNTCStatus	KEYWORD2
 getNTCStatusString	KEYWORD2
-enableADCMeasure	KEYWORD2
+enableMeasure	KEYWORD2
 disableADCMeasure	KEYWORD2
 setBoostFreq	KEYWORD2
 getBoostFreq	KEYWORD2

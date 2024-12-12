@@ -6,6 +6,9 @@
  * @date      2024-06-04
  *
  */
+
+#define XPOWERS_CHIP_BQ25896
+
 #include <XPowersLib.h>
 
 XPowersPPM PPM;
@@ -71,7 +74,7 @@ void setup()
 
 
     // To obtain voltage data, the ADC must be enabled first
-    PPM.enableADCMeasure();
+    PPM.enableMeasure();
 
     // Turn on charging function
     // If there is no battery connected, do not turn on the charging function
@@ -105,7 +108,7 @@ void loop()
         pmu_irq = false;
 
         // Get PPM interrupt status
-        PPM.getIrqStatus();
+        PPM.getFaultStatus();
 
         Serial.print("-> [");
         Serial.print(millis() / 1000);
@@ -133,12 +136,6 @@ void loop()
             Serial.print(PPM.getNTCStatusString());
             Serial.print(" Percentage:");
             Serial.print(PPM.getNTCPercentage()); Serial.println("%");
-        }
-        // The battery may be disconnected or damaged.
-        else if (PPM.isVsysLowVoltageWarning()) {
-
-            Serial.println("In VSYSMIN regulation (BAT<VSYSMIN)");
-
         } else {
             /*
             * When the battery is removed, INT will send an interrupt every 100ms. If the battery is not connected,
@@ -151,8 +148,8 @@ void loop()
     }
 
     /*
-    * Obtaining the battery voltage and battery charging status does not directly read the register, 
-    * but determines whether the charging current register is normal. 
+    * Obtaining the battery voltage and battery charging status does not directly read the register,
+    * but determines whether the charging current register is normal.
     * If read directly, the reading will be inaccurate.
     * The premise for obtaining these two states is that the NTC temperature measurement circuit is normal.
     * If the NTC detection is abnormal, it will return 0

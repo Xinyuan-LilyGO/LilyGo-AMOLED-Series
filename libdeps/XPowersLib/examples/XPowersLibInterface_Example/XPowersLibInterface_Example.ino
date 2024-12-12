@@ -406,12 +406,46 @@ void setup()
     power->disableInterrupt(XPOWERS_ALL_INT);
 
     power->enableInterrupt(XPOWERS_USB_INSERT_INT |
-                         XPOWERS_USB_REMOVE_INT |
-                         XPOWERS_BATTERY_INSERT_INT |
-                         XPOWERS_BATTERY_REMOVE_INT |
-                         XPOWERS_PWR_BTN_CLICK_INT |
-                         XPOWERS_CHARGE_START_INT |
-                         XPOWERS_CHARGE_DONE_INT);
+                           XPOWERS_USB_REMOVE_INT |
+                           XPOWERS_BATTERY_INSERT_INT |
+                           XPOWERS_BATTERY_REMOVE_INT |
+                           XPOWERS_PWR_BTN_CLICK_INT |
+                           XPOWERS_CHARGE_START_INT |
+                           XPOWERS_CHARGE_DONE_INT);
+
+
+    // Access the subclass method by getting the model
+    uint8_t chipType = power->getChipModel();
+    switch (chipType) {
+    case XPOWERS_AXP192: {
+        XPowersAXP192 *axp192 = static_cast<XPowersAXP192 *>(power);
+        axp192->enableCoulomb();
+        uint32_t data = axp192->getBattChargeCoulomb();
+        float chargeCurrent =  axp192->getBatteryChargeCurrent();
+        float dischargeCurrent = axp192->getBattDischargeCurrent();
+        Serial.printf("AXP192 GetBattChargeCoulomb : %X\n", data);
+        Serial.printf("AXP192 GetBatteryChargeCurrent:%.2f mA\n", chargeCurrent);
+        Serial.printf("AXP192 GetBattDischargeCurrent:%.2f mA\n", dischargeCurrent);
+    }
+    break;
+    case XPOWERS_AXP202: {
+        XPowersAXP202 *axp202 = static_cast<XPowersAXP202 *>(power);
+        axp202->enableCoulomb();
+        uint32_t data = axp202->getBattChargeCoulomb();
+        Serial.printf("AX202 GetBattChargeCoulomb : %X\n", data);
+    }
+    break;
+    case XPOWERS_AXP2101: {
+        XPowersAXP2101 *axp2101 = static_cast<XPowersAXP2101 *>(power);
+        axp2101->fuelGaugeControl(true, true);
+        axp2101->setPrechargeCurr(XPOWERS_AXP2101_PRECHARGE_50MA);
+        axp2101->setChargerTerminationCurr(XPOWERS_AXP2101_CHG_ITERM_25MA);
+    }
+    break;
+    default:
+        break;
+    }
+
 }
 
 void printPMU()

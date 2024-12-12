@@ -146,7 +146,7 @@ void loop()
     if (pmu_flag) {
         pmu_flag = false;
         // Get PMU Interrupt Status Register
-        uint32_t status = power.getIrqStatus();
+        power.getIrqStatus();
         if (power.isPekeyShortPressIrq()) {
 
             // Set constant current charge current limit

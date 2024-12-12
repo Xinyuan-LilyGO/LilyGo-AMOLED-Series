@@ -6,6 +6,8 @@
  * @date      2023-08-31
  *
  */
+#define XPOWERS_CHIP_SY6970
+
 #include <XPowersLib.h>
 
 XPowersPPM PPM;
@@ -49,14 +51,14 @@ void setup()
 
     /*
     * Example:
-    *   PPM.enableWatchdog( SY6970_WDT_TIMEROUT_40SEC );
+    *   PPM.enableWatchdog(PowersSY6970::TIMER_OUT_40SEC);
     * Optional parameters:
-    *   SY6970_WDT_TIMEROUT_40SEC,      //40 Second
-    *   SY6970_WDT_TIMEROUT_80SEC,      //80 Second
-    *   SY6970_WDT_TIMEROUT_160SEC,     //160 Second
+    *   PowersSY6970::TIMER_OUT_40SEC,      //40 Second
+    *   PowersSY6970::TIMER_OUT_80SEC,      //80 Second
+    *   PowersSY6970::TIMER_OUT_160SEC,     //160 Second
     * * */
-    // Enable SY6970 PPM watchdog function ,default timer out 40 second
-    PPM.enableWatchdog();
+    // Enable SY6970 PPM watchdog function
+    PPM.enableWatchdog(PowersSY6970::TIMER_OUT_40SEC);
 
 }
 

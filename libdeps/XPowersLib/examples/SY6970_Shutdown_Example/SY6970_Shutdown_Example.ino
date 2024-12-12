@@ -6,6 +6,8 @@
  * @date      2024-05-23
  *
  */
+#define XPOWERS_CHIP_SY6970
+
 #include <XPowersLib.h>
 
 XPowersPPM PPM;

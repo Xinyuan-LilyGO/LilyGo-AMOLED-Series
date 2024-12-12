@@ -7,6 +7,12 @@
  *
  */
 
+// Use SY6970
+// #define XPOWERS_CHIP_SY6970
+
+// Use BQ25896
+#define XPOWERS_CHIP_BQ25896
+ 
 #include <XPowersLib.h>
 
 #ifdef ARDUINO_ARCH_NRF52
@@ -125,18 +131,21 @@ void setup()
 
         ppm.disableOTG();
 
+        // SY6970 Range:0~5056 mA / step:64mA
+        // BQ25896 Range:0~3008 mA / step:64mA
         ppm.setChargerConstantCurr(2048);
         // Disable current limit pin
         ppm.disableCurrentLimitPin();
 
-        ppm.setInputCurrentLimit(POWERS_SY6970_IN_CURRENT_MAX);
+        // SY6970 : Range : 100 mA ~ 3250 mA
+        ppm.setInputCurrentLimit(3250);
 
         // ppm.disableInputCurrentLimit();
 
         // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
         ppm.setChargeTargetVoltage(4208);
 
-        ppm.enableADCMeasure();
+        ppm.enableMeasure();
 
         // ppm.setHighVoltageRequestedRange(RequestRange::REQUEST_9V);
         // ppm.setSysPowerDownVoltage(3500);
@@ -201,7 +210,7 @@ void loop()
         buffer.concat("\n");
 
         if (find_ppm) {
-            ppm.getIrqStatus();
+            ppm.getFaultStatus();
             buffer.concat("NTC:"); buffer.concat(ppm.getNTCStatusString()); buffer.concat("\n");
             buffer.concat("VBUS:"); buffer.concat(ppm.getVbusVoltage()); buffer.concat("\n");
             buffer.concat("VBAT:"); buffer.concat(ppm.getBattVoltage()); buffer.concat("\n");
@@ -217,7 +226,7 @@ void loop()
         Serial.println(buffer);
         if (find_ppm) {
 
-            ppm.getIrqStatus();
+            ppm.getFaultStatus();
             Serial.print("NTC STR:"); Serial.println(ppm.getNTCStatusString());
             Serial.printf("CHG TARGET VOLTAGE :%04dmV CURRENT:%04dmA PER_CHARGE_CUR %04dmA\n",
                           ppm.getChargeTargetVoltage(), ppm.getChargerConstantCurr(), ppm.getPrechargeCurr());

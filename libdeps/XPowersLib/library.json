@@ -1,6 +1,6 @@
 {
   "name": "XPowersLib",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Arduino, CircuitPython, Micropython, esp-idf and other frameworks power management series library",
   "keywords": "AXP192,AXP202,AXP2101,SY6970,BQ25896,HUSB238",
   "authors": [

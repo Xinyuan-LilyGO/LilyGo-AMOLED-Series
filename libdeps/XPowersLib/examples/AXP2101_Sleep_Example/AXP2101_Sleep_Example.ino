@@ -107,7 +107,7 @@ void loop()
     if (pmu_flag) {
         pmu_flag = false;
         // Get PMU Interrupt Status Register
-        uint32_t status = power.getIrqStatus();
+        power.getIrqStatus();
         if (power.isPekeyShortPressIrq()) {
 
             // Turn off the charging indicator to save power
