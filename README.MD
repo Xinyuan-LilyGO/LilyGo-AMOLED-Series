@@ -104,8 +104,9 @@ examples/
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install`
-6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
-7. `Tools` , Look at the picture to choose
+6. `Library Search` -> `XPowersLib` -> `v0.2.6` -> `Install`
+7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
+8. `Tools` , Look at the picture to choose
    | Arduino IDE Setting                  | Value                             |
    | ------------------------------------ | --------------------------------- |
    | Board                                | **ESP32S3 Dev Module**            |
