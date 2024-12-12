@@ -53,7 +53,8 @@ examples/
 ├── Lvgl_Images                         # Screen color test
 ├── PMU_ADC                             # PMU Voltage detection example , only support 1.47-inch AMOLED
 ├── PMU_Interrupt                       # PMU interrupt example , only support 1.47-inch AMOLED
-├── PPM_Example                         # Power chip example, only used for T4-S3
+├── PPM_Example_for_T4S3                # Power chip example, only used for T4-S3
+├── PPM_Example_for_191Plus             # Power chip example, only used for AMOLED 1.91 Plus
 ├── CameraShield                        # Extern camera shield example, only supports 1.91 inches
 ├── SPI_SDCard                          # External SD card example, SPI communication
 ├── QWIIC_GPS_Shield                    # Extern GPS Shield example,use Serial communication
@@ -67,6 +68,7 @@ examples/
 ├── LVGL_Rotation                       # Screen rotation, only available for 1.91, 2.41 inches
 ├── Touchpad                            # Touchpad example
 ├── TouchPaint                          # TouchPaint example
+├── USB_Host_Keyboard_Mouse             # USB host example
 └── lvgl                                # LVGL examples
     ├── event
     ├── get_started
@@ -104,7 +106,6 @@ examples/
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install`
-6. `Library Search` -> `XPowersLib` -> `v0.2.6` -> `Install`
 7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 8. `Tools` , Look at the picture to choose
    | Arduino IDE Setting                  | Value                             |
