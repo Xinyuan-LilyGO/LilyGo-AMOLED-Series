@@ -37,8 +37,7 @@
 #endif
 
 #include "SensorPCF85063.hpp"
-
-
+#include "PowersBQ25896.tpp"
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -302,10 +301,14 @@ class LilyGo_AMOLED:
     public TouchDrvCHSC5816,
     public SensorCM32181,
     public TouchDrvCSTXXX,
-    public XPowersPPM,
     public SensorPCF85063
 {
 public:
+    // LILYGO_AMOLED_191_SPI USE BQ25896
+    PowersSY6970 SY;
+    // LILYGO_AMOLED_241 USE SY6970
+    PowersBQ25896 BQ;
+
     LilyGo_AMOLED();
 
     ~LilyGo_AMOLED();
