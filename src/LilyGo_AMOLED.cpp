@@ -283,7 +283,7 @@ void LilyGo_AMOLED::disableCharge(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                // XPowersAXP2101::disableCharge();
+                XPowersAXP2101::setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_0MA);
             } else  if (boards == &BOARD_AMOLED_241 ) {
                 SY.disableCharge();
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
@@ -298,7 +298,7 @@ void LilyGo_AMOLED::enableCharge(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                // XPowersAXP2101::enableCharge();
+                XPowersAXP2101::setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_200MA);
             } else  if (boards == &BOARD_AMOLED_241 ) {
                 SY.enableCharge();
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
@@ -545,6 +545,7 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
             // Try to find touch device
             Wire.beginTransmission(CST816_SLAVE_ADDRESS);
             if (Wire.endTransmission() == 0) {
+                TouchDrvCSTXXX::setTouchDrvModel(TouchDrv_CST8XX);
                 TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
                 bool res = TouchDrvCSTXXX::begin(Wire, CST816_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
                 if (!res) {
@@ -612,6 +613,7 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
             // Try to find touch device
             Wire.beginTransmission(CST816_SLAVE_ADDRESS);
             if (Wire.endTransmission() == 0) {
+                TouchDrvCSTXXX::setTouchDrvModel(TouchDrv_CST8XX);
                 TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
                 bool res = TouchDrvCSTXXX::begin(Wire, CST816_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
                 if (!res) {
@@ -657,6 +659,7 @@ bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
         // Try to find touch device
         Wire.beginTransmission(CST226SE_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
+            TouchDrvCSTXXX::setTouchDrvModel(TouchDrv_CST226);
             TouchDrvCSTXXX::setPins(boards->touch->rst, boards->touch->irq);
             bool res = TouchDrvCSTXXX::begin(Wire, CST226SE_SLAVE_ADDRESS, boards->touch->sda, boards->touch->scl);
             if (!res) {

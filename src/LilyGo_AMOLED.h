@@ -47,6 +47,10 @@
 #error "Detected that PSRAM is not turned on. Please set PSRAM to OPI PSRAM in ArduinoIDE"
 #endif //BOARD_HAS_PSRAM
 
+#ifndef SENSORLIB_VERSION_MAJOR
+#error "Please search SensorLib through the arduino ide library manager and install version v0.2.4"
+#endif
+
 
 #define BOARD_NONE_PIN      (-1)
 #define BOARD_PIXELS_PIN    (18)        //only 1.47 inch
