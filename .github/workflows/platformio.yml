@@ -23,7 +23,8 @@ jobs:
           - examples/LVGL_SD_Images
           - examples/LumenMeter
           - examples/PMU_ADC
-          - examples/PPM_Example
+          - examples/PPM_Example_for_191Plus
+          - examples/PPM_Example_for_T4S3
           - examples/SPI_SDCard
           - examples/PMU_Interrupt
           - examples/CameraShield

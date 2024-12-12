@@ -23,7 +23,8 @@ jobs:
           - examples/LVGL_SD_Images/LVGL_SD_Images.ino
           - examples/LumenMeter/LumenMeter.ino
           - examples/PMU_ADC/PMU_ADC.ino
-          - examples/PPM_Example/PPM_Example.ino
+          - examples/PPM_Example_for_191Plus/PPM_Example_for_191Plus.ino
+          - examples/PPM_Example_for_T4S3/PPM_Example_for_T4S3.ino
           - examples/SPI_SDCard/SPI_SDCard.ino
           - examples/CameraShield/CameraShield.ino
           - examples/PMU_Interrupt/PMU_Interrupt.ino
