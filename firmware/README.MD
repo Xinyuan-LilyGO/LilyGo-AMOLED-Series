@@ -72,3 +72,9 @@ esptool --chip esp32s3  --baud 921600 --before default_reset --after hard_reset 
    6. Upload sketch
    7. Press the **RST** button to exit download mode
 
+- How do I prove to LilyGo that the board is damaged?
+  1. You need to shoot a video to prove that the board is damaged. Follow the steps below to shoot a video to prove that the board is damaged.
+  2. Follow the first step of the FAQ on this page to put the board into download mode
+  3. Select a burning tool, download **debug.bin** and upload the firmware to the board through the burning tool
+  4. After waiting for the burning to complete, press the RST button, or disconnect the USB and then reinsert it.
+  5. Any of the above steps must be included in the video content for clarification
