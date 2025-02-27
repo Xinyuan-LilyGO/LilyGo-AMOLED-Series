@@ -4,15 +4,13 @@
  * @license   MIT
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
  * @date      2023-04-20
- *
+ * @note      Adapt to lvgl 8 version
  */
 #include <Arduino.h>
 #include "LV_Helper.h"
 
 
-#if LV_VERSION_CHECK(9,0,0)
-#error "Currently not supported 9.x"
-#endif
+#if LVGL_VERSION_MAJOR == 8
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_disp_drv_t disp_drv;
@@ -180,4 +178,4 @@ void beginLvglInputDevice(struct InputParams prams)
     }
 }
 
-
+#endif
