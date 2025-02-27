@@ -9,12 +9,9 @@
 
 ## News
 
-- `LilyGo-AMOLED-Series` depends on lvgl **v8.4.x** version. Currently lvgl has released lvgl **v9.0** version. When compilation error occurs, please check whether lvgl belongs to **v8.4.x**
+- `LilyGo-AMOLED-Series` is currently compatible with lvgl9, but there is only one `lvgl 9.x.x` example, and the rest of the examples are still based on `lvgl 8.x.x`. Please confirm the lvgl version before using the examples. How to change the lvgl version please see the following description
 - `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
 - `T4-S3` **GPIO18** has been assigned to the display TE Pin, please do not use this Pin
-
-
-
 
 ## 1️⃣Support Product
 
@@ -69,6 +66,7 @@ examples/
 ├── Touchpad                            # Touchpad example
 ├── TouchPaint                          # TouchPaint example
 ├── USB_Host_Keyboard_Mouse             # USB host example
+├── lvgl_version_9                      # Lvgl version 9 example
 └── lvgl                                # LVGL examples
     ├── event
     ├── get_started
@@ -105,7 +103,7 @@ examples/
 2. Install [Arduino ESP32 V2.0.5 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
-5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install`
+5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install` , How to use `lvgl 9.x.x`, please see the lvgl upgrade settings below
 7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 8. `Tools` , Look at the picture to choose
    | Arduino IDE Setting                  | Value                             |
@@ -247,9 +245,17 @@ examples/
 
 # 8️⃣ Depends on required libraries
 
-- [XPowersLib](https://github.com/lewisxhe/XPowersLib)
-- [SensorLib](https://github.com/lewisxhe/SensorsLib)
-- [lvgl 8.4.0](https://github.com/lvgl/lvgl)
-- [AceButton](https://github.com/bxparks/AceButton)
-- [Adafruit_NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel)
-- [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlusl)
+- [XPowersLib v0.2.7](https://github.com/lewisxhe/XPowersLib)
+- [SensorLib v0.2.4](https://github.com/lewisxhe/SensorsLib)
+- [lvgl v8.x or v9.x](https://github.com/lvgl/lvgl)
+- [AceButton v1.10.1](https://github.com/bxparks/AceButton)
+- [Adafruit_NeoPixel v1.11.0](https://github.com/adafruit/Adafruit_NeoPixel)
+- [TinyGPSPlus v1.0.3](https://github.com/mikalhart/TinyGPSPlusl)
+
+# 9️⃣. lvgl 9 Upgrade Guide
+
+1. Find `LilyGo-AMOLED-Series` in the library installation directory and enter the `src` directory
+2. Rename `lv_conf.h` to `lv_conf.h.v8`
+3. Rename `lv_conf.h.v9` to `lv_conf.h`
+4. Open `Arduino IDE` -> `File` -> `examples`- > `lvgl_version_9`
+5. Currently there is only one example, `lvgl_version_9`, and other examples are based on `lvgl 8`, please note.
