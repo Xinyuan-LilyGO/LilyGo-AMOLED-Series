@@ -14,6 +14,11 @@
 #include <esp_adc_cal.h>
 #endif
 
+#if SENSORLIB_VERSION_MINOR == 3 && SENSORLIB_VERSION_PATCH == 0
+#ifdef writeBytes
+#undef writeBytes
+#endif
+#endif
 
 #ifndef LCD_CMD_MADCTL
 #define LCD_CMD_MADCTL       (0x36)     // Memory data access control
@@ -600,7 +605,11 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
         }
     }
 
+#if SENSORLIB_VERSION_MINOR > 2
+    _hasRTC = SensorPCF85063::begin(Wire, boards->pmu->sda, boards->pmu->scl);
+#else
     _hasRTC = SensorPCF85063::init(Wire, boards->pmu->sda, boards->pmu->scl);
+#endif
     if (!_hasRTC) {
         log_e("begin rtc failed!");
     }
