@@ -215,12 +215,12 @@ examples/
 
 # 8️⃣ Resource
 
-| Product(PinMap)               | schematic                                                | Dimensions                                        | PCB 3D                                                  | Shell                                  |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
-| [T-Display-AMOLED-Lite][1]    | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)       | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     | x                                      |
-| [T-Display-S3 AMOLED][2]      | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf)   | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) | [STP](./shell/T-Display-S3-AMOLED.zip) |
-| [T4-S3][3]                    | [schematic](./schematic/T-Display-S3%20AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.DWG)              | [STP](./dimensions/T4-S3-AMOLED-PCB-3D.7z)              | [STP](./shell/T4-S3-AMOLED.zip)        |
-| [T-Display-S3 AMOLED Plus][4] | [schematic](./schematic/T-Display-S3-AMOLED-Plus.pdf)    | [DWG](./dimensions/T-Display-S3-AMOLED-Plus.DXF)  | [STP](./dimensions/T-Display-S3-AMOLED-Plus.7Z)         | [STP](./shell/T-Display-S3-AMOLED.zip) |
+| Product(PinMap)               | schematic                                              | Dimensions                                        | PCB 3D                                                  | Shell                                  |
+| ----------------------------- | ------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| [T-Display-AMOLED-Lite][1]    | [schematic](./schematic/T-Display_AMOLED-Lite.pdf)     | [DWG](./dimensions/T-Display-AMOLED-Lite.DWG)     | [STP](./dimensions/T-Display-AMOLED-Lite-PCB-3D.7z)     | x                                      |
+| [T-Display-S3 AMOLED][2]      | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf) | [DWG](./dimensions/T-Display-S3-AMOLED-Touch.DWG) | [STP](./dimensions/T-Display-S3-AMOLED-Touch-PCB-3D.7z) | [STP](./shell/T-Display-S3-AMOLED.zip) |
+| [T4-S3][3]                    | [schematic](./schematic/T-Display-S3-AMOLED-Touch.pdf) | [DWG](./dimensions/T4-S3-AMOLED.dxf)              | [STP](./dimensions/T4-S3-AMOLED-PCB.7z)                 | [STP](./shell/T4-S3-AMOLED.zip)        |
+| [T-Display-S3 AMOLED Plus][4] | [schematic](./schematic/T-Display-S3-AMOLED-Plus.pdf)  | [DWG](./dimensions/T-Display-S3-AMOLED-Plus.DXF)  | [STP](./dimensions/T-Display-S3-AMOLED-Plus.7Z)         | [STP](./shell/T-Display-S3-AMOLED.zip) |
 
 ##### T-Display-AMOLED-Lite datasheet
 
@@ -228,17 +228,17 @@ examples/
 - [Touchpad Driver datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CHSC5816%E8%A7%A6%E6%8E%A7%E8%8A%AF%E7%89%87%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8EV1-20221114.pdf)
 - [PMU datasheet](https://github.com/lewisxhe/XPowersLib/blob/master/datasheet/AXP2101_Datasheet_V1.0_en.pdf)
 - [Light Sensor datasheet](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/CM32181A3OP.pdf)
-- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [ESP32S3-R8](https://www.espressif.com.cn/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 
 ##### T-Display-S3 AMOLED datasheet
 
-- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [ESP32S3-R8](https://www.espressif.com.cn/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 - [AMOLED Driver datasheet](./datasheet/RM67162%20DataSheet.pdf)
-- [CST816 datasheet](<[./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf)>)
+- [CST816 datasheet](./datasheet/CST816_Register.pdf)
 
 ##### T4-S3 datasheet
 
-- [ESP32S3-R8](https://www.espressif.com.cn/en/support/documents/technical-documents?keys=&field_type_tid%5B%5D=842)
+- [ESP32S3-R8](https://www.espressif.com.cn/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 - [SY6970](./datasheet/SY6970%20Datasheet.pdf)
 - [AMOLED Driver datasheet](./datasheet/RM690B0%20DataSheet_V0.2.pdf)
 - [CST226 datasheet](<[./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf)>)
