@@ -353,6 +353,7 @@ public:
     void setAddrWindow(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
     void pushColors(uint16_t *data, uint32_t len);
     void pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t hight, uint16_t *data);
+    void pushColorsDMA(uint16_t *data, uint32_t len);
 
     /**
      * @brief   Hang on SD card
