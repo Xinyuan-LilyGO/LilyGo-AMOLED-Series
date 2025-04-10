@@ -139,6 +139,8 @@ void beginLvglHelperDMA(LilyGo_Display &board, bool debug) {
         Serial.println("Error: Buffers are not DMA-capable!");
     }
 
+    lv_disp_draw_buf_init(&draw_buf, buf1, buf2, board.width() * board.height() / 10);
+
     /*Initialize the display*/
     lv_disp_drv_init( &disp_drv );
     /* display resolution */
