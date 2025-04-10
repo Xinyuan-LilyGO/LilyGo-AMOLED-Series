@@ -30,6 +30,16 @@ static void disp_flush( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color
     lv_disp_flush_ready( disp_drv );
 }
 
+static void disp_flushDMA( lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p )
+{
+    uint32_t w = ( area->x2 - area->x1 + 1 );
+    uint32_t h = ( area->y2 - area->y1 + 1 );
+    static_cast<LilyGo_Display *>(disp_drv->user_data)->setAddrWindow(area->x1, area->y1, area->x2, area->y2);
+    static_cast<LilyGo_Display *>(disp_drv->user_data)->pushColorsDMA((uint16_t *)color_p, w * h);
+
+    lv_disp_flush_ready( disp_drv );
+}
+
 /*Read the touchpad*/
 static void touchpad_read( lv_indev_drv_t *indev_driver, lv_indev_data_t *data )
 {
@@ -107,6 +117,52 @@ static void lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
         area->y1--;
     if (!(area->y2 & 1))
         area->y2++;
+}
+
+void beginLvglHelperDMA(LilyGo_Display &board, bool debug) {
+    lv_init();
+
+#if LV_USE_LOG
+    if (debug) {
+        lv_log_register_print_cb(lv_log_print_g_cb);
+    }
+#endif
+
+    size_t lv_buffer_size = (board.width() * board.height() / 10) * sizeof(lv_color_t);
+
+    lv_color_t *buf1 = (lv_color_t *)heap_caps_malloc(lv_buffer_size, MALLOC_CAP_DMA);
+    lv_color_t *buf2 = (lv_color_t *)heap_caps_malloc(lv_buffer_size, MALLOC_CAP_DMA);
+
+    assert (buf1 && buf2);
+
+    if (!esp_ptr_dma_capable(buf1) || !esp_ptr_dma_capable(buf2)) {
+        Serial.println("Error: Buffers are not DMA-capable!");
+    }
+
+    /*Initialize the display*/
+    lv_disp_drv_init( &disp_drv );
+    /* display resolution */
+    disp_drv.hor_res = board.width();
+    disp_drv.ver_res = board.height();
+    disp_drv.flush_cb = disp_flushDMA;
+    disp_drv.draw_buf = &draw_buf;
+    bool full_refresh = board.needFullRefresh();
+    disp_drv.full_refresh = full_refresh;
+    disp_drv.user_data = &board;
+    if (!full_refresh) {
+        disp_drv.rounder_cb = lv_rounder_cb;
+    }
+    lv_disp_drv_register( &disp_drv );
+
+    if (board.hasTouch()) {
+        lv_indev_drv_init( &indev_drv );
+        indev_drv.type = LV_INDEV_TYPE_POINTER;
+        indev_drv.read_cb = touchpad_read;
+        indev_drv.user_data = &board;
+        lv_indev_drv_register( &indev_drv );
+    }
+
+    lv_group_set_default(lv_group_create());
 }
 
 void beginLvglHelper(LilyGo_Display &board, bool debug)

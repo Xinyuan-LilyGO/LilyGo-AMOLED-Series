@@ -971,6 +971,53 @@ void LilyGo_AMOLED::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t 
     }
 }
 
+void LilyGo_AMOLED::pushColorsDMA(uint16_t *data, uint32_t len) {
+    if (!spi) return;
+
+    bool first_send = true;
+    setCS();
+
+    while (len > 0) {
+        size_t chunk_size = len;
+        if (chunk_size > SEND_BUF_SIZE) {
+            chunk_size = SEND_BUF_SIZE;
+        }
+
+        spi_transaction_ext_t t = {0};
+        memset(&t, 0, sizeof(t));
+
+        if (first_send) {
+            t.base.flags = SPI_TRANS_MODE_QIO;
+            t.base.cmd = 0x32;
+            t.base.addr = 0x002C00;
+            first_send = 0;
+        } else {
+            t.base.flags = SPI_TRANS_MODE_QIO | SPI_TRANS_VARIABLE_CMD | SPI_TRANS_VARIABLE_ADDR | SPI_TRANS_VARIABLE_DUMMY;
+            t.command_bits = 0;
+            t.address_bits = 0;
+            t.dummy_bits = 0;
+        }
+
+        t.base.tx_buffer = data;
+        t.base.length = chunk_size * 16;
+
+        esp_err_t ret = spi_device_queue_trans(spi, &t.base, portMAX_DELAY);
+        if (ret != ESP_OK) {
+            log_e("DMA transfer failed!");
+        }
+
+        spi_transaction_t *trans_result;
+        ret = spi_device_get_trans_result(spi, &trans_result, portMAX_DELAY);
+        if (ret != ESP_OK) {
+            log_e("DMA SPI transfer failed!");
+        }
+
+        data += chunk_size;
+        len -= chunk_size;
+    }
+
+    clrCS();
+}
 
 void LilyGo_AMOLED::beginCore()
 {
