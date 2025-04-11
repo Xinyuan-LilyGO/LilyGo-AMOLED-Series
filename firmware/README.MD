@@ -22,6 +22,19 @@
 ## 2️⃣How to Flash ?
 
 
+> \[!IMPORTANT]
+>
+> 🤖 USB ports keep popping in and out?
+> Follow the steps below to put your device into download mode
+>
+>  1. Connect the board via the USB cable
+>  2. Press and hold the **BOOT** button , While still pressing the **BOOT** button
+>  3. Release the **RST** button
+>  4. Release the **BOOT** button
+>  5. The USB port should be fixed and will not flash again. You can click Upload.
+>  6. Press the **RST** button to exit download mode
+
+
 ### Use ESP Download Tool
 
 - Download [Flash_download_tool](https://www.espressif.com.cn/sites/default/files/tools/flash_download_tool_3.9.5_0.zip)

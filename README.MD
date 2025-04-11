@@ -128,9 +128,22 @@ examples/
 
    - The options in bold are required, others are selected according to actual conditions.
 
-8. Select `Port`
+8. Select `Port` ，Port keeps flashing? Please see the following tips
 9. Click `upload` , Wait for compilation and writing to complete
 10. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
+
+> \[!IMPORTANT]
+>
+> 🤖 USB ports keep popping in and out?
+> Follow the steps below to put your device into download mode
+>
+>  1. Connect the board via the USB cable
+>  2. Press and hold the **BOOT** button , While still pressing the **BOOT** button
+>  3. Release the **RST** button
+>  4. Release the **BOOT** button
+>  5. The USB port should be fixed and will not flash again. You can click Upload.
+>  6. Press the **RST** button to exit download mode
+
 
 ## 5️⃣ Arduino IDE Manual installation (not recommended)
 
@@ -162,7 +175,7 @@ examples/
    - The options in bold are required, others are selected according to actual conditions.
 
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
-7. Select `Port`
+7. Select `Port` ，Port keeps flashing? Please see the following tips
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
@@ -183,10 +196,11 @@ examples/
    Please enter the upload mode manually.
 
    1. Connect the board via the USB cable
-   2. Press and hold the BOOT button , While still pressing the BOOT button, press RST
-   3. Release the RST
-   4. Release the BOOT button
-   5. Upload sketch
+   2. Press and hold the **BOOT** button , While still pressing the **BOOT** button
+   3. Release the **RST** button
+   4. Release the **BOOT** button
+   5. The USB port should be fixed and will not flash again. You can click Upload.
+   6. Press the **RST** button to exit download mode
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD) to check whether the hardware is normal
 3. **1.47 inches AMOLED(T-Display-AMOLED-Lite)** does not support hardware screen rotation function
