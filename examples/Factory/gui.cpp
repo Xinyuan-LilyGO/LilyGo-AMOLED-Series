@@ -306,12 +306,11 @@ void createBrightnessUI(lv_obj_t *parent)
     lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
     lv_msg_subsribe_obj(TEMPERATURE_MSG_ID, label, NULL);
 
-    // Added temperture change message cb
-    // TODO:Need fix
-    // lv_obj_add_event_cb( label, [](lv_event_t *e) {
-    //     lv_obj_t *label = (lv_obj_t *)lv_event_get_target(e);
-    //     lv_label_set_text_fmt(label, "Temperature:%.2f°C",  amoled.readCoreTemp());
-    // }, LV_EVENT_MSG_RECEIVED, NULL);
+    // Added temperature change message cb
+    lv_obj_add_event_cb( label, [](lv_event_t *e) {
+        lv_obj_t *label = (lv_obj_t *)lv_event_get_target(e);
+        lv_label_set_text_fmt(label, "Temperature:%.2f°C",  amoled.readCoreTemp());
+    }, LV_EVENT_MSG_RECEIVED, NULL);
 
 
     //SDCard

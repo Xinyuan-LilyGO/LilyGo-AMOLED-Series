@@ -806,9 +806,6 @@ bool LilyGo_AMOLED::beginAMOLED_147()
                       powerOn();
     }
 
-    // Temperature detect
-    beginCore();
-
     return true;
 }
 
@@ -971,7 +968,8 @@ void LilyGo_AMOLED::pushColors(uint16_t x, uint16_t y, uint16_t width, uint16_t 
     }
 }
 
-void LilyGo_AMOLED::pushColorsDMA(uint16_t *data, uint32_t len) {
+void LilyGo_AMOLED::pushColorsDMA(uint16_t *data, uint32_t len)
+{
     if (!spi) return;
 
     bool first_send = true;
@@ -1019,33 +1017,9 @@ void LilyGo_AMOLED::pushColorsDMA(uint16_t *data, uint32_t len) {
     clrCS();
 }
 
-void LilyGo_AMOLED::beginCore()
-{
-    // https://docs.espressif.com/projects/esp-idf/zh_CN/v4.4.4/esp32s3/api-reference/peripherals/temp_sensor.html
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
-    temp_sensor_config_t temp_sensor = TSENS_CONFIG_DEFAULT();
-    temp_sensor_set_config(temp_sensor);
-    temp_sensor_start();
-#else
-    // https://docs.espressif.com/projects/esp-idf/zh_CN/v5.0.1/esp32s3/api-reference/peripherals/temp_sensor.html
-    static temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(10, 50);
-    temperature_sensor_install(&temp_sensor_config, &temp_sensor);
-    temperature_sensor_enable(temp_sensor);
-#endif
-}
-
-
 float LilyGo_AMOLED::readCoreTemp()
 {
-    float tsens_value;
-    // https://docs.espressif.com/projects/esp-idf/zh_CN/v4.4.4/esp32s3/api-reference/peripherals/temp_sensor.html
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
-    temp_sensor_read_celsius(&tsens_value);
-#else
-    // https://docs.espressif.com/projects/esp-idf/zh_CN/v5.0.1/esp32s3/api-reference/peripherals/temp_sensor.html
-    temperature_sensor_get_celsius(temp_sensor, &tsens_value);
-#endif
-    return tsens_value;
+    return temperatureRead();
 }
 
 
