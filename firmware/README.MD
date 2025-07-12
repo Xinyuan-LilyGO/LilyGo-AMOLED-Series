@@ -7,16 +7,17 @@
 
 ## 1️⃣Support Product
 
-| Product(PinMap)            | Release                   | Debug                   |
-| -------------------------- | ------------------------- | ----------------------- |
-| [T-Display-AMOLED-Lite][1] | [firmware](./release.bin) | [firmware](./debug.bin) |
-| [T-Display-S3 AMOLED][2]   | [firmware](./release.bin) | [firmware](./debug.bin) |
-| [T4-S3][3]                 | [firmware](./release.bin) | [firmware](./debug.bin) |
+| Product(PinMap)               | Release                   | Debug                   |
+| ----------------------------- | ------------------------- | ----------------------- |
+| [T-Display-AMOLED-Lite][1]    | [firmware](./release.bin) | [firmware](./debug.bin) |
+| [T-Display-S3 AMOLED][2]      | [firmware](./release.bin) | [firmware](./debug.bin) |
+| [T4-S3][3]                    | [firmware](./release.bin) | [firmware](./debug.bin) |
+| [T-Display-S3 AMOLED Plus][4] | [firmware](./release.bin) | [firmware](./debug.bin) |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
-
+[4]: https://www.lilygo.cc/products/t-display-s3-amoled
 
 
 ## 2️⃣How to Flash ?
