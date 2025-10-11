@@ -29,7 +29,7 @@ static void disp_flush( lv_display_t *disp_drv, const lv_area_t *area, uint8_t *
     uint32_t w = ( area->x2 - area->x1 + 1 );
     uint32_t h = ( area->y2 - area->y1 + 1 );
     auto *plane = (LilyGo_Display *)lv_display_get_user_data(disp_drv);
-    lv_draw_sw_rgb565_swap(color_p, w * h * 2);
+    lv_draw_sw_rgb565_swap(color_p, w * h);
     plane->pushColors(area->x1, area->y1, w, h, (uint16_t *)color_p);
     lv_display_flush_ready( disp_drv );
 }
