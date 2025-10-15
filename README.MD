@@ -132,6 +132,8 @@ examples/
 9. Click `upload` , Wait for compilation and writing to complete
 10. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
+## 📽️ [Install from the Arduino IDE library manager](https://youtu.be/FOGPq-WfDkg)
+
 > \[!IMPORTANT]
 >
 > 🤖 USB ports keep popping in and out?
