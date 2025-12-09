@@ -49,7 +49,7 @@ static void touchpad_read( lv_indev_t *indev, lv_indev_data_t *data )
     data->state = LV_INDEV_STATE_REL;
 }
 
-static uint32_t lv_tick_get_cb(void)
+static uint32_t lv_tick_get_callback(void)
 {
     return millis();
 }
@@ -145,7 +145,7 @@ void beginLvglHelper(LilyGo_Display &board, bool debug)
         lv_indev_set_display(indev_drv, disp_drv);
     }
 
-    lv_tick_set_cb(lv_tick_get_cb);
+    lv_tick_set_cb(lv_tick_get_callback);
 
     lv_group_set_default(lv_group_create());
 }
