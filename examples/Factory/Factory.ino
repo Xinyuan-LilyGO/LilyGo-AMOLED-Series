@@ -71,6 +71,8 @@ using namespace ace_button;
 // For temperature in Fahrenheit
 // #define OPENWEATHERMAP_USE_FAHRENHEIT
 
+// To synchronize your local timezone using a network IP address, you need to check if the SSL certificate has expired; this is disabled by default at the factory.
+// #define ENABLE_DATETIME_SYNC
 
 #define NTP_SERVER1           "pool.ntp.org"
 #define NTP_SERVER2           "time.nist.gov"
@@ -437,10 +439,11 @@ void WiFiEvent(WiFiEvent_t event)
          */
         configTzTime(DEFAULT_TIMEZONE, NTP_SERVER1, NTP_SERVER2);
 
-
+#ifdef ENABLE_DATETIME_SYNC
         if (!vUpdateDateTimeTaskHandler) {
             xTaskCreate(datetimeSyncTask, "sync", 10 * 1024, NULL, 12, &vUpdateDateTimeTaskHandler);
         }
+#endif
         if (!vUpdateCoin360TaskHandler) {
             if (String(COINMARKETCAP_APIKEY) != "") {
                 xTaskCreate(updateCoin360Task, "coin", 10 * 1024, NULL, 10, &vUpdateCoin360TaskHandler);
