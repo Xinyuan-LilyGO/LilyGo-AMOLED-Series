@@ -34,7 +34,7 @@
 [1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
-[4]: https://www.lilygo.cc/products/t-display-s3-amoled
+[4]: https://www.lilygo.cc/products/t-display-s3-amoled-plus
 
 - This code supports T-Display-S3 AMOLED both touch and non-touch versions
 
