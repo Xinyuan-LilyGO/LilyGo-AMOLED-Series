@@ -38,6 +38,131 @@
 
 - This code supports T-Display-S3 AMOLED both touch and non-touch versions
 
+## 🔧 Hardware Description
+
+The ESP32-S3 GPIO numbers below are also the Arduino pin numbers.
+
+### T-Display-AMOLED-Lite pinout
+
+| Name                        | GPIO | Note                              |
+| --------------------------- | ---- | --------------------------------- |
+| Display DATA0               | 7    | SH8501 QSPI                       |
+| Display DATA1               | 10   | SH8501 QSPI                       |
+| Display DATA2               | 11   | SH8501 QSPI                       |
+| Display DATA3               | 12   | SH8501 QSPI                       |
+| Display SCLK                | 5    |                                   |
+| Display CS                  | 4    |                                   |
+| Display RST                 | 40   |                                   |
+| Display TE                  | 6    |                                   |
+| Touch SDA                   | 1    | Shared I2C bus                    |
+| Touch SCL                   | 2    | Shared I2C bus                    |
+| Touch IRQ                   | 13   | CHSC5816                          |
+| Touch RST                   | 14   | CHSC5816                          |
+| PMU SDA                     | 1    | Shared I2C bus                    |
+| PMU SCL                     | 2    | Shared I2C bus                    |
+| PMU IRQ                     | 3    | AXP2101                           |
+| Ambient light sensor SDA    | 1    | Shared I2C bus                    |
+| Ambient light sensor SCL    | 2    | Shared I2C bus                    |
+| Ambient light sensor IRQ    | 8    | CM32181                           |
+| BOOT button                 | 0    | Active low                        |
+| User button                 | 21   | Active low                        |
+| RGB LED                     | 18   | WS2812                            |
+| External SD MISO            | 47   | Library default; no onboard slot  |
+| External SD MOSI            | 39   | Library default; no onboard slot  |
+| External SD SCLK            | 38   | Library default; no onboard slot  |
+| External SD CS              | 9    | Library default; no onboard slot  |
+| USB D-                      | 19   | Native USB                        |
+| USB D+                      | 20   | Native USB                        |
+| UART TX                     | 43   | U0TXD                             |
+| UART RX                     | 44   | U0RXD                             |
+
+### T-Display-S3 AMOLED pinout
+
+| Name                        | GPIO | Note                                      |
+| --------------------------- | ---- | ----------------------------------------- |
+| Display DATA0               | 18   | RM67162 QSPI                              |
+| Display DATA1               | 7    | RM67162 QSPI                              |
+| Display DATA2               | 48   | RM67162 QSPI                              |
+| Display DATA3               | 5    | RM67162 QSPI                              |
+| Display SCLK                | 47   |                                           |
+| Display CS                  | 6    |                                           |
+| Display RST                 | 17   |                                           |
+| Display TE                  | 9    |                                           |
+| Display power enable        | 38   | Active high                               |
+| Touch SDA                   | 3    | Touch version only                        |
+| Touch SCL                   | 2    | Touch version only                        |
+| Touch IRQ                   | 21   | CST816; touch version only                |
+| BOOT button                 | 0    | Active low                                |
+| Battery ADC                 | 4    |                                           |
+| External SD MISO            | 13   | Library default; no onboard slot          |
+| External SD MOSI            | 12   | Library default; no onboard slot          |
+| External SD SCLK            | 14   | Library default; no onboard slot          |
+| External SD CS              | 11   | Library default; no onboard slot          |
+| USB D-                      | 19   | Native USB                                |
+| USB D+                      | 20   | Native USB                                |
+| UART TX                     | 43   | U0TXD                                     |
+| UART RX                     | 44   | U0RXD                                     |
+
+### T4-S3 pinout
+
+| Name                        | GPIO | Note                   |
+| --------------------------- | ---- | ---------------------- |
+| Display DATA0               | 14   | RM690B0 QSPI           |
+| Display DATA1               | 10   | RM690B0 QSPI           |
+| Display DATA2               | 16   | RM690B0 QSPI           |
+| Display DATA3               | 12   | RM690B0 QSPI           |
+| Display SCLK                | 15   |                        |
+| Display CS                  | 11   |                        |
+| Display RST                 | 13   |                        |
+| Display TE                  | 18   |                        |
+| Display power enable        | 9    | Active high            |
+| Touch SDA                   | 6    | Shared I2C bus         |
+| Touch SCL                   | 7    | Shared I2C bus         |
+| Touch IRQ                   | 8    | CST226SE               |
+| Touch RST                   | 17   | CST226SE               |
+| PMU SDA                     | 6    | Shared I2C bus         |
+| PMU SCL                     | 7    | Shared I2C bus         |
+| PMU IRQ                     | 5    | SY6970                 |
+| MicroSD MISO                | 4    | Onboard slot           |
+| MicroSD MOSI                | 2    | Onboard slot           |
+| MicroSD SCLK                | 3    | Onboard slot           |
+| MicroSD CS                  | 1    | Onboard slot           |
+| BOOT button                 | 0    | Active low             |
+| USB D-                      | 19   | Native USB             |
+| USB D+                      | 20   | Native USB             |
+| UART TX                     | 43   | U0TXD                  |
+| UART RX                     | 44   | U0RXD                  |
+
+### T-Display-S3 AMOLED Plus pinout
+
+| Name                        | GPIO | Note                                  |
+| --------------------------- | ---- | ------------------------------------- |
+| Display MOSI                | 18   | RM67162 SPI                           |
+| Display DC                  | 7    |                                       |
+| Display SCLK                | 47   |                                       |
+| Display CS                  | 6    |                                       |
+| Display RST                 | 17   |                                       |
+| Display TE                  | 9    |                                       |
+| Display power enable        | 38   | Active high                           |
+| Touch SDA                   | 3    | Shared I2C bus                        |
+| Touch SCL                   | 2    | Shared I2C bus                        |
+| Touch IRQ                   | 21   | CST816                                |
+| PMU SDA                     | 3    | Shared I2C bus                        |
+| PMU SCL                     | 2    | Shared I2C bus                        |
+| PMU IRQ                     | 1    | SY6970 or BQ25896, depending on board |
+| RTC SDA                     | 3    | PCF85063; shared I2C bus              |
+| RTC SCL                     | 2    | PCF85063; shared I2C bus              |
+| MicroSD MISO                | 13   | Onboard slot                          |
+| MicroSD MOSI                | 12   | Onboard slot                          |
+| MicroSD SCLK                | 14   | Onboard slot                          |
+| MicroSD CS                  | 11   | Onboard slot                          |
+| BOOT button                 | 0    | Active low                            |
+| Battery ADC                 | 4    |                                       |
+| USB D-                      | 19   | Native USB                            |
+| USB D+                      | 20   | Native USB                            |
+| UART TX                     | 43   | U0TXD                                 |
+| UART RX                     | 44   | U0RXD                                 |
+
 ## 2️⃣Examples
 
 ```txt
@@ -104,8 +229,9 @@ examples/
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install` , How to use `lvgl 9.x.x`, please see the lvgl upgrade settings below
-7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
-8. `Tools` , Look at the picture to choose
+6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
+7. `Tools` , Look at the picture to choose
+
    | Arduino IDE Setting                  | Value                             |
    | ------------------------------------ | --------------------------------- |
    | Board                                | **ESP32S3 Dev Module**            |
