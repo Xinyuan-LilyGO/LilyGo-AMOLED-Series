@@ -224,13 +224,21 @@ examples/
 
 ## 4️⃣ Install from Arduino Library Manager (recommended)
 
+> \[!IMPORTANT]
+>
+> Please use the recommended versions of the dependency libraries; newer versions may have compatibility issues.
+>
+> SensorLib -> v0.2.4
+>
+
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 V2.0.16 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install` , How to use `lvgl 9.x.x`, please see the lvgl upgrade settings below
-6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
-7. `Tools` , Look at the picture to choose
+6. `Library Search` -> `SensorLib` -> `v0.2.4` -> `Install`
+7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
+8. `Tools` , Look at the picture to choose
 
    | Arduino IDE Setting                  | Value                             |
    | ------------------------------------ | --------------------------------- |
@@ -254,9 +262,9 @@ examples/
 
    - The options in bold are required, others are selected according to actual conditions.
 
-8. Select `Port` ，Port keeps flashing? Please see the following tips
-9. Click `upload` , Wait for compilation and writing to complete
-10. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
+9. Select `Port` ，Port keeps flashing? Please see the following tips
+10. Click `upload` , Wait for compilation and writing to complete
+11. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
 ## 📽️ [Install from the Arduino IDE library manager](https://youtu.be/FOGPq-WfDkg)
 
