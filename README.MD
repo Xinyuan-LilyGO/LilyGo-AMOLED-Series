@@ -88,7 +88,7 @@ The ESP32-S3 GPIO numbers below are also the Arduino pin numbers.
 | Display CS                  | 6    |                                           |
 | Display RST                 | 17   |                                           |
 | Display TE                  | 9    |                                           |
-| Display power enable        | 38   | Active high                               |
+| Display power enable(V2.0)  | 38   | Active high   (V1.0 is GREEN LED)         |
 | Touch SDA                   | 3    | Touch version only                        |
 | Touch SCL                   | 2    | Touch version only                        |
 | Touch IRQ                   | 21   | CST816; touch version only                |
@@ -102,6 +102,11 @@ The ESP32-S3 GPIO numbers below are also the Arduino pin numbers.
 | USB D+                      | 20   | Native USB                                |
 | UART TX                     | 43   | U0TXD                                     |
 | UART RX                     | 44   | U0RXD                                     |
+
+> \[!TIP]
+>
+> V1.0 GPIO 38 is GREEN LED , V2.0 GPIO38 is Display Power Enable
+>
 
 ### T4-S3 pinout
 
