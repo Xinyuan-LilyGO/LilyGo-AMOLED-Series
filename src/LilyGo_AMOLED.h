@@ -17,12 +17,11 @@
 #include <driver/spi_master.h>
 #include <SPI.h>
 #include "initSequence.h"
-#include "pmic/xpowers/axp2101/PmicAXP2101.hpp"
-#include "pmic/silergy/sy6970/PmicSY6970.hpp"
-#include "pmic/ti/bq25896/PmicBQ25896.hpp"
-#include "TouchDrvChipshine.hpp"
-#include "TouchDrvCST.hpp"
-#include "sensor/light_sensor/SensorCM32181.hpp"
+#include "PmicXPowers.hpp"
+#include "PmicSilergy.hpp"
+#include "PmicTI.hpp"
+#include "TouchDrv.hpp"
+#include "LightSensorDrv.hpp"
 #include <sys/cdefs.h>
 #include "LilyGo_Display.h"
 #if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
@@ -31,7 +30,7 @@
 #include <driver/temperature_sensor.h>
 #endif
 
-#include "time/pcf85063/SensorPCF85063.hpp"
+#include "RtcDrv.hpp"
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
