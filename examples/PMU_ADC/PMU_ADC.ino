@@ -47,12 +47,16 @@ void setup()
 void loop()
 {
     if (lastMillis < millis()) {
-        const auto status = amoled.AXP.charger().getStatus();
+        PmicBase *pmu = amoled.pmic();
+        if (!pmu || !pmu->getCharger()) {
+            return;
+        }
+        const auto status = pmu->getCharger()->getStatus();
         float battery = 0;
         float vbus = 0;
         float system = 0;
         float percent = 0;
-        auto &adc = amoled.AXP.getAdc();
+        auto &adc = pmu->getAdc();
         adc.read(PmicAdcBase::Channel::BAT_VOLTAGE, battery);
         adc.read(PmicAdcBase::Channel::VBUS_VOLTAGE, vbus);
         adc.read(PmicAdcBase::Channel::VSYS_VOLTAGE, system);

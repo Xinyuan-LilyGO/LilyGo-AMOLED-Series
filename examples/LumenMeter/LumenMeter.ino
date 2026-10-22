@@ -16,8 +16,11 @@ lv_obj_t *label;
 
 void timer_event_handler(lv_timer_t *t)
 {
-    float lux =  amoled.getLux();
-    lv_label_set_text_fmt(label, "%.2f lux", lux);
+    if (SensorCM32181 *sensor = amoled.lightSensor()) {
+        lv_label_set_text_fmt(label, "%.2f lux", sensor->getLux());
+    } else {
+        lv_label_set_text(label, "N/A");
+    }
     lv_obj_center(label);
 
 }

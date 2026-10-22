@@ -27,13 +27,13 @@ void setup()
     }
 
     beginLvglHelper(amoled);
-    auto &charger = amoled.BQ.charger();
-    auto &adc = amoled.BQ.adc();
+    PmicBase *pmu = amoled.pmic();
+    auto &charger = *pmu->getCharger();
+    auto &adc = pmu->getAdc();
 
     charger.setChargeVoltage(4208);
     charger.setPreChargeCurrent(64);
     charger.setFastChargeCurrent(832);
-    adc.setContinuousMode(true);
     charger.enableCharging(false);
 
     Serial.printf("Configured charge current: %u mA\n", charger.getFastChargeCurrent());
@@ -45,10 +45,11 @@ void setup()
 void loop()
 {
     if (millis() >= nextUpdate) {
-        const auto status = amoled.BQ.charger().getStatus();
-        const float vbus = readValue(amoled.BQ.adc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
-        const float battery = readValue(amoled.BQ.adc(), PmicAdcBase::Channel::BAT_VOLTAGE);
-        const float system = readValue(amoled.BQ.adc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+        PmicBase *pmu = amoled.pmic();
+        const auto status = pmu->getCharger()->getStatus();
+        const float vbus = readValue(pmu->getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+        const float battery = readValue(pmu->getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+        const float system = readValue(pmu->getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
 
         lv_label_set_text_fmt(label1,
                               "Charging:%s\nUSB:%s\nVBUS:%u mV\nBattery:%u mV\nSystem:%u mV\nCharge current:%u mA",
@@ -57,7 +58,7 @@ void loop()
                               static_cast<unsigned>(vbus),
                               static_cast<unsigned>(battery),
                               static_cast<unsigned>(system),
-                              amoled.BQ.charger().getFastChargeCurrent());
+                              pmu->getCharger()->getFastChargeCurrent());
         Serial.printf("VBUS=%u mV VBAT=%u mV VSYS=%u mV charging=%s\n",
                       static_cast<unsigned>(vbus), static_cast<unsigned>(battery),
                       static_cast<unsigned>(system), status.charging ? "yes" : "no");

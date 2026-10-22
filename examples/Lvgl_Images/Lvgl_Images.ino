@@ -148,14 +148,16 @@ void setup()
     lv_obj_add_event_cb(img1, images_event_cb, LV_EVENT_CLICKED, NULL);
 
     // Home Button Only 1.91 Inch AMOLED board support ,other board not support
-    amoled.TouchDrvCSTXXX::setHomeButtonCallback([](void *ptr) {
-        static uint32_t checkMs = 0;
-        if (millis() > checkMs) {
-            updateImages();
-        }
-        checkMs = millis() + 300;
+    if (TouchDrvInterface *touch = amoled.touch()) {
+        touch->setHomeButtonCallback([](void *ptr) {
+            static uint32_t checkMs = 0;
+            if (millis() > checkMs) {
+                updateImages();
+            }
+            checkMs = millis() + 300;
 
-    }, NULL);
+        }, NULL);
+    }
 
     amoled.setBrightness(255);
 

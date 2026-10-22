@@ -73,7 +73,7 @@ static void update_date(lv_timer_t *e)
 
     if (amoled.hasRTC()) {
         // When a real-time clock chip is present, the hardware time is used
-        amoled.getDateTime(&timeinfo);
+        amoled.rtc()->getDateTime(&timeinfo);
     } else {
         // When the real-time clock chip does not exist, the ESP32 internal time is used
         time(&now);
@@ -615,8 +615,11 @@ void createDeviceInfoUI(lv_obj_t *parent)
             lv_label_set_text_fmt(p[1], "%u mV", vol);
 
             if (boards->sensor) {
-                float lux = amoled.getLux();
-                lv_label_set_text_fmt(p[2], "%.1f lux", lux);
+                if (SensorCM32181 *sensor = amoled.lightSensor()) {
+                    lv_label_set_text_fmt(p[2], "%.1f lux", sensor->getLux());
+                } else {
+                    lv_label_set_text(p[2], "N/A");
+                }
             }
         }
 

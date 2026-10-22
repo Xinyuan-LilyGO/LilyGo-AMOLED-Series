@@ -48,15 +48,17 @@ void setup(void)
     lv_obj_center(label);
 
     // Only 1.91 Inch AMOLED board support
-    amoled.TouchDrvCSTXXX::setHomeButtonCallback([](void *ptr) {
-        Serial.println("Home key pressed!");
-        static uint32_t checkMs = 0;
-        if (millis() > checkMs) {
-            lv_label_set_text(label, "Home Pressed");
-            lv_obj_center(label);
-        }
-        checkMs = millis() + 200;
-    }, NULL);
+    if (TouchDrvInterface *touch = amoled.touch()) {
+        touch->setHomeButtonCallback([](void *ptr) {
+            Serial.println("Home key pressed!");
+            static uint32_t checkMs = 0;
+            if (millis() > checkMs) {
+                lv_label_set_text(label, "Home Pressed");
+                lv_obj_center(label);
+            }
+            checkMs = millis() + 200;
+        }, NULL);
+    }
 
 }
 

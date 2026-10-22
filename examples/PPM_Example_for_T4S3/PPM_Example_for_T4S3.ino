@@ -27,15 +27,15 @@ void setup()
     }
 
     beginLvglHelper(amoled);
-    auto &charger = amoled.SY.charger();
-    auto &adc = amoled.SY.adc();
+    PmicBase *pmu = amoled.pmic();
+    auto &charger = *pmu->getCharger();
+    auto &adc = pmu->getAdc();
 
     charger.setChargeVoltage(4208);
     charger.setPreChargeCurrent(64);
     charger.setFastChargeCurrent(832);
-    adc.setContinuousMode(true);
     charger.enableCharging(true);
-    amoled.SY.getLed().setMode(PmicLedBase::Mode::AUTO);
+    pmu->getLed().setMode(PmicLedBase::Mode::AUTO);
 
     Serial.printf("Configured charge current: %u mA\n", charger.getFastChargeCurrent());
     label1 = lv_label_create(lv_scr_act());
@@ -46,10 +46,11 @@ void setup()
 void loop()
 {
     if (millis() >= nextUpdate) {
-        const auto status = amoled.SY.charger().getStatus();
-        const float vbus = readValue(amoled.SY.adc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
-        const float battery = readValue(amoled.SY.adc(), PmicAdcBase::Channel::BAT_VOLTAGE);
-        const float system = readValue(amoled.SY.adc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+        PmicBase *pmu = amoled.pmic();
+        const auto status = pmu->getCharger()->getStatus();
+        const float vbus = readValue(pmu->getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+        const float battery = readValue(pmu->getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+        const float system = readValue(pmu->getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
 
         lv_label_set_text_fmt(label1,
                               "Charging:%s\nUSB:%s\nVBUS:%u mV\nBattery:%u mV\nSystem:%u mV\nCharge current:%u mA",
@@ -58,7 +59,7 @@ void loop()
                               static_cast<unsigned>(vbus),
                               static_cast<unsigned>(battery),
                               static_cast<unsigned>(system),
-                              amoled.SY.charger().getFastChargeCurrent());
+                              pmu->getCharger()->getFastChargeCurrent());
         Serial.printf("VBUS=%u mV VBAT=%u mV VSYS=%u mV charging=%s\n",
                       static_cast<unsigned>(vbus), static_cast<unsigned>(battery),
                       static_cast<unsigned>(system), status.charging ? "yes" : "no");

@@ -178,9 +178,9 @@ void buttonHandleEvent(AceButton *button,
         if (boards->pmu && id == LILYGO_AMOLED_147) {
 
             // Set PMU Sleep mode
-            amoled.AXP.power().enableSleep();
+            static_cast<PmicAXP2101 *>(amoled.pmic())->power().enableSleep();
             amoled.clearPMU();
-            amoled.AXP.power().enableWakeup();
+            static_cast<PmicAXP2101 *>(amoled.pmic())->power().enableWakeup();
             // The 1.47-inch screen does not have an external pull-up resistor, so it cannot be woken up by pressing the button.
             // Use Timer wakeup .
             esp_sleep_enable_timer_wakeup(60 * 1000000ULL);  //60S
@@ -333,20 +333,22 @@ void setup()
         xTaskCreate(buttonHandlerTask, "btn", 5 * 1024, NULL, 12, NULL);
     }
 
-    amoled.TouchDrvCSTXXX::setHomeButtonCallback([](void *ptr) {
-        Serial.println("Home key pressed!");
-        static uint32_t checkMs = 0;
-        static uint8_t lastBri = 0;
-        if (millis() > checkMs) {
-            if (amoled.getBrightness()) {
-                lastBri = amoled.getBrightness();
-                amoled.setBrightness(0);
-            } else {
-                amoled.setBrightness(lastBri);
+    if (TouchDrvInterface *touch = amoled.touch()) {
+        touch->setHomeButtonCallback([](void *ptr) {
+            Serial.println("Home key pressed!");
+            static uint32_t checkMs = 0;
+            static uint8_t lastBri = 0;
+            if (millis() > checkMs) {
+                if (amoled.getBrightness()) {
+                    lastBri = amoled.getBrightness();
+                    amoled.setBrightness(0);
+                } else {
+                    amoled.setBrightness(lastBri);
+                }
             }
-        }
-        checkMs = millis() + 200;
-    }, NULL);
+            checkMs = millis() + 200;
+        }, NULL);
+    }
 
 }
 
@@ -379,12 +381,12 @@ void time_available(struct timeval *t)
 
     // Write synchronization time to hardware rtc chip
     if (amoled.hasRTC()) {
-        amoled.hwClockWrite();
+        amoled.rtc()->hwClockWrite();
 
 
         //Read hardware clock
         struct tm hwTimeinfo;
-        amoled.getDateTime(&hwTimeinfo);
+        amoled.rtc()->getDateTime(&hwTimeinfo);
         Serial.print("Hardware clock :");
         Serial.println(&hwTimeinfo, "%A, %B %d %Y %H:%M:%S");
     }

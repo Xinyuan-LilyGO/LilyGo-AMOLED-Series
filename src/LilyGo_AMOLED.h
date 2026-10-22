@@ -16,6 +16,7 @@
 
 #include <driver/spi_master.h>
 #include <SPI.h>
+#include <memory>
 #include "initSequence.h"
 #include "PmicXPowers.hpp"
 #include "PmicSilergy.hpp"
@@ -295,17 +296,9 @@ enum AmoledBoardID {
 };
 
 class LilyGo_AMOLED:
-    public LilyGo_Display,
-    public TouchDrvCHSC5816,
-    public SensorCM32181,
-    public TouchDrvCSTXXX,
-    public SensorPCF85063
+    public LilyGo_Display
 {
 public:
-    PmicAXP2101 AXP;
-    PmicSY6970 SY;
-    PmicBQ25896 BQ;
-
     LilyGo_AMOLED();
 
     ~LilyGo_AMOLED();
@@ -411,6 +404,12 @@ public:
 
 
     bool hasRTC();
+
+    // Optional peripherals are null when absent or not initialized.
+    PmicBase *pmic() const { return _pmu.get(); }
+    TouchDrvInterface *touch() const { return _touch.get(); }
+    SensorCM32181 *lightSensor() const { return _lightSensor.get(); }
+    SensorPCF85063 *rtc() const { return _rtc.get(); }
 private:
 
     enum class PmicType : uint8_t {
@@ -426,8 +425,10 @@ private:
     };
 
     bool initBUS(DriverBusType type = QSPI_DRIVER);
+    void selectBoard(const BoardsConfigure_t *configuration);
     bool initPMU();
-    PmicType getPmicType() const;
+    bool initTouch(uint8_t address, std::unique_ptr<TouchDrvInterface> driver);
+    bool initPPM(PmicType type, uint8_t address);
     static uint16_t readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel channel);
     void inline setCS();
     void inline clrCS();
@@ -436,15 +437,17 @@ private:
     spi_device_handle_t spi;
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
-    bool _touchOnline;
+    std::unique_ptr<PmicBase> _pmu;
+    std::unique_ptr<TouchDrvInterface> _touch;
+    std::unique_ptr<SensorCM32181> _lightSensor;
+    std::unique_ptr<SensorPCF85063> _rtc;
     uint16_t _width, _height;
 
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
     temperature_sensor_handle_t temp_sensor;
 #endif
 
-    bool  _hasRTC;
-    bool _pmuUsesSY6970;
+    PmicType _pmicType;
 
     bool _disableTouch;
 
