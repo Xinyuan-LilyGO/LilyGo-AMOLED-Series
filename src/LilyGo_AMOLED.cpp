@@ -42,12 +42,22 @@
 #define TFT_SPI_MODE            SPI_MODE0
 #define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
-LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false), _pmuUsesSY6970(false), _disableTouch(false)
+LilyGo_AMOLED::LilyGo_AMOLED() :
+    pBuffer(nullptr),
+    spi(nullptr),
+    _brightness(AMOLED_DEFAULT_BRIGHTNESS),
+    boards(nullptr),
+    _touchOnline(false),
+    _width(0),
+    _height(0),
+#if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
+    temp_sensor(nullptr),
+#endif
+    _hasRTC(false),
+    _pmuUsesSY6970(false),
+    _disableTouch(false),
+    spiDev(nullptr)
 {
-    spiDev = NULL;
-    pBuffer = NULL;
-    spi = NULL;
-    _brightness = AMOLED_DEFAULT_BRIGHTNESS;
     // Prevent previously set hold
     switch (esp_sleep_get_wakeup_cause()) {
     case ESP_SLEEP_WAKEUP_EXT0 :
@@ -124,6 +134,20 @@ uint16_t LilyGo_AMOLED::readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel chann
     return adc.read(channel, value) ? static_cast<uint16_t>(value) : 0;
 }
 
+LilyGo_AMOLED::PmicType LilyGo_AMOLED::getPmicType() const
+{
+    if (boards == &BOARD_AMOLED_147) {
+        return PmicType::AXP2101;
+    }
+    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+        return PmicType::SY6970;
+    }
+    if (boards == &BOARD_AMOLED_191_SPI) {
+        return PmicType::BQ25896;
+    }
+    return PmicType::NONE;
+}
+
 void inline LilyGo_AMOLED::setCS()
 {
     digitalWrite(boards->display.cs, LOW);
@@ -177,17 +201,18 @@ uint8_t LilyGo_AMOLED::getPoint(int16_t *x, int16_t *y, uint8_t get_point )
 
 uint16_t LilyGo_AMOLED::getBattVoltage(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
-            } else if (boards == &BOARD_AMOLED_241 ||
-                       (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
-            } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
-            }
-        } else if (boards->adcPins != -1) {
+    switch (getPmicType()) {
+    case PmicType::AXP2101:
+        return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+    case PmicType::SY6970:
+        return readVoltage(SY.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+    case PmicType::BQ25896:
+        return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+    case PmicType::NONE:
+        break;
+    }
+
+    if (boards && boards->adcPins != -1) {
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
             esp_adc_cal_characteristics_t adc_chars;
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4,4,7)
@@ -203,88 +228,61 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
             v1 *= 2;   //The hardware voltage divider resistor is half of the actual voltage, multiply it by 2 to get the true voltage
 #endif
             return v1;
-        }
     }
     return 0;
 }
 
 uint16_t LilyGo_AMOLED::getVbusVoltage(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
-            } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101: return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+    case PmicType::SY6970: return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+    case PmicType::BQ25896: return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+    case PmicType::NONE: return 0;
     }
     return 0;
 }
 
 bool LilyGo_AMOLED::isBatteryConnect(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return AXP.isBatteryConnect();
-            } else  if (boards == &BOARD_AMOLED_241) {
-                return SY.charger().getStatus().batteryPresent;
-            } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return _pmuUsesSY6970 ? SY.charger().getStatus().batteryPresent :
-                       BQ.charger().getStatus().batteryPresent;
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101: return AXP.isBatteryConnect();
+    case PmicType::SY6970: return SY.charger().getStatus().batteryPresent;
+    case PmicType::BQ25896: return BQ.charger().getStatus().batteryPresent;
+    case PmicType::NONE: return false;
     }
     return false;
 }
 
 uint16_t LilyGo_AMOLED::getSystemVoltage(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
-            } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101: return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+    case PmicType::SY6970: return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+    case PmicType::BQ25896: return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+    case PmicType::NONE: return 0;
     }
     return 0;
 }
 
 bool LilyGo_AMOLED::isCharging(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return AXP.isCharging();
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                return SY.charger().isCharging();
-            } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.charger().isCharging();
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101: return AXP.isCharging();
+    case PmicType::SY6970: return SY.charger().isCharging();
+    case PmicType::BQ25896: return BQ.charger().isCharging();
+    case PmicType::NONE: return false;
     }
     return false;
 }
 
 bool LilyGo_AMOLED::isVbusIn(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                return AXP.isVbusGood();
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                return SY.charger().getStatus().vbusPresent;
-            } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.charger().getStatus().vbusPresent;
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101: return AXP.isVbusGood();
+    case PmicType::SY6970: return SY.charger().getStatus().vbusPresent;
+    case PmicType::BQ25896: return BQ.charger().getStatus().vbusPresent;
+    case PmicType::NONE: return false;
     }
     return false;
 }
@@ -306,62 +304,54 @@ void LilyGo_AMOLED::setChargingLedMode(uint8_t mode)
 
 void LilyGo_AMOLED::disableCharge(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                AXP.charger().setFastChargeCurrent(0);
-                AXP.charger().enableCharging(false);
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                SY.charger().enableCharging(false);
-            } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                BQ.charger().enableCharging(false);
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101:
+        AXP.charger().setFastChargeCurrent(0);
+        AXP.charger().enableCharging(false);
+        break;
+    case PmicType::SY6970: SY.charger().enableCharging(false); break;
+    case PmicType::BQ25896: BQ.charger().enableCharging(false); break;
+    case PmicType::NONE: break;
     }
 }
 
 void LilyGo_AMOLED::enableCharge(void)
 {
-    if (boards) {
-        if (boards->pmu) {
-            if (boards == &BOARD_AMOLED_147) {
-                AXP.charger().setFastChargeCurrent(200);
-                AXP.charger().enableCharging(true);
-            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-                SY.charger().enableCharging(true);
-            } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                BQ.charger().enableCharging(true);
-            }
-        }
+    switch (getPmicType()) {
+    case PmicType::AXP2101:
+        AXP.charger().setFastChargeCurrent(200);
+        AXP.charger().enableCharging(true);
+        break;
+    case PmicType::SY6970: SY.charger().enableCharging(true); break;
+    case PmicType::BQ25896: BQ.charger().enableCharging(true); break;
+    case PmicType::NONE: break;
     }
 }
 
 bool LilyGo_AMOLED::isEnableOTG()
 {
-    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-        return SY.power().isBoostEnabled();
+    switch (getPmicType()) {
+    case PmicType::SY6970: return SY.power().isBoostEnabled();
+    case PmicType::BQ25896: return BQ.power().isBoostEnabled();
+    default: return false;
     }
-    if (boards == &BOARD_AMOLED_191_SPI) {
-        return BQ.power().isBoostEnabled();
-    }
-    return false;
 }
 
 void LilyGo_AMOLED::enableOTG()
 {
-    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-        SY.power().enableBoost(true);
-    } else if (boards == &BOARD_AMOLED_191_SPI) {
-        BQ.power().enableBoost(true);
+    switch (getPmicType()) {
+    case PmicType::SY6970: SY.power().enableBoost(true); break;
+    case PmicType::BQ25896: BQ.power().enableBoost(true); break;
+    default: break;
     }
 }
 
 void LilyGo_AMOLED::disableOTG()
 {
-    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
-        SY.power().enableBoost(false);
-    } else if (boards == &BOARD_AMOLED_191_SPI) {
-        BQ.power().enableBoost(false);
+    switch (getPmicType()) {
+    case PmicType::SY6970: SY.power().enableBoost(false); break;
+    case PmicType::BQ25896: BQ.power().enableBoost(false); break;
+    default: break;
     }
 }
 

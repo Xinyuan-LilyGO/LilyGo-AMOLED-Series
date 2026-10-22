@@ -416,6 +416,13 @@ public:
     bool hasRTC();
 private:
 
+    enum class PmicType : uint8_t {
+        NONE,
+        AXP2101,
+        SY6970,
+        BQ25896,
+    };
+
     enum DriverBusType {
         QSPI_DRIVER,
         SPI_DRIVER,
@@ -423,6 +430,7 @@ private:
 
     bool initBUS(DriverBusType type = QSPI_DRIVER);
     bool initPMU();
+    PmicType getPmicType() const;
     static uint16_t readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel channel);
     void inline setCS();
     void inline clrCS();
