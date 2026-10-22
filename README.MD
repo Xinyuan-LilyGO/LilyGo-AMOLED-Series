@@ -233,7 +233,7 @@ examples/
 >
 > Please use the recommended versions of the dependency libraries; newer versions may have compatibility issues.
 >
-> SensorLib -> v0.2.4
+> SensorLib -> v0.5.1
 >
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
@@ -241,7 +241,7 @@ examples/
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
 5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install` , How to use `lvgl 9.x.x`, please see the lvgl upgrade settings below
-6. `Library Search` -> `SensorLib` -> `v0.2.4` -> `Install`
+6. `Library Search` -> `SensorLib` -> `v0.5.1` -> `Install`
 7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 8. `Tools` , Look at the picture to choose
 
@@ -400,8 +400,7 @@ examples/
 
 # 8️⃣ Depends on required libraries
 
-- [XPowersLib v0.2.7](https://github.com/lewisxhe/XPowersLib)
-- [SensorLib v0.2.4](https://github.com/lewisxhe/SensorsLib)
+- [SensorLib v0.5.1](https://github.com/lewisxhe/SensorLib) (includes PMIC and touch drivers)
 - [lvgl v8.x or v9.x](https://github.com/lvgl/lvgl)
 - [AceButton v1.10.1](https://github.com/bxparks/AceButton)
 - [Adafruit_NeoPixel v1.11.0](https://github.com/adafruit/Adafruit_NeoPixel)

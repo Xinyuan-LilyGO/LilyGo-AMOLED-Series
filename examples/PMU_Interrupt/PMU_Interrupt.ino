@@ -5,7 +5,7 @@
  * @copyright Copyright (c) 2023  Shenzhen Xinyuan Electronic Technology Co., Ltd
  * @date      2023-09-09
  * @note      Sketch only for 1.47" screen with Power management unit
- *            For more PMU examples, please refer to https://github.com/lewisxhe/XPowersLib
+ *            PMIC APIs are provided by SensorLib.
  */
 
 #include <LilyGo_AMOLED.h>
@@ -37,28 +37,24 @@ void setup()
     amoled.attachPMU(setFlag);
 
     // Disable all interrupts
-    amoled.disablePMUInterrupt(XPOWERS_AXP2101_ALL_IRQ);
-
-    // Print interrupt register
-    amoled.printIntRegister(&Serial);
+    amoled.disablePMUInterrupt(AXP2101Irq::IRQ_ALL_MASK);
 
     // Clear all interrupt flags
     amoled.clearPMU();
 
     // Enable the required interrupt function
     amoled.enablePMUInterrupt(
-        XPOWERS_AXP2101_BAT_INSERT_IRQ    | XPOWERS_AXP2101_BAT_REMOVE_IRQ      |   //BATTERY
-        XPOWERS_AXP2101_VBUS_INSERT_IRQ   | XPOWERS_AXP2101_VBUS_REMOVE_IRQ     |   //VBUS
-        XPOWERS_AXP2101_PKEY_SHORT_IRQ    | XPOWERS_AXP2101_PKEY_LONG_IRQ       |   //POWER KEY
-        XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  | XPOWERS_AXP2101_BAT_CHG_START_IRQ       //CHARGE
-        // XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ | XPOWERS_AXP2101_PKEY_POSITIVE_IRQ   |   //POWER KEY
+        AXP2101Irq::IRQ_BAT_INSERT | AXP2101Irq::IRQ_BAT_REMOVE |
+        AXP2101Irq::IRQ_VBUS_INSERT | AXP2101Irq::IRQ_VBUS_REMOVE |
+        AXP2101Irq::IRQ_PEKEY_SHORT_PRESS | AXP2101Irq::IRQ_PEKEY_LONG_PRESS |
+        AXP2101Irq::IRQ_BAT_CHG_DONE | AXP2101Irq::IRQ_BAT_CHG_START
     );
 
-    amoled.enablePMUInterrupt(XPOWERS_AXP2101_BAT_NOR_UNDER_TEMP_IRQ);
+    amoled.enablePMUInterrupt(AXP2101Irq::IRQ_BAT_UNDER_TEMP_WORK);
 
-    amoled.enablePMUInterrupt(XPOWERS_AXP2101_PKEY_SHORT_IRQ | XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ);
+    amoled.enablePMUInterrupt(AXP2101Irq::IRQ_PEKEY_SHORT_PRESS | AXP2101Irq::IRQ_PEKEY_NEGATIVE_EDGE);
 
-    amoled.enablePMUInterrupt(XPOWERS_AXP2101_BAT_OVER_VOL_IRQ);
+    amoled.enablePMUInterrupt(AXP2101Irq::IRQ_BAT_OVER_VOLT);
 
 
     lv_label_set_text(label1, "Wait PMU IRQ!");
@@ -72,112 +68,44 @@ void loop()
 
         pmu_flag = false;
 
-        // Get amoled Interrupt Status Register
-        uint32_t status = amoled.readPMU();
-        Serial.print("STATUS => HEX:");
-        Serial.print(status, HEX);
-        Serial.print(" BIN:");
-        Serial.println(status, BIN);
+        const uint64_t status = amoled.readPMU();
+        Serial.printf("AXP2101 IRQ status: 0x%06llX\n", static_cast<unsigned long long>(status));
 
-        if (amoled.isDropWarningLevel2Irq()) {
-            Serial.println("isDropWarningLevel2");
-            lv_label_set_text(label1, "isDropWarningLevel2");
-        }
-        if (amoled.isDropWarningLevel1Irq()) {
-            Serial.println("isDropWarningLevel1");
-            lv_label_set_text(label1, "isDropWarningLevel1");
-        }
-        if (amoled.isGaugeWdtTimeoutIrq()) {
-            Serial.println("isWdtTimeout");
-            lv_label_set_text(label1, "isWdtTimeout");
-        }
-        if (amoled.isBatChargerOverTemperatureIrq()) {
-            Serial.println("isBatChargeOverTemperature");
-            lv_label_set_text(label1, "isBatChargeOverTemperature");
-        }
-        if (amoled.isBatWorkOverTemperatureIrq()) {
-            Serial.println("isBatWorkOverTemperature");
-            lv_label_set_text(label1, "isBatWorkOverTemperature");
-        }
-        if (amoled.isBatWorkUnderTemperatureIrq()) {
-            Serial.println("isBatWorkUnderTemperature");
-            lv_label_set_text(label1, "isBatWorkUnderTemperature");
-        }
-        if (amoled.isVbusInsertIrq()) {
-            Serial.println("isVbusInsert");
-            lv_label_set_text(label1, "isVbusInsert");
-        }
-        if (amoled.isVbusRemoveIrq()) {
-            Serial.println("isVbusRemove");
-            lv_label_set_text(label1, "isVbusRemove");
-        }
-        if (amoled.isBatInsertIrq()) {
-            Serial.println("isBatInsert");
-            lv_label_set_text(label1, "isBatInsert");
-        }
-        if (amoled.isBatRemoveIrq()) {
-            Serial.println("isBatRemove");
-            lv_label_set_text(label1, "isBatRemove");
-        }
-        if (amoled.isPekeyShortPressIrq()) {
-            Serial.println("isPekeyShortPress");
-            lv_label_set_text(label1, "isPekeyShortPress");
-        }
-        if (amoled.isPekeyLongPressIrq()) {
-            Serial.println("isPekeyLongPress");
-            lv_label_set_text(label1, "isPekeyLongPress");
-        }
-        if (amoled.isPekeyNegativeIrq()) {
-            Serial.println("isPekeyNegative");
-            lv_label_set_text(label1, "isPekeyNegative");
-        }
-        if (amoled.isPekeyPositiveIrq()) {
-            Serial.println("isPekeyPositive");
-            lv_label_set_text(label1, "isPekeyPositive");
-        }
-        if (amoled.isWdtExpireIrq()) {
-            Serial.println("isWdtExpire");
-            lv_label_set_text(label1, "isWdtExpire");
-        }
-        if (amoled.isLdoOverCurrentIrq()) {
-            Serial.println("isLdoOverCurrentIrq");
-            lv_label_set_text(label1, "isLdoOverCurrentIrq");
-        }
-        if (amoled.isBatfetOverCurrentIrq()) {
-            Serial.println("isBatfetOverCurrentIrq");
-            lv_label_set_text(label1, "isBatfetOverCurrentIrq");
-        }
-
-        if (amoled.isBatteryConnect()) {
-            if (amoled.isBatChargeDoneIrq()) {
-                Serial.println("isBatChargeDone");
-                lv_label_set_text(label1, "isBatChargeDone");
+        static const struct {
+            uint64_t mask;
+            const char *name;
+        } events[] = {
+            {AXP2101Irq::IRQ_WARNING_LEVEL2, "Battery warning level 2"},
+            {AXP2101Irq::IRQ_WARNING_LEVEL1, "Battery warning level 1"},
+            {AXP2101Irq::IRQ_GAUGE_WDT_TIMEOUT, "Gauge watchdog timeout"},
+            {AXP2101Irq::IRQ_BAT_OVER_TEMP_WORK, "Battery over-temperature"},
+            {AXP2101Irq::IRQ_BAT_UNDER_TEMP_WORK, "Battery under-temperature"},
+            {AXP2101Irq::IRQ_VBUS_INSERT, "VBUS inserted"},
+            {AXP2101Irq::IRQ_VBUS_REMOVE, "VBUS removed"},
+            {AXP2101Irq::IRQ_BAT_INSERT, "Battery inserted"},
+            {AXP2101Irq::IRQ_BAT_REMOVE, "Battery removed"},
+            {AXP2101Irq::IRQ_PEKEY_SHORT_PRESS, "Power key short press"},
+            {AXP2101Irq::IRQ_PEKEY_LONG_PRESS, "Power key long press"},
+            {AXP2101Irq::IRQ_PEKEY_NEGATIVE_EDGE, "Power key released"},
+            {AXP2101Irq::IRQ_PEKEY_POSITIVE_EDGE, "Power key pressed"},
+            {AXP2101Irq::IRQ_WDT_EXPIRE, "Watchdog expired"},
+            {AXP2101Irq::IRQ_LDO_OVER_CURR, "LDO over-current"},
+            {AXP2101Irq::IRQ_BATFET_OVER_CURR, "BATFET over-current"},
+            {AXP2101Irq::IRQ_BAT_CHG_DONE, "Charge complete"},
+            {AXP2101Irq::IRQ_BAT_CHG_START, "Charging started"},
+            {AXP2101Irq::IRQ_CHG_TIMEOUT, "Charge timeout"},
+            {AXP2101Irq::IRQ_DIE_OVER_TEMP, "PMIC over-temperature"},
+            {AXP2101Irq::IRQ_BAT_OVER_VOLT, "Battery over-voltage"},
+        };
+        for (const auto &event : events) {
+            if (AXP2101Irq::isIrqSet(event.mask, status)) {
+                Serial.println(event.name);
+                lv_label_set_text(label1, event.name);
             }
-            if (amoled.isBatChargeStartIrq()) {
-                Serial.println("isBatChargeStart");
-                lv_label_set_text(label1, "isBatChargeStart");
-            }
-            if (amoled.isChargeOverTimeoutIrq()) {
-                Serial.println("isChargeOverTimeout");
-                lv_label_set_text(label1, "isChargeOverTimeout");
-            }
-        }
-
-        if (amoled.isBatDieOverTemperatureIrq()) {
-            Serial.println("isBatDieOverTemperature");
-            lv_label_set_text(label1, "isBatDieOverTemperature");
-        }
-
-        if (amoled.isBatOverVoltageIrq()) {
-            Serial.println("isBatOverVoltage");
-            lv_label_set_text(label1, "isBatOverVoltage");
         }
 
         // Clear amoled Interrupt Status Register
         amoled.clearPMU();
-
-        // Print AXP2101 interrupt control register
-        amoled.printIntRegister(&Serial);
 
     }
     lv_task_handler();

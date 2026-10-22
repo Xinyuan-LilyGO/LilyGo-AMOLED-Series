@@ -129,8 +129,7 @@ void buttonHandleEvent(AceButton *button,
             if (boards->pmu && id == LILYGO_AMOLED_147) {
                 // Toggle CHG led
                 amoled.setChargingLedMode(
-                    amoled.getChargingLedMode() != XPOWERS_CHG_LED_OFF ?
-                    XPOWERS_CHG_LED_OFF : XPOWERS_CHG_LED_ON);
+                    amoled.getChargingLedMode() ? 0 : 1);
             }
         }
         break;
@@ -179,9 +178,9 @@ void buttonHandleEvent(AceButton *button,
         if (boards->pmu && id == LILYGO_AMOLED_147) {
 
             // Set PMU Sleep mode
-            amoled.enableSleep();
+            amoled.AXP.power().enableSleep();
             amoled.clearPMU();
-            amoled.enableWakeup();
+            amoled.AXP.power().enableWakeup();
             // The 1.47-inch screen does not have an external pull-up resistor, so it cannot be woken up by pressing the button.
             // Use Timer wakeup .
             esp_sleep_enable_timer_wakeup(60 * 1000000ULL);  //60S

@@ -1,129 +1,70 @@
 /**
  * @file      PPM_Example_for_T4S3.ino
- * @author    Lewis He (lewishe@outlook.com)
- * @license   MIT
- * @copyright Copyright (c) 2024  Shenzhen Xin Yuan Electronic Technology Co., Ltd
- * @date      2024-08-15
- * @note      Examples only apply to T4-S3
+ * @note      Example for T4-S3 using SensorLib PMIC interfaces.
  */
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
 
 LilyGo_Class amoled;
-
-uint32_t cycleInterval;
-bool pmu_irq = false;
 lv_obj_t *label1;
+uint32_t nextUpdate;
+
+static float readValue(PmicAdcBase &adc, PmicAdcBase::Channel channel)
+{
+    float value = 0;
+    adc.read(channel, value);
+    return value;
+}
 
 void setup()
 {
     Serial.begin(115200);
-    while (!Serial);
-
-    //  * @note      Examples only apply to T4-S3
-    //  * @note      Examples only apply to T4-S3
-    bool rslt = amoled.beginAMOLED_241();
-
-    if (!rslt) {
-        while (1) {
-            Serial.println("The board model cannot be detected, please raise the Core Debug Level to an error");
+    if (!amoled.beginAMOLED_241()) {
+        while (true) {
+            Serial.println("Unable to initialize T4-S3 PMIC");
             delay(1000);
         }
     }
 
     beginLvglHelper(amoled);
+    auto &charger = amoled.SY.charger();
+    auto &adc = amoled.SY.adc();
 
-    // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
-    amoled.SY.setChargeTargetVoltage(4208);
+    charger.setChargeVoltage(4208);
+    charger.setPreChargeCurrent(64);
+    charger.setFastChargeCurrent(832);
+    adc.setContinuousMode(true);
+    charger.enableCharging(true);
+    amoled.SY.getLed().setMode(PmicLedBase::Mode::AUTO);
 
-    // Set the precharge current , Range: 64mA ~ 1024mA ,step:64mA
-    amoled.SY.setPrechargeCurr(64);
-
-    // The premise is that Limit Pin is disabled, or it will only follow the maximum charging current set by Limit Pin.
-    // Set the charging current , Range:0~5056mA ,step:64mA
-    amoled.SY.setChargerConstantCurr(832);
-
-    // Get the set charging current
-    amoled.SY.getChargerConstantCurr();
-    Serial.printf("getChargerConstantCurr: %d mA\n", amoled.SY.getChargerConstantCurr());
-
-
-    // To obtain voltage data, the ADC must be enabled first
-    amoled.SY.enableMeasure();
-
-    // Turn on charging function
-    // If the battery does not exist, the data may be confused when the charging function is turned on.
-    // The chip cannot determine whether the battery exists
-    amoled.SY.enableCharge();
-
-    // Turn off charging function
-    // If USB is used as the only power input, it is best to turn off the charging function,
-    // otherwise the VSYS power supply will have a sawtooth wave, affecting the discharge output capability.
-    // amoled.SY.disableCharge();
-
-    // The OTG function needs to enable OTG, and set the OTG control pin to HIGH
-    // After OTG is enabled, if an external power supply is plugged in, OTG will be turned off
-    // amoled.SY.enableOTG();
-    // amoled.SY.disableOTG();
-
-    // Turn off charge led
-    // Without a battery connected, the status light will flash to indicate an error
-    amoled.SY.disableStatLed();
-
-    // Turn on charge led
-    // amoled.SY.enableStatLed();
-
+    Serial.printf("Configured charge current: %u mA\n", charger.getFastChargeCurrent());
     label1 = lv_label_create(lv_scr_act());
-    lv_label_set_recolor(label1, true);    /*Enable re-coloring by commands in the text*/
+    lv_label_set_recolor(label1, true);
     lv_obj_center(label1);
 }
 
-
 void loop()
 {
-    // If the battery does not exist, the data may be confused when the charging function is turned on.
-    // The chip cannot determine whether the battery exists
-    if (millis() > cycleInterval) {
+    if (millis() >= nextUpdate) {
+        const auto status = amoled.SY.charger().getStatus();
+        const float vbus = readValue(amoled.SY.adc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+        const float battery = readValue(amoled.SY.adc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+        const float system = readValue(amoled.SY.adc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
 
-        Serial.println("Sats        VBUS    VBAT   SYS    VbusStatus      String   ChargeStatus     String      TargetVoltage       ChargeCurrent       Precharge       NTCStatus           String");
-        Serial.println("            (mV)    (mV)   (mV)   (HEX)                         (HEX)                    (mV)                 (mA)                   (mA)           (HEX)           ");
-        Serial.println("--------------------------------------------------------------------------------------------------------------------------------");
-        Serial.print(amoled.SY.isVbusIn() ? "Connected" : "Disconnect"); Serial.print("\t");
-        Serial.print(amoled.SY.getVbusVoltage()); Serial.print("\t");
-        Serial.print(amoled.SY.getBattVoltage()); Serial.print("\t");
-        Serial.print(amoled.SY.getSystemVoltage()); Serial.print("\t");
-        Serial.print("0x");
-        Serial.print(amoled.SY.getBusStatus(), HEX); Serial.print("\t");
-        Serial.print(amoled.SY.getBusStatusString()); Serial.print("\t");
-        Serial.print("0x");
-        Serial.print(amoled.SY.chargeStatus(), HEX); Serial.print("\t");
-        Serial.print(amoled.SY.getChargeStatusString()); Serial.print("\t");
-
-        Serial.print(amoled.SY.getChargeTargetVoltage()); Serial.print("\t");
-        Serial.print(amoled.SY.getChargeCurrent()); Serial.print("\t");
-        Serial.print(amoled.SY.getPrechargeCurr()); Serial.print("\t");
-        Serial.print(amoled.SY.getNTCStatus()); Serial.print("\t");
-        Serial.print(amoled.SY.getNTCStatusString()); Serial.print("\t");
-
-        lv_label_set_text_fmt(label1, "Charging:%s\nUSB PlugIn:%s\nCHG state:%s\nBattery Voltage:%u mV\n USB Voltage:%u mV\n SYS Voltage:%u mV\n",
-                              amoled.SY.isCharging() ? "#00ff00 YES" : "#ff0000 NO",
-                              amoled.SY.isVbusIn() ? "#00ff00 YES" : "#ff0000 NO",
-                              amoled.SY.getChargeStatusString(),
-                              amoled.SY.getBattVoltage(),
-                              amoled.SY.getVbusVoltage(),
-                              amoled.SY.getSystemVoltage()
-                             );
-
-        Serial.println();
-        Serial.println();
-        cycleInterval = millis() + 1000;
+        lv_label_set_text_fmt(label1,
+                              "Charging:%s\nUSB:%s\nVBUS:%u mV\nBattery:%u mV\nSystem:%u mV\nCharge current:%u mA",
+                              status.charging ? "#00ff00 YES" : "#ff0000 NO",
+                              status.vbusPresent ? "#00ff00 Connected" : "#ff0000 Disconnected",
+                              static_cast<unsigned>(vbus),
+                              static_cast<unsigned>(battery),
+                              static_cast<unsigned>(system),
+                              amoled.SY.charger().getFastChargeCurrent());
+        Serial.printf("VBUS=%u mV VBAT=%u mV VSYS=%u mV charging=%s\n",
+                      static_cast<unsigned>(vbus), static_cast<unsigned>(battery),
+                      static_cast<unsigned>(system), status.charging ? "yes" : "no");
+        nextUpdate = millis() + 1000;
     }
 
     lv_task_handler();
     delay(5);
 }
-
-
-
-
-
