@@ -32,16 +32,18 @@
 
 #if   defined(ARDUINO_T_DECK)
 // T-Deck GT911
-#define SENSOR_SDA 18
-#define SENSOR_SCL 8
-#define SENSOR_IRQ 16
-#define SENSOR_RST -1
+#define TOUCH_SDA 18
+#define TOUCH_SCL 8
+#define TOUCH_IRQ 16
+#define TOUCH_RST -1
 #elif defined(ARDUINO_T_AMOLED_191)
 // T-Display-AMOLED 1.91 Inch CST816T✅
+#define TOUCH_SDA 3
+#define TOUCH_SCL 2
 #define SENSOR_SDA 3
 #define SENSOR_SCL 2
-#define SENSOR_IRQ 21
-#define SENSOR_RST -1
+#define TOUCH_IRQ 21
+#define TOUCH_RST -1
 #elif defined(ARDUINO_T_AMOLED_191_QWIIC)
 // T-Display-AMOLED 1.91 Inch QWIIC
 #define SENSOR_SDA 3
@@ -50,16 +52,25 @@
 #define SENSOR_RST 44//RX
 #elif defined(ARDUINO_T_AMOLED_241)
 // T4-S3 CST226SE ✅
-#define SENSOR_SDA 6
-#define SENSOR_SCL 7
-#define SENSOR_IRQ 8
-#define SENSOR_RST 17
+#define TOUCH_SDA 6
+#define TOUCH_SCL 7
+#define TOUCH_IRQ 8
+#define TOUCH_RST 17
 #elif defined(ARDUINO_T_AMOLED_147)
 // T-Display-Lite 1.47 Inch CHSC5816 ✅
 #define SENSOR_SDA 1
 #define SENSOR_SCL 2
-#define SENSOR_IRQ 13
-#define SENSOR_RST 14
+#define SENSOR_IRQ 8
+
+#define PMIC_SDA 1
+#define PMIC_SCL 2
+#define PMIC_IRQ 3
+
+#define TOUCH_SDA  1
+#define TOUCH_SCL  2
+#define TOUCH_RST 14
+#define TOUCH_IRQ  13
+
 #elif defined(ARDUINO_T_DISPLAY_S3_PRO)
 // T-Display-S3-Pro CST226SE✅
 #define SENSOR_SDA 5
@@ -78,39 +89,87 @@
 #define SENSOR_SCL 5
 #define SENSOR_IRQ 15
 #define SENSOR_RST 41
-#elif defined(ARDUINO_T_WATCH_S3_U)
+#elif defined(ARDUINO_T_WATCH_S3_ULTRA)
 // T-Watch-S3-U
-#define SENSOR_SDA 2
-#define SENSOR_SCL 3
-#define SENSOR_IRQ 12
-#define SENSOR_RST 16
+#define TOUCH_SDA 3
+#define TOUCH_SCL 2
+#define TOUCH_IRQ 12
+#define TOUCH_RST -1
+#define PMIC_SDA 3
+#define PMIC_SCL 2
+#define PMIC_IRQ 7
+#elif defined(ARDUINO_T_WATCH_S3)
+// T-Watch-S3
+#define SENSOR_SDA 10
+#define SENSOR_SCL 11
+#define PCF8563_IRQ 17
+#define BMA423_IRQ 14
+#define TOUCH_SDA 39
+#define TOUCH_SCL 40
+#define TOUCH_IRQ 16
 
+#define PMIC_SDA 10
+#define PMIC_SCL 11
+#define PMIC_IRQ 21
+
+#elif defined(ARDUINO_T_WATCH_VX)
+// T-Watch-VX
+#define SENSOR_SDA 21
+#define SENSOR_SCL 22
+#define PCF8563_IRQ 37
+#define BMA423_IRQ 39
+#define TOUCH_SDA 23
+#define TOUCH_SCL 32
+#define TOUCH_IRQ 38
+
+#define PMIC_SDA 21
+#define PMIC_SCL 22
+#define PMIC_IRQ 35
+
+#elif defined(ARDUINO_T_BEAM_S3_SUPREME)
+#define OLED_SDA   (17)
+#define OLED_SCL   (18)
+#define SPI_MOSI   (35)
+#define SPI_SCK    (36)
+#define SPI_MISO   (37)
+#define SPI_CS     (47)
+#define IMU_CS     (34)
+#define IMU_IRQ    (33)  //INTERRUPT PIN1 & PIN2 ,Use or logic to form a pin
+#define RTC_IRQ    (14)
+#define RTC_PMU_SDA (42)
+#define RTC_PMU_SCL (41)
+#define USE_SPI_INTERFACE
+#elif defined(ARDUINO_BHI260_SENSOR)
+#define SPI_MOSI     33
+#define SPI_MISO     34
+#define SPI_SCK      35
+#define BHI260_CS    36
+#define BHI260_IRQ   37
+#define BHI260_RST   47
+#define BHI260_POWER 48
+#define SENSOR_SDA   9
+#define SENSOR_SCL   8
+#define USE_SPI_INTERFACE   1
+#define TOUCH_BUTTON  14
+#elif defined(ARDUINO_T_ULTIMA)
+#define SPI_MOSI     4
+#define SPI_MISO     7
+#define SPI_SCK      26
+#define BHI260_CS    27
+#define BHI260_IRQ   5
+#define BHI260_RST   -1
+#define USE_SPI_INTERFACE   1
+#elif defined(CUSTOM_SENSOR_EVB)
+#define SPI_MOSI     11
+#define SPI_MISO     10
+#define SPI_SCK      12
+#define BHI360_CS    13
+#define BHI360_IRQ   9
+#define BHI360_RST   14
+#define USE_SPI_INTERFACE   1
+#elif defined(ARDUINO_T_PANEL)
+#define TOUCH_SDA 17
+#define TOUCH_SCL 18
+#define TOUCH_IRQ 21
+#define TOUCH_RST 4
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,47 @@
+/**
+ *
+ * @license MIT License
+ *
+ * Copyright (c) 2026 lewis he
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @file      IoExpanderDrv.hpp
+ * @author    Lewis He (lewishe@outlook.com)
+ * @date      2026-04-24
+ */
+#pragma once
+
+#include "SensorBuildOpt.h"
+
+#if !SENSORLIB_EXCLUDE_IO_EXPANDER_XL9555
+#include "expander/IoExpanderXL9555.hpp"
+#endif
+
+#if !SENSORLIB_EXCLUDE_IO_EXPANDER_PCA9570
+#include "expander/IoExpanderPCA9570.hpp"
+#endif
+
+#if !SENSORLIB_EXCLUDE_IO_EXPANDER_AW9523
+#include "expander/IoExpanderAW9523.hpp"
+#endif
+
+#if !SENSORLIB_EXCLUDE_IO_EXPANDER_SPI
+#include "expander/IoExpanderSPI.hpp"
+#endif

@@ -1,0 +1,137 @@
+name: Build with Arduino
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "src/**"
+      - "examples/**"
+      - ".github/workflows/arduino_ci.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ArduinoLint:
+    if: |
+      !(
+        (github.event_name == 'push' && contains(github.event.head_commit.message, '[skip-arduino]')) ||
+        (github.event_name == 'pull_request' && (
+          contains(github.event.pull_request.title, '[skip-arduino]') ||
+          contains(github.event.pull_request.body, '[skip-arduino]')
+        ))
+      )
+    name: ${{ matrix.board.fqbn }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - fqbn: esp32:esp32:esp32s3
+            platform: esp32:esp32
+            url: https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          # - fqbn: rp2040:rp2040:rpipico
+          #   platform: rp2040:rp2040
+          #   url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - fqbn: adafruit:nrf52:pca10056
+            platform: adafruit:nrf52
+            url: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+          # - fqbn: STMicroelectronics:stm32:GenF4
+          #   platform: stmicroelectronics:stm32
+          #   url: https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+          # - fqbn: arduino:mbed_rp2040:pico
+          #   platform: arduino:mbed_rp2040
+        include:
+          - example_file: examples.txt
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Arduino CLI
+        run: |
+          echo "Installing Arduino CLI..."
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          if [ $? -ne 0 ]; then
+            echo "Failed to install Arduino CLI."
+            exit 1
+          fi
+          echo "./bin" >> $GITHUB_PATH
+          echo "Arduino CLI installed successfully."
+
+      - name: Install board
+        run: |
+          echo "Initializing Arduino CLI configuration..."
+          arduino-cli config init
+          arduino-cli config set library.enable_unsafe_install true
+          if [ -n "${{ matrix.board.url }}" ]; then
+            echo "Adding additional board manager URL: ${{ matrix.board.url }}"
+            arduino-cli config add board_manager.additional_urls ${{ matrix.board.url }}
+          fi
+          echo "Updating board index..."
+          arduino-cli core update-index
+          if [ $? -ne 0 ]; then
+            echo "Failed to update board index."
+            exit 1
+          fi
+          echo "Installing board platform: ${{ matrix.board.platform }}"
+          arduino-cli core install ${{ matrix.board.platform }}
+          if [ $? -ne 0 ]; then
+            echo "Failed to install board platform."
+            exit 1
+          fi
+          echo "Board platform installed successfully."
+
+      - name: Install libraries
+        run: |
+          echo "Installing required libraries..."
+          arduino-cli lib install --git-url https://github.com/ThingPulse/esp8266-oled-ssd1306.git
+          arduino-cli lib install --git-url https://github.com/arduino-libraries/MadgwickAHRS.git
+          arduino-cli lib install --git-url https://github.com/CreativeRobotics/Commander.git
+          arduino-cli lib install --git-url https://github.com/adafruit/SdFat.git
+          if [ $? -ne 0 ]; then
+            echo "Failed to install libraries."
+            exit 1
+          fi
+          echo "Libraries installed successfully."
+
+      - name: Install adafruit-nrfutil
+        if: matrix.board.platform == 'adafruit:nrf52'
+        run: |
+          pip install adafruit-nrfutil
+          if [ $? -ne 0 ]; then
+            echo "Failed to install adafruit-nrfutil."
+            exit 1
+          fi
+          echo "adafruit-nrfutil installed successfully."
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Find .ino files in examples directory
+        id: find-examples
+        run: |
+          echo "Current working directory: $(pwd)"
+          if [ -d "./examples" ]; then
+            examples=$(find ./examples -name "*.ino" -print0 | tr '\0' ' ')
+            echo "Found examples: $examples"
+            echo "examples=$examples" >> $GITHUB_OUTPUT
+          else
+            echo "The './examples' directory does not exist."
+            exit 1
+          fi
+
+      - name: Run test
+        run: |
+          for example in ${{ steps.find-examples.outputs.examples }}; do
+            echo "Compiling example: $example"
+            arduino-cli compile --library . -b ${{ matrix.board.fqbn }} $example
+            if [ $? -ne 0 ]; then
+              echo "Compilation failed for example: $example"
+              exit 1
+            fi
+            echo "Compilation succeeded for example: $example"
+          done

@@ -53,13 +53,8 @@
     },
     {
       "owner": "lewisxhe",
-      "name": "XPowersLib",
-      "version": "0.2.7"
-    },
-    {
-      "owner": "lewisxhe",
       "name": "SensorLib",
-      "version": "0.2.4"
+      "version": "0.5.1"
     }
   ],
   "examples": ["examples/*/*.ino"],

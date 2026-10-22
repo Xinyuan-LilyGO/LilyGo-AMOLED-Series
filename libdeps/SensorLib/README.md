@@ -1,101 +1,530 @@
-```bash
- _____                                 _      _  _
-/  ___|                               | |    (_)| |
-\ `--.   ___  _ __   ___   ___   _ __ | |     _ | |__
- `--. \ / _ \| '_ \ / __| / _ \ | '__|| |    | || '_ \
-/\__/ /|  __/| | | |\__ \| (_) || |   | |____| || |_) |
-\____/  \___||_| |_||___/ \___/ |_|   \_____/|_||_.__/
-                 ···   ···
->  Commonly used I2C , SPI device multi-platform libraries
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C6FF,100:0072FF&height=200&section=header&text=SensorLib&fontSize=64&fontColor=FFFFFF&animation=fadeIn&desc=Arduino%20%7C%20PlatformIO%20%7C%20ESP-IDF&descAlignY=72&descSize=18" />
+</p>
 
+<h1 align="center">SensorLib</h1>
+
+<p align="center">
+  A multi-platform sensor driver library for Arduino / PlatformIO / ESP-IDF.
+</p>
+
+<p align="center">
+  <a href="https://github.com/lewisxhe/SensorLib/actions/workflows/esp-idf.yml"><img src="https://github.com/lewisxhe/SensorLib/actions/workflows/esp-idf.yml/badge.svg" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/actions/workflows/arduino_ci.yml"><img src="https://github.com/lewisxhe/SensorLib/actions/workflows/arduino_ci.yml/badge.svg" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/actions/workflows/platformio.yml"><img src="https://github.com/lewisxhe/SensorLib/actions/workflows/platformio.yml/badge.svg" /></a>
+  <a href="https://www.ardu-badge.com/SensorLib"><img src="https://www.ardu-badge.com/badge/SensorLib.svg?" /></a>
+  <a href="https://registry.platformio.org/libraries/lewisxhe/SensorLib"><img src="https://badges.registry.platformio.org/packages/lewisxhe/library/SensorLib.svg" /></a>
+  <a href="https://components.espressif.com/components/lewisxhe/sensorlib">
+  <img src="https://img.shields.io/badge/ESP--IDF%20Registry-v0.5.1-success?logo=espressif&logoColor=white&color=009688&style=flat-square" alt="ESP-IDF Component Registry"></a>
+  <a href="https://lewisxhe.github.io/SensorLib/"><img src="https://img.shields.io/badge/API-Doxygen-2C4AA8?logo=doxygen&logoColor=white" alt="Doxygen API documentation" /></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/lewisxhe/SensorLib/blob/master/LICENSE"><img src="https://img.shields.io/github/license/lewisxhe/SensorLib" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/issues"><img src="https://img.shields.io/github/issues/lewisxhe/SensorLib" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/graphs/contributors"><img src="https://img.shields.io/github/forks/lewisxhe/SensorLib" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/stargazers"><img src="https://img.shields.io/github/stars/lewisxhe/SensorLib" /></a>
+  <a href="https://github.com/lewisxhe/SensorLib/releases"><img src="https://img.shields.io/github/release/lewisxhe/SensorLib" /></a>
+</p>
+
+---
+
+### Highlights
+
+- **45+ devices** across 11 categories — Touch, PMIC, IMU, Magnetometer, Accelerometer, RTC, Gauge, Haptic, Light Sensor, I/O Expander, LED
+- **Ready-to-run examples** covering supported devices and common workflows
+- **Full PMIC subsystem** — charger, ADC, GPIO, IRQ, LED, power channels, coulomb counter, BC1.2, Type-C/USB-PD where supported
+- One library for **Arduino / PlatformIO / ESP-IDF**
+- Supports both **I2C** and **SPI** buses
+
+See the [changelog](CHANGELOG.md) for release details. Projects upgrading from
+v0.4.x should also read the [v0.5 migration guide](docs/migration-v0.5.md).
+
+---
+
+## Contents
+- [Contents](#contents)
+- [Upgrading from v0.4.x](#upgrading-from-v04x)
+- [Installation](#installation)
+  - [Arduino IDE](#arduino-ide)
+  - [PlatformIO](#platformio)
+  - [ESP-IDF](#esp-idf)
+- [Build Options](#build-options)
+  - [Driver Exclusion](#driver-exclusion)
+  - [Bosch Firmware Files](#bosch-firmware-files)
+- [Quick Start](#quick-start)
+  - [Including Headers](#including-headers)
+    - [Option A: Vendor-specific Include (Recommended)](#option-a-vendor-specific-include-recommended)
+    - [Option B: Aggregate Include (Quick Prototyping)](#option-b-aggregate-include-quick-prototyping)
+  - [Minimal Example: Touch](#minimal-example-touch)
+  - [Minimal Example: PMIC](#minimal-example-pmic)
+  - [AXP517 USB-C PD](#axp517-usb-c-pd)
+- [Examples](#examples)
+  - [Using Examples](#using-examples)
+- [Supported Devices](#supported-devices)
+- [Platform Compatibility](#platform-compatibility)
+- [Notes](#notes)
+- [License](#license)
+  - [Third-party licenses](#third-party-licenses)
+
+## Upgrading from v0.4.x
+
+v0.5.x reorganizes driver headers and expands several common interfaces. Most
+legacy top-level headers remain as deprecated compatibility wrappers, but some
+projects require source changes. Review the [v0.5 migration guide](docs/migration-v0.5.md)
+before upgrading.
+
+## Installation
+
+### Arduino IDE
+
+Install from **Library Manager** (recommended):
+1. Open Arduino IDE
+2. Go to `Tools` → `Manage Libraries...`
+3. Search for **SensorLib**
+4. Click **Install**
+
+<details>
+<summary>Alternative install methods</summary>
+
+**From ZIP**
+1. GitHub page → `Code` → `Download ZIP`
+2. Arduino IDE → `Sketch` → `Include Library` → `Add .ZIP Library...`
+3. Select the downloaded ZIP file
+
+**With Git**
+1. Clone this repository into your Arduino libraries folder:
+   - Windows: `Documents/Arduino/libraries/`
+   - macOS: `~/Documents/Arduino/libraries/`
+   - Linux: `~/Arduino/libraries/`
+2. Folder name should be `SensorLib`
+3. Restart Arduino IDE
+
+</details>
+
+### PlatformIO
+
+Add to your `platformio.ini`:
+
+```ini
+[env:your_env]
+platform = espressif32
+board = esp32dev
+framework = arduino
+lib_deps =
+  lewisxhe/SensorLib@^0.5.1
 ```
 
-[![Build esp-idf](https://github.com/lewisxhe/SensorLib/actions/workflows/esp-idf.yml/badge.svg)](https://github.com/lewisxhe/SensorLib/actions/workflows/esp-idf.yml)
-[![Arduino CI](https://github.com/lewisxhe/SensorLib/actions/workflows/arduino_ci.yml/badge.svg)](https://github.com/lewisxhe/SensorLib/actions/workflows/arduino_ci.yml)
-[![PlatformIO CI](https://github.com/lewisxhe/SensorLib/actions/workflows/pio.yml/badge.svg)](https://github.com/lewisxhe/SensorLib/actions/workflows/pio.yml)
-[![arduino-library-badge](https://www.ardu-badge.com/badge/SensorLib.svg?)](https://www.ardu-badge.com/SensorLib)
-[![PlatformIO Registry](https://badges.registry.platformio.org/packages/lewisxhe/library/SensorLib.svg)](https://registry.platformio.org/libraries/lewisxhe/SensorLib)
+<details>
+<summary>Alternative: install from GitHub or local lib</summary>
 
-[![LICENSE](https://img.shields.io/github/license/lewisxhe/SensorLib)](https://github.com/lewisxhe/SensorLib/blob/master/LICENSE)
-[![ISSUES](https://img.shields.io/github/issues/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/issues)
-[![FORK](https://img.shields.io/github/forks/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/graphs/contributors)
-[![STAR](https://img.shields.io/github/stars/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorsLib/stargazers)
-[![releases](https://img.shields.io/github/release/lewisxhe/SensorsLib)](https://github.com/lewisxhe/SensorLib/releases)
+**From GitHub (latest)**
+```ini
+lib_deps =
+  https://github.com/lewisxhe/SensorLib.git
+```
 
-## RTC
+**Local library**
+Copy/clone this repository into `<your_project>/lib/SensorLib/`. PlatformIO will auto-detect it.
 
-![PCF8563](https://img.shields.io/badge/PCF8563-GREEN)
-![PCF85063](https://img.shields.io/badge/PCF85063-GREEN)
-![HYM8563](https://img.shields.io/badge/HYM8563-GREEN)
+</details>
 
-## Motion Sensor
+### ESP-IDF
 
-![QMI8658](https://img.shields.io/badge/QMI8658-blue)
-![BMM150](https://img.shields.io/badge/BMM150-blue)
-![QMC6310](https://img.shields.io/badge/QMC6310-blue)
-![BMA423](https://img.shields.io/badge/BMA423-blue)
-![BHI260AP](https://img.shields.io/badge/BHI260AP-blue)
+SensorLib is published in the [ESP-IDF Component Registry](https://components.espressif.com/components/lewisxhe/sensorlib). Supports ESP-IDF v4.4+ (recommended v5.1+).
 
-## GPIO Expansion
+**1. Add dependency** in project root `idf_component.yml`:
 
-![XL9555](https://img.shields.io/badge/XL9555-yellow)
-![XL9535](https://img.shields.io/badge/XL9535-yellow)
+```yaml
+dependencies:
+  lewisxhe/sensorlib:
+    version: "^0.5.1"
+```
 
-## Haptic Driver
+**2. Use in your code**:
 
-![DRV2605](https://img.shields.io/badge/DRV2605-teal)
+```c
+#include "TouchDrvGoodix.hpp"
 
-## Light Sensor
+// or for PMIC:
+// #include "PmicXPowers.hpp"
+```
 
-![CM32181](https://img.shields.io/badge/CM32181-brown)
-![LTR553](https://img.shields.io/badge/LTR553-brown)
+## Build Options
 
-## Touchpad
+### Driver Exclusion
 
-![FT5206](https://img.shields.io/badge/FT5206-red)
-![FT6206](https://img.shields.io/badge/FT6206-red)
-![FT6236](https://img.shields.io/badge/FT6236-red)
-![FT3267](https://img.shields.io/badge/FT3267-red)
-![CST816S](https://img.shields.io/badge/CST816S-red)
-![CST816D](https://img.shields.io/badge/CST816D-red)
-![CST816T](https://img.shields.io/badge/CST816T-red)
-![CST820](https://img.shields.io/badge/CST820-red)
-![CST226SE](https://img.shields.io/badge/CST226SE-red)
-![CHSC5816](https://img.shields.io/badge/CHSC5816-red)
-![GT911](https://img.shields.io/badge/GT911-red)
-![CST9217](https://img.shields.io/badge/CST9217-red)
-![CST9220](https://img.shields.io/badge/CST9220-red)
-![GT9895](https://img.shields.io/badge/GT9895-red)
+SensorLib can exclude unused driver families or individual drivers at build time.
+This is useful when a project only uses one sensor and should not compile the
+rest of the library.
 
-## LedDriver
+For ESP-IDF, configure exclusions from `menuconfig`:
 
-![AW9364](https://img.shields.io/badge/GT9895-pink)
+```bash
+idf.py menuconfig
+```
 
-Support list:
+Then open:
 
-| Sensor          | Description              | I2C | SPI |
-| --------------- | ------------------------ | --- | --- |
-| PCF8563/HYM8563 | Real-time clock          | ✔️   | ❌   |
-| PCF85063        | Real-time clock          | ✔️   | ❌   |
-| QMI8658         | IMU                      | ✔️   | ✔️   |
-| BHI260AP        | IMU                      | ✔️   | ✔️   |
-| QMC6310         | Magnetic Sensor          | ✔️   | ❌   |
-| BMM150          | Magnetic Sensor          | ✔️   | ❌   |
-| XL9555          | I/O expander             | ✔️   | ❌   |
-| BMA423          | Accelerometer            | ✔️   | ❌   |
-| DRV2605         | Haptic Driver            | ✔️   | ❌   |
-| CM32181         | Ambient Light Sensor     | ✔️   | ❌   |
-| LTR553          | Light & Proximity Sensor | ✔️   | ❌   |
-| FT3267          | Capacitive touch         | ✔️   | ❌   |
-| FT5206          | Capacitive touch         | ✔️   | ❌   |
-| FT6206          | Capacitive touch         | ✔️   | ❌   |
-| FT6236          | Capacitive touch         | ✔️   | ❌   |
-| CST820          | Capacitive touch         | ✔️   | ❌   |
-| CST816S/T/D     | Capacitive touch         | ✔️   | ❌   |
-| CST226SE        | Capacitive touch         | ✔️   | ❌   |
-| CHSC5816        | Capacitive touch         | ✔️   | ❌   |
-| GT911           | Capacitive touch         | ✔️   | ❌   |
-| CST9217         | Capacitive touch         | ✔️   | ❌   |
-| CST9220         | Capacitive touch         | ✔️   | ❌   |
-| GT9895          | Capacitive touch         | ✔️   | ❌   |
-| AW9364          | Led Driver (GPIO)        | ❌   | ❌   |
+```text
+Component config -> SensorLib Configuration -> Driver exclusion
+```
+
+Select family-level options such as `SENSORLIB_EXCLUDE_IMU`,
+`SENSORLIB_EXCLUDE_TOUCH`, `SENSORLIB_EXCLUDE_PMIC`, or select individual
+drivers such as `SENSORLIB_EXCLUDE_BHI260`, `SENSORLIB_EXCLUDE_TOUCH_GT911`,
+`SENSORLIB_EXCLUDE_PCF85063`.
+
+Example: build an ESP-IDF project that only uses `SensorPCF8563`:
+
+```text
+CONFIG_SENSORLIB_EXCLUDE_IMU=y
+CONFIG_SENSORLIB_EXCLUDE_ACCELEROMETER=y
+CONFIG_SENSORLIB_EXCLUDE_MAGNETOMETER=y
+CONFIG_SENSORLIB_EXCLUDE_LIGHT_SENSOR=y
+CONFIG_SENSORLIB_EXCLUDE_TOUCH=y
+CONFIG_SENSORLIB_EXCLUDE_HAPTIC=y
+CONFIG_SENSORLIB_EXCLUDE_PMIC=y
+CONFIG_SENSORLIB_EXCLUDE_GAUGE=y
+CONFIG_SENSORLIB_EXCLUDE_IO_EXPANDER=y
+CONFIG_SENSORLIB_EXCLUDE_ACTUATOR=y
+CONFIG_SENSORLIB_EXCLUDE_FINGER_NAVIGATION=y
+CONFIG_SENSORLIB_EXCLUDE_WIRE_HELPER=y
+CONFIG_SENSORLIB_EXCLUDE_PCF85063=y
+```
+
+Leave `CONFIG_SENSORLIB_EXCLUDE_RTC` and
+`CONFIG_SENSORLIB_EXCLUDE_PCF8563` disabled so the PCF8563 driver remains
+available.
+
+For Arduino or PlatformIO source builds, define the same macros in
+`src/SensorBuildOptUser.h` before including SensorLib headers:
+
+```cpp
+#define SENSORLIB_EXCLUDE_IMU 1
+#define SENSORLIB_EXCLUDE_TOUCH 1
+#define SENSORLIB_EXCLUDE_PMIC 1
+#define SENSORLIB_EXCLUDE_PCF85063 1
+```
+
+`SENSORLIB_EXCLUDE_ALL` can be used to disable every optional driver controlled
+by SensorLib build options. Prefer the family or per-driver options when you
+want to keep one driver from the same category enabled.
+
+### Bosch Firmware Files
+
+Raw Bosch `*.fw` files are not required by the build and are not included.
+BHI260/BHI360 examples use generated firmware headers under
+`src/bosch/firmware/`. If you use a custom Bosch firmware image, convert it to a
+C/C++ header or provide your own firmware byte array, then pass it with
+`setFirmware()`.
+
+## Quick Start
+
+### Including Headers
+
+SensorLib provides two ways to include drivers in your sketch:
+
+#### Option A: Vendor-specific Include (Recommended)
+
+Include only the vendor group you need. Best balance of granularity and convenience.
+
+```cpp
+// Touch — by vendor
+#include "TouchDrvGoodix.hpp"      // GT911, GT9895
+#include "TouchDrvCST.hpp"         // CST226, CST816, CST9217, CST3530, CST3240
+#include "TouchDrvFocalTech.hpp"   // FT6X36
+#include "TouchDrvJadard.hpp"      // HI8561
+#include "TouchDrvChipshine.hpp"   // CHSC5816
+
+// PMIC — by vendor
+#include "PmicXPowers.hpp"         // AXP192, AXP202, AXP2101, AXP517
+#include "PmicSilergy.hpp"         // SY6970
+#include "PmicTI.hpp"              // BQ25896
+
+// Other categories — by device type
+#include "MagnetometerDrv.hpp"     // All magnetometers
+#include "ImuDrv.hpp"              // All IMUs
+#include "RtcDrv.hpp"              // All RTCs
+#include "GaugeDrv.hpp"            // All gauges
+#include "IoExpanderDrv.hpp"       // All I/O expanders
+#include "HapticDrivers.hpp"       // All haptic drivers
+#include "LightSensorDrv.hpp"      // All light sensors
+#include "AccelerometerDrv.hpp"    // All accelerometers
+```
+
+#### Option B: Aggregate Include (Quick Prototyping)
+
+One header pulls in **all** drivers for a category. Convenient for prototyping,
+but brings in extra macros and classes you may not need.
+
+```cpp
+#include "TouchDrv.hpp"            // All touch drivers (all vendors)
+#include "PmicDrv.hpp"             // All PMIC drivers (all vendors)
+```
+
+> **Note**: All include paths are flat filenames in `src/`. This works on
+> **Arduino IDE**, **PlatformIO**, and **ESP-IDF** without subdirectory paths.
+
+### Minimal Example: Touch
+
+**GT911 on ESP32 (Arduino)**
+
+```cpp
+#include <Wire.h>
+#include "TouchDrvGoodix.hpp"
+
+TouchDrvGT911 touch;
+
+void setup() {
+    Serial.begin(115200);
+    touch.setPins(15, 18);   // INT pin = 15, IRQ pin = 18
+    touch.begin(Wire, GT911_SLAVE_ADDRESS_L, 21,22); // SDA=21,SCL=22
+    Serial.println("GT911 ready");
+}
+
+void loop() {
+    TouchPoints touch_points = touch.getTouchPoints();
+    if (touch_points.hasPoints()) {
+        for (int i = 0; i < touch_points.getPointCount(); ++i) {
+            const TouchPoint &point = touch_points.getPoint(i);
+            Serial.print("X[");
+            Serial.print(i);
+            Serial.print("]:");
+            Serial.print(point.x);
+            Serial.print(" ");
+            Serial.print(" Y[");
+            Serial.print(i);
+            Serial.print("]:");
+            Serial.print(point.y);
+            Serial.print(" ");
+        }
+        Serial.println();
+    }
+    delay(10);
+}
+```
+
+### Minimal Example: PMIC
+
+**AXP2101 on ESP32 (Arduino)**
+
+```cpp
+#include <Wire.h>
+#include "PmicXPowers.hpp"
+
+PmicAXP2101 pmic;
+
+void setup() {
+    Serial.begin(115200);
+
+    if (!pmic.begin(Wire, AXP2101_SLAVE_ADDRESS, 3, 2)) { // SDA=3, SCL=2
+        Serial.println("AXP2101 not found!");
+        while (1) delay(1000);
+    }
+
+    Serial.print("Chip ID: 0x");
+    Serial.println(pmic.getChipID(), HEX);
+
+    // Set DCDC1 to 3.3V
+    pmic.getChannel()->setVoltage(AXP2101Channel::CH_DCDC1, 3300);
+    pmic.getChannel()->enable(AXP2101Channel::CH_DCDC1, true);
+
+    // Read battery voltage
+    pmic.enableModule(PmicAXP2101::Module::GENERAL_ADC, true);
+    float vbusMv = 0;
+    Serial.print("VBUS: ");
+    if (pmic.getAdc().read(PmicAdcBase::Channel::VBUS_VOLTAGE, vbusMv)) {
+        Serial.print(vbusMv);
+    } else {
+        Serial.print("read failed");
+    }
+    Serial.println(" mV");
+}
+
+void loop() {
+    float batteryMv = 0;
+    Serial.print("Battery: ");
+    if (pmic.getAdc().read(PmicAdcBase::Channel::BAT_VOLTAGE, batteryMv)) {
+        Serial.print(batteryMv);
+    } else {
+        Serial.print("read failed");
+    }
+    Serial.println(" mV");
+    delay(2000);
+}
+```
+
+### AXP517 USB-C PD
+
+AXP517 includes Type-C/TCPC support and a simple USB-PD sink negotiator for requesting fixed PDO voltages.
+
+PD negotiation is interrupt-driven. Hardware must connect `PMIC_IRQ` to an MCU GPIO, and the application must pass that pin to `begin(..., irqPin)` or `initPdSink(irqPin)` before calling `requestPd()`. Without a valid IRQ pin, the TCPC RX FIFO cannot be serviced reliably and PD voltage requests cannot complete.
+
+```cpp
+#include <Wire.h>
+#include "PmicXPowers.hpp"
+
+PmicAXP517 pmic;
+AXP517PdNegotiator::SourceCaps caps;
+
+static constexpr int PMIC_SDA = 3;   // Adjust for your board.
+static constexpr int PMIC_SCL = 2;   // Adjust for your board.
+static constexpr int PMIC_IRQ = 44;  // Must be connected to PMIC_IRQ.
+
+void setup() {
+    Serial.begin(115200);
+
+    if (!pmic.begin(Wire, AXP517_SLAVE_ADDRESS, PMIC_SDA, PMIC_SCL, PMIC_IRQ)) {
+        Serial.println("AXP517 or PMIC_IRQ init failed");
+        while (1) delay(1000);
+    }
+
+    if (pmic.requestPd(9000, 6000, &caps)) {
+        Serial.println("9V PD contract ready");
+    }
+}
+
+void loop() {
+}
+```
+
+Relevant examples:
+
+- `examples/power/axp517_pd_voltage/`
+- `examples/power/axp517_pd_auto_request/`
+- `examples/power/axp517_interrupt/`
+
+---
+
+## Examples
+
+Examples are organized by category in the `examples/` directory:
+
+Directory names and `.ino` files use lowercase `snake_case`; folder names do not use hyphens.
+
+```
+examples/
+├── actuator/                 # Haptic motors, LED drivers
+├── io/                       # GPIO expanders and bus helper demos
+├── platform/                 # ESP-IDF framework projects
+│   ├── esp_idf_sensor_hub/
+│   └── esp_idf_touch/
+├── power/                    # PMIC, charger, gauge examples
+├── sensor/                   # IMU, accelerometer, light, magnetometer, navigation
+├── touch/                    # Touch panel drivers and touch interface examples
+├── rtc/                      # PCF85063, PCF8563, RTC helpers
+└── utility/                  # Callback and I2C scan/debug helpers
+```
+
+### Using Examples
+
+**PlatformIO**: Edit `platformio.ini` and set `src_dir` to the example you want:
+
+```ini
+[platformio]
+src_dir = examples/sensor/qmi8658_basic_read
+```
+
+**Arduino IDE**: `File` → `Open` → navigate to the `.ino` file in `examples/`.
+
+**ESP-IDF**: See `examples/platform/` for ESP-IDF specific projects.
+
+## Supported Devices
+
+<details>
+<summary>45 supported devices (click to expand)</summary>
+
+| Device | Description | I2C | SPI | Header |
+|--------|-------------|:---:|:---:|--------|
+| **RTC** |||||
+| PCF8563 / HYM8563 | Real-time clock | ✔️ | ❌ | `SensorPCF8563.hpp` |
+| PCF85063 | Real-time clock | ✔️ | ❌ | `SensorPCF85063.hpp` |
+| **IMU** |||||
+| QMI8658 | 6-axis IMU | ✔️ | ✔️ | `ImuDrv.hpp` |
+| BHI260AP | Smart IMU (Bosch) | ✔️ | ✔️ | `SensorBHI260AP.hpp` |
+| BHI360 | Smart IMU (Bosch) | ✔️ | ✔️ | `SensorBHI360.hpp` |
+| **Magnetometer** |||||
+| QMC6309 | Magnetic Sensor | ✔️ | ❌ | `SensorQMC6309.hpp` |
+| QMC6310U/N | Magnetic Sensor | ✔️ | ❌ | `SensorQMC6310.hpp` |
+| QMC5883P | Magnetic Sensor | ✔️ | ❌ | `SensorQMC5883P.hpp` |
+| QMC5883L | Magnetic Sensor | ✔️ | ❌ | `SensorQMC5883L.hpp` |
+| BMM150 | Magnetic Sensor | ✔️ | ❌ | `MagnetometerDrv.hpp` |
+| **Accelerometer** |||||
+| BMA422 | Accelerometer | ✔️ | ❌ | `SensorBMA422.hpp` |
+| BMA423 | Accelerometer | ✔️ | ❌ | `SensorBMA423.hpp` |
+| BMA456H | Accelerometer | ✔️ | ❌ | `SensorBMA456H.hpp` |
+| **I/O Expander** |||||
+| XL9555 | 16-bit I/O Expander | ✔️ | ❌ | `IoExpanderDrv.hpp` |
+| PCA9570 | 4-bit I/O Expander | ✔️ | ❌ | `IoExpanderDrv.hpp` |
+| AW9523 / AW9523B | 16-bit I/O Expander and LED Driver | ✔️ | ❌ | `IoExpanderDrv.hpp` |
+| **Haptic** |||||
+| DRV2605 | Haptic Driver (TI) | ✔️ | ❌ | `HapticDrivers.hpp` |
+| AW86224 | Haptic Driver (Awinic) | ✔️ | ❌ | `HapticDrivers.hpp` |
+| **Light Sensor** |||||
+| CM32181 | Ambient Light Sensor | ✔️ | ❌ | `LightSensorDrv.hpp` |
+| LTR553 | Light & Proximity | ✔️ | ❌ | `LightSensorDrv.hpp` |
+| **Touch** |||||
+| GT911 | Capacitive Touch | ✔️ | ❌ | `TouchDrvGoodix.hpp` |
+| GT9895 | Capacitive Touch | ✔️ | ❌ | `TouchDrvGoodix.hpp` |
+| FT3267 | Capacitive Touch | ✔️ | ❌ | `TouchDrvFocalTech.hpp` |
+| FT5206 | Capacitive Touch | ✔️ | ❌ | `TouchDrvFocalTech.hpp` |
+| FT6206 | Capacitive Touch | ✔️ | ❌ | `TouchDrvFocalTech.hpp` |
+| FT6236 | Capacitive Touch | ✔️ | ❌ | `TouchDrvFocalTech.hpp` |
+| CST226SE | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST820 | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST816S/T/D | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST9217 | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST9220 | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST3240 | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CST3530 | Capacitive Touch | ✔️ | ❌ | `TouchDrvCST.hpp` |
+| CHSC5816 | Capacitive Touch | ✔️ | ❌ | `TouchDrvChipshine.hpp` |
+| HI8561 | Capacitive Touch | ✔️ | ❌ | `TouchDrvJadard.hpp` |
+| **LED** |||||
+| AW9364 | LED Driver (GPIO) | ❌ | ❌ | `AW9364LedDriver.hpp` |
+| **PMIC** |||||
+| AXP192 | PMIC (XPowers) | ✔️ | ❌ | `PmicXPowers.hpp` |
+| AXP202 | PMIC (XPowers) | ✔️ | ❌ | `PmicXPowers.hpp` |
+| AXP2101 | PMIC (XPowers) | ✔️ | ❌ | `PmicXPowers.hpp` |
+| AXP517 | PMIC (XPowers, Type-C/USB-PD sink) | ✔️ | ❌ | `PmicXPowers.hpp` |
+| BQ25896 | Charger (TI) | ✔️ | ❌ | `PmicTI.hpp` |
+| SY6970 | Charger (Silergy) | ✔️ | ❌ | `PmicSilergy.hpp` |
+| **Gauge** |||||
+| BQ27220 | Battery Gauge (TI) | ✔️ | ❌ | `GaugeDrv.hpp` |
+| AXP2602 | Battery Gauge (XPowers) | ✔️ | ❌ | `GaugeDrv.hpp` |
+| **Other** |||||
+| PAW-A350 | Finger Navigation (PixArt) | ✔️ | ❌ | `FingerNavigationDrv.hpp` |
+
+</details>
+
+## Platform Compatibility
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| ESP32 | ✔️ | Primary target, full support |
+| ESP32-S2 | ✔️ | Single-core, USB OTG |
+| ESP32-S3 | ✔️ | Dual-core, USB OTG |
+| ESP32-C3 | ✔️ | RISC-V single-core |
+| ESP32-C6 | ✔️ | RISC-V, Wi-Fi 6 |
+
+> Other Arduino-compatible boards (RP2040, nRF52, etc.) may work for I2C devices
+> but are not actively tested.
+
+## Notes
+
+- **I2C pull-ups**: Most I2C devices require proper pull-up resistors (4.7kΩ typical) on SDA/SCL lines.
+- **I2C speed**: Default is 100kHz. For faster transfers, use `Wire.setClock(400000)` before `begin()`.
+- **SPI devices**: QMI8658, BHI260AP, BHI360 support SPI. Touch and PMIC devices are I2C only.
+- **I2C addresses**: Some devices have configurable addresses (e.g., GT911 has `GT911_SLAVE_ADDRESS_L` / `GT911_SLAVE_ADDRESS_H`). Check the header file for available constants.
+- **AXP517 USB-PD**: PD voltage negotiation requires `PMIC_IRQ` wiring. Pass the IRQ pin during initialization and use `pmic.irq().readStatus(true)` in interrupt-driven code so normal PMIC IRQs and TCPC PD alerts are both drained.
+- **Troubleshooting**: If a device is not detected, verify wiring, address selection, and I2C speed. Use `examples/utility/wire_helper/` to scan the I2C bus.
+
+## License
+
+SensorLib is licensed under the **MIT License**. See `LICENSE`.
+
+### Third-party licenses
+
+This repository includes third-party code under `src/bosch/` from **Bosch Sensortec**, licensed under the **BSD 3-Clause License (BSD-3-Clause)**.
+
+See `THIRD_PARTY_NOTICES.md` for details.

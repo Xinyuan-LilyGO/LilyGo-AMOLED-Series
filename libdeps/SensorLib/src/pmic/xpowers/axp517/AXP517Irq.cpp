@@ -1,0 +1,172 @@
+/**
+ *
+ * @license MIT License
+ *
+ * Copyright (c) 2026 lewis he
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @file      AXP517Irq.cpp
+ * @author    Lewis He (lewishe@outlook.com)
+ * @date      2026-03-12
+ *
+ */
+#include "../../../SensorBuildOpt.h"
+#if !SENSORLIB_EXCLUDE_PMIC_AXP517
+
+#include "AXP517Irq.hpp"
+#include "AXP517Regs.hpp"
+#include "AXP517TcpcRegs.hpp"
+
+namespace
+{
+bool readPmicRegisters(AXP517Core &core, uint8_t firstReg, uint8_t *buffer,
+                       size_t length)
+{
+    for (size_t i = 0; i < length; ++i) {
+        int value = core.readReg(static_cast<uint8_t>(firstReg + i));
+        if (value < 0) return false;
+        buffer[i] = static_cast<uint8_t>(value);
+    }
+    return true;
+}
+
+bool writePmicRegisters(AXP517Core &core, uint8_t firstReg,
+                        const uint8_t *buffer, size_t length)
+{
+    for (size_t i = 0; i < length; ++i) {
+        if (core.writeReg(static_cast<uint8_t>(firstReg + i), buffer[i]) < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+} // namespace
+
+AXP517Irq::AXP517Irq(AXP517Core &core) : _core(core)
+{
+}
+
+bool AXP517Irq::enable(uint64_t mask)
+{
+    mask &= ~IRQ_RESERVED_MASK;
+
+    uint8_t buffer[4];
+
+    if (!readPmicRegisters(_core, axp517_regs::irq::ENABLE0, buffer, sizeof(buffer))) {
+        SENSORLIB_LOG_E("Failed to read IRQ enable registers");
+        return false;
+    }
+    uint64_t current = (static_cast<uint64_t>(buffer[0]) << 24) |
+                       (static_cast<uint64_t>(buffer[1]) << 16) |
+                       (static_cast<uint64_t>(buffer[2]) << 8) |
+                       (static_cast<uint64_t>(buffer[3]));
+    current &= (~IRQ_RESERVED_MASK);
+    current |= mask;
+    buffer[0] = static_cast<uint8_t>((current >> 24) & 0xFF);
+    buffer[1] = static_cast<uint8_t>((current >> 16) & 0xFF);
+    buffer[2] = static_cast<uint8_t>((current >> 8) & 0xFF);
+    buffer[3] = static_cast<uint8_t>(current & 0xFF);
+    if (!writePmicRegisters(_core, axp517_regs::irq::ENABLE0, buffer, sizeof(buffer))) {
+        return false;
+    }
+    return true;
+}
+
+bool AXP517Irq::disable(uint64_t mask)
+{
+    mask &= ~IRQ_RESERVED_MASK;
+
+    uint8_t buffer[4];
+    if (!readPmicRegisters(_core, axp517_regs::irq::ENABLE0, buffer, sizeof(buffer))) {
+        SENSORLIB_LOG_E("Failed to read IRQ enable registers");
+        return false;
+    }
+    uint64_t current = (static_cast<uint64_t>(buffer[0]) << 24) |
+                       (static_cast<uint64_t>(buffer[1]) << 16) |
+                       (static_cast<uint64_t>(buffer[2]) << 8) |
+                       (static_cast<uint64_t>(buffer[3]));
+
+    current &= (~IRQ_RESERVED_MASK);
+    current &= (~mask);
+    buffer[0] = static_cast<uint8_t>((current >> 24) & 0xFF);
+    buffer[1] = static_cast<uint8_t>((current >> 16) & 0xFF);
+    buffer[2] = static_cast<uint8_t>((current >> 8) & 0xFF);
+    buffer[3] = static_cast<uint8_t>(current & 0xFF);
+    if (!writePmicRegisters(_core, axp517_regs::irq::ENABLE0, buffer, sizeof(buffer))) {
+        return false;
+    }
+    return true;
+}
+
+uint64_t AXP517Irq::readStatus(bool clear)
+{
+    uint8_t buffer[4];
+    int pdAlertL = _core.readReg(axp517::tcpc::PD_ALERTL);
+    int pdAlertH = _core.readReg(axp517::tcpc::PD_ALERTH);
+    if (pdAlertL < 0 || pdAlertH < 0) {
+        SENSORLIB_LOG_E("Failed to read PD alert registers");
+        return 0;
+    }
+
+    if (!readPmicRegisters(_core, axp517_regs::irq::STATUS0, buffer, sizeof(buffer))) {
+        SENSORLIB_LOG_E("Failed to read IRQ status registers");
+        return 0;
+    }
+
+    uint16_t pdAlert = static_cast<uint16_t>(pdAlertL) |
+                       (static_cast<uint16_t>(pdAlertH) << 8);
+    uint64_t mask = (static_cast<uint64_t>(pdAlert) << 32) |
+                    (static_cast<uint64_t>(buffer[0]) << 24) |
+                    (static_cast<uint64_t>(buffer[1]) << 16) |
+                    (static_cast<uint64_t>(buffer[2]) << 8) |
+                    (static_cast<uint64_t>(buffer[3]));
+    mask &= (~IRQ_RESERVED_MASK);
+    if (clear && mask != 0) {
+        this->clearStatus();
+    }
+    return mask;
+}
+
+bool AXP517Irq::clearStatus()
+{
+    uint8_t buffer[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+    int fault = _core.readReg(axp517::tcpc::FAULT_STATUS);
+    if (fault < 0) {
+        SENSORLIB_LOG_E("Failed to read PD fault status register");
+        return false;
+    }
+    uint8_t faultStatus = static_cast<uint8_t>(fault);
+    if (faultStatus && _core.writeReg(axp517::tcpc::FAULT_STATUS, faultStatus) < 0) {
+        SENSORLIB_LOG_E("Failed to clear PD fault status register");
+        return false;
+    }
+    if (_core.writeReg(axp517::tcpc::PD_ALERTL, 0xFF) < 0 ||
+            _core.writeReg(axp517::tcpc::PD_ALERTH, 0xFF) < 0) {
+        SENSORLIB_LOG_E("Failed to clear PD alert registers");
+        return false;
+    }
+    if (!writePmicRegisters(_core, axp517_regs::irq::STATUS0, buffer, sizeof(buffer))) {
+        SENSORLIB_LOG_E("Failed to clear IRQ status registers");
+        return false;
+    }
+    return true;
+}
+
+#endif

@@ -1,0 +1,203 @@
+/**
+ *
+ * @license MIT License
+ *
+ * Copyright (c) 2026 lewis he
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * @file      SensorBase.hpp
+ * @author    Lewis He (lewishe@outlook.com)
+ * @date      2026-01-22
+ *
+ * @brief Abstract base class template for all sensors
+ * @note This class cannot be instantiated directly. Use derived classes such as:
+ *       - AccelerometerBase for accelerometers
+ *       - GyroscopeBase for gyroscopes
+ *       - MagnetometerBase for magnetometers
+ */
+#pragma once
+
+#include "../SensorPlatform.hpp"
+#include "SensorDefs.hpp"
+#include <functional>
+#include <vector>
+#include <cstring>
+
+
+/**
+ * @brief Utility class providing static sensor-related helper functions
+ */
+class SensorUtils
+{
+public:
+    /**
+     * @brief Convert sensor type enumeration to string representation
+     *
+     * @param type Sensor type enumeration value
+     * @return const char* String representation of the sensor type
+     */
+    static const char *typeToString(SensorType type)
+    {
+        switch (type) {
+        case SensorType::ACCELEROMETER: return "ACCELEROMETER";
+        case SensorType::GYROSCOPE:     return "GYROSCOPE";
+        case SensorType::MAGNETOMETER:  return "MAGNETOMETER";
+        case SensorType::PRESSURE:      return "PRESSURE";
+        case SensorType::TEMPERATURE:   return "TEMPERATURE";
+        case SensorType::HUMIDITY:      return "HUMIDITY";
+        case SensorType::MULTI_AXIS:    return "MULTI_AXIS";
+        default:                        return "UNKNOWN";
+        }
+    }
+};
+
+/**
+ * @brief Template base class for all sensor implementations
+ *
+ * @tparam T Sensor data type (e.g., AccelerometerData, GyroscopeData)
+ *
+ * @note This is an abstract base class and cannot be instantiated directly.
+ *       Derived classes must implement the pure virtual functions.
+ *
+ * @warning Constructor is protected to prevent direct instantiation
+ */
+template<typename T>
+class SensorBase
+{
+protected:
+    /**
+     * @brief Construct a new SensorBase object
+     *
+     * @param sensor_type Type of sensor (default: UNKNOWN)
+     *
+     * @note Constructor is protected to prevent direct instantiation of abstract base class
+     */
+    SensorBase(SensorType sensor_type = SensorType::UNKNOWN)
+    {
+        _info.type = sensor_type;
+    }
+
+    /**
+     * @brief Virtual destructor for proper polymorphic cleanup
+     */
+    virtual ~SensorBase() = default;
+
+public:
+    // Delete copy operations to prevent slicing
+    SensorBase(const SensorBase &) = delete;
+    SensorBase &operator=(const SensorBase &) = delete;
+
+    /**
+     * @brief Set sensor calibration offsets
+     *
+     * @param x X-axis offset
+     * @param y Y-axis offset
+     * @param z Z-axis offset
+     */
+    void setOffset(int16_t x, int16_t y, int16_t z)
+    {
+        _x_offset = x;
+        _y_offset = y;
+        _z_offset = z;
+    }
+
+    /**
+     * @brief Get sensor sensitivity
+     *
+     * @return float Sensitivity value
+     */
+    float getSensitivity() const
+    {
+        return _sensitivity;
+    }
+
+    /**
+     * @brief Get sensor information
+     *
+     * @return SensorInfo Sensor information structure
+     */
+    SensorInfo getSensorInfo() const
+    {
+        return _info;
+    }
+
+    // Pure virtual interface functions
+
+    /**
+     * @brief Read data from sensor
+     *
+     * @param data Reference to store read data
+     * @return true  Read successful
+     * @return false Read failed
+     */
+    virtual bool readData(T &data) = 0;
+
+    /**
+     * @brief Check if new data is available
+     *
+     * @return true  New data available
+     * @return false No new data
+     */
+    virtual bool isDataReady() = 0;
+
+    /**
+     * @brief Reset sensor to default state
+     *
+     * @return true  Reset successful
+     * @return false Reset failed
+     */
+    virtual bool reset() = 0;
+
+    /**
+     * @brief Perform sensor self-test
+     *
+     * @return true  Self-test passed
+     * @return false Self-test failed
+     */
+    virtual bool selfTest() = 0;
+
+    /**
+     * @brief Get current sensor configuration
+     *
+     * @return SensorConfig Current configuration
+     */
+    virtual SensorConfig getConfig() const
+    {
+        return _config;
+    }
+
+private:
+    /**
+     * @brief Sensor-specific initialization implementation
+     *
+     * @param addr I2C address
+     * @return true  Initialization successful
+     * @return false Initialization failed
+     */
+    virtual bool initImpl(uint8_t addr) = 0;
+
+protected:
+    SensorConfig _config;                   ///< Current configuration
+    SensorInfo _info;                       ///< Sensor information
+    int16_t _x_offset;
+    int16_t _y_offset;
+    int16_t _z_offset;
+    float   _sensitivity;
+};
