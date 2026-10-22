@@ -16,6 +16,7 @@
  */
 #include <LilyGo_AMOLED.h>      //To use LilyGo AMOLED series screens, please include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
+#include <SD.h>
 #include <AceButton.h>
 #include <vector>
 

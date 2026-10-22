@@ -10,6 +10,7 @@
 #include <LilyGo_AMOLED.h>
 #include "gui.h"
 #include <Adafruit_NeoPixel.h>
+#include <SD.h>
 #include <WiFi.h>
 
 extern LilyGo_Class amoled;

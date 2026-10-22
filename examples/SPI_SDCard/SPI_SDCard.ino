@@ -16,6 +16,7 @@
  */
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
+#include <SD.h>
 
 LilyGo_Class amoled;
 

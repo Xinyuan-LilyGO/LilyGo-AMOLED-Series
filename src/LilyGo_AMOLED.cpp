@@ -9,6 +9,7 @@
 
 #include "LilyGo_AMOLED.h"
 #include <driver/gpio.h>
+#include <SD.h>
 
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
 #include <esp_adc_cal.h>

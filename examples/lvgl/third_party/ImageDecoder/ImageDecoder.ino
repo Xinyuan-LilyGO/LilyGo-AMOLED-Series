@@ -12,6 +12,8 @@
  */
 #include <LilyGo_AMOLED.h>
 #include <LV_Helper.h>
+#include <SD.h>
+#include <SPIFFS.h>
 
 #if !LV_USE_PNG || !LV_USE_BMP || !LV_USE_SJPG
 #error "lvgl png , bmp , sjpg decoder library is not enable!"
