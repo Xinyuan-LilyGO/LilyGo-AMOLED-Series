@@ -14,12 +14,6 @@
 #include <esp_adc_cal.h>
 #endif
 
-#if SENSORLIB_VERSION_MINOR == 3 && SENSORLIB_VERSION_PATCH == 0
-#ifdef writeBytes
-#undef writeBytes
-#endif
-#endif
-
 #ifndef LCD_CMD_MADCTL
 #define LCD_CMD_MADCTL       (0x36)     // Memory data access control
 #endif
@@ -48,7 +42,7 @@
 #define TFT_SPI_MODE            SPI_MODE0
 #define DEFAULT_SPI_HANDLER    (SPI3_HOST)
 
-LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false), _disableTouch(false)
+LilyGo_AMOLED::LilyGo_AMOLED() : boards(NULL), _hasRTC(false), _pmuUsesSY6970(false), _disableTouch(false)
 {
     spiDev = NULL;
     pBuffer = NULL;
@@ -124,6 +118,12 @@ uint16_t  LilyGo_AMOLED::height()
     return _height;
 }
 
+uint16_t LilyGo_AMOLED::readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel channel)
+{
+    float value = 0;
+    return adc.read(channel, value) ? static_cast<uint16_t>(value) : 0;
+}
+
 void inline LilyGo_AMOLED::setCS()
 {
     digitalWrite(boards->display.cs, LOW);
@@ -179,14 +179,13 @@ uint16_t LilyGo_AMOLED::getBattVoltage(void)
 {
     if (boards) {
         if (boards->pmu) {
-            if (boards->pmu) {
-                if (boards == &BOARD_AMOLED_147) {
-                    return XPowersAXP2101::getBattVoltage();
-                } else  if (boards == &BOARD_AMOLED_241) {
-                    return SY.getBattVoltage();
-                } else if (boards == &BOARD_AMOLED_191_SPI) {
-                    return BQ.getBattVoltage();
-                }
+            if (boards == &BOARD_AMOLED_147) {
+                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+            } else if (boards == &BOARD_AMOLED_241 ||
+                       (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
+            } else if (boards == &BOARD_AMOLED_191_SPI) {
+                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::BAT_VOLTAGE);
             }
         } else if (boards->adcPins != -1) {
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
@@ -214,11 +213,11 @@ uint16_t LilyGo_AMOLED::getVbusVoltage(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                return XPowersAXP2101::getVbusVoltage();
-            } else  if (boards == &BOARD_AMOLED_241) {
-                return SY.getVbusVoltage();
+                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
             } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.getVbusVoltage();
+                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VBUS_VOLTAGE);
             }
         }
     }
@@ -230,9 +229,12 @@ bool LilyGo_AMOLED::isBatteryConnect(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                return XPowersAXP2101::isBatteryConnect();
-            } else  if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-                return getVbusVoltage() != 0;
+                return AXP.isBatteryConnect();
+            } else  if (boards == &BOARD_AMOLED_241) {
+                return SY.charger().getStatus().batteryPresent;
+            } else if (boards == &BOARD_AMOLED_191_SPI) {
+                return _pmuUsesSY6970 ? SY.charger().getStatus().batteryPresent :
+                       BQ.charger().getStatus().batteryPresent;
             }
         }
     }
@@ -244,11 +246,11 @@ uint16_t LilyGo_AMOLED::getSystemVoltage(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                return XPowersAXP2101::getSystemVoltage();
-            } else  if (boards == &BOARD_AMOLED_241) {
-                return SY.getSystemVoltage();
+                return readVoltage(AXP.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                return readVoltage(SY.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
             } else if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.getSystemVoltage();
+                return readVoltage(BQ.getAdc(), PmicAdcBase::Channel::VSYS_VOLTAGE);
             }
         }
     }
@@ -260,11 +262,11 @@ bool LilyGo_AMOLED::isCharging(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                return XPowersAXP2101::isCharging();
-            } else  if (boards == &BOARD_AMOLED_241) {
-                return SY.isCharging();
+                return AXP.isCharging();
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                return SY.charger().isCharging();
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.isCharging();
+                return BQ.charger().isCharging();
             }
         }
     }
@@ -276,15 +278,30 @@ bool LilyGo_AMOLED::isVbusIn(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                return XPowersAXP2101::isVbusIn();
-            } else  if (boards == &BOARD_AMOLED_241 ) {
-                return SY.isVbusIn();
+                return AXP.isVbusGood();
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                return SY.charger().getStatus().vbusPresent;
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                return BQ.isVbusIn();
+                return BQ.charger().getStatus().vbusPresent;
             }
         }
     }
     return false;
+}
+
+uint8_t LilyGo_AMOLED::getChargingLedMode()
+{
+    if (boards == &BOARD_AMOLED_147) {
+        return AXP.led().getMode() == PmicLedBase::Mode::AUTO ? 1 : 0;
+    }
+    return 0;
+}
+
+void LilyGo_AMOLED::setChargingLedMode(uint8_t mode)
+{
+    if (boards == &BOARD_AMOLED_147) {
+        AXP.led().setMode(mode ? PmicLedBase::Mode::AUTO : PmicLedBase::Mode::DISABLE);
+    }
 }
 
 void LilyGo_AMOLED::disableCharge(void)
@@ -292,11 +309,12 @@ void LilyGo_AMOLED::disableCharge(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                XPowersAXP2101::setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_0MA);
-            } else  if (boards == &BOARD_AMOLED_241 ) {
-                SY.disableCharge();
+                AXP.charger().setFastChargeCurrent(0);
+                AXP.charger().enableCharging(false);
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                SY.charger().enableCharging(false);
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                BQ.disableCharge();
+                BQ.charger().enableCharging(false);
             }
         }
     }
@@ -307,13 +325,43 @@ void LilyGo_AMOLED::enableCharge(void)
     if (boards) {
         if (boards->pmu) {
             if (boards == &BOARD_AMOLED_147) {
-                XPowersAXP2101::setChargerConstantCurr(XPOWERS_AXP2101_CHG_CUR_200MA);
-            } else  if (boards == &BOARD_AMOLED_241 ) {
-                SY.enableCharge();
+                AXP.charger().setFastChargeCurrent(200);
+                AXP.charger().enableCharging(true);
+            } else  if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+                SY.charger().enableCharging(true);
             } else  if (boards == &BOARD_AMOLED_191_SPI) {
-                BQ.enableCharge();
+                BQ.charger().enableCharging(true);
             }
         }
+    }
+}
+
+bool LilyGo_AMOLED::isEnableOTG()
+{
+    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+        return SY.power().isBoostEnabled();
+    }
+    if (boards == &BOARD_AMOLED_191_SPI) {
+        return BQ.power().isBoostEnabled();
+    }
+    return false;
+}
+
+void LilyGo_AMOLED::enableOTG()
+{
+    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+        SY.power().enableBoost(true);
+    } else if (boards == &BOARD_AMOLED_191_SPI) {
+        BQ.power().enableBoost(true);
+    }
+}
+
+void LilyGo_AMOLED::disableOTG()
+{
+    if (boards == &BOARD_AMOLED_241 || (boards == &BOARD_AMOLED_191_SPI && _pmuUsesSY6970)) {
+        SY.power().enableBoost(false);
+    } else if (boards == &BOARD_AMOLED_191_SPI) {
+        BQ.power().enableBoost(false);
     }
 }
 
@@ -348,38 +396,30 @@ uint32_t deviceScan(TwoWire *_port, Stream *stream)
 
 bool LilyGo_AMOLED::initPMU()
 {
-    bool res = XPowersAXP2101::init(Wire, boards->pmu->sda, boards->pmu->scl, AXP2101_SLAVE_ADDRESS);
+    bool res = AXP.begin(Wire, AXP2101_SLAVE_ADDRESS, boards->pmu->sda, boards->pmu->scl);
     if (!res) {
         return false;
     }
 
-    clearPMU();
+    AXP.enableModule(PmicAXP2101::Module::BAT_DETECT, true);
+    AXP.getIrq()->clearStatus();
+    setChargingLedMode(1);
 
-    setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
-
-    // ALDO1 = AMOLED logic power & Sensor Power voltage
-    setALDO1Voltage(1800);
-    enableALDO1();
-
-    // ALDO3 = Level conversion enable and AMOLED power supply
-    setALDO3Voltage(3300);
-    enableALDO3();
-
-    // BLDO1 = AMOLED LOGIC POWER 1.8V
-    setBLDO1Voltage(1800);
-    enableBLDO1();
-
-    // No use power channel
-    disableDC2();
-    disableDC3();
-    disableDC4();
-    disableDC5();
-    disableCPUSLDO();
-
-    // Enable PMU ADC
-    enableBattDetection();
-    enableVbusVoltageMeasure();
-    enableBattVoltageMeasure();
+    auto *channels = AXP.getChannel();
+    channels->setVoltage(AXP2101Channel::CH_ALDO1, 1800);
+    channels->enable(AXP2101Channel::CH_ALDO1, true);
+    channels->setVoltage(AXP2101Channel::CH_ALDO3, 3300);
+    channels->enable(AXP2101Channel::CH_ALDO3, true);
+    channels->setVoltage(AXP2101Channel::CH_BLDO1, 1800);
+    channels->enable(AXP2101Channel::CH_BLDO1, true);
+    channels->enable(AXP2101Channel::CH_DCDC2, false);
+    channels->enable(AXP2101Channel::CH_DCDC3, false);
+    channels->enable(AXP2101Channel::CH_DCDC4, false);
+    channels->enable(AXP2101Channel::CH_DCDC5, false);
+    channels->enable(AXP2101Channel::CH_CPUSLDO, false);
+    AXP.getAdc().enableChannels(static_cast<uint32_t>(PmicAdcBase::Channel::BAT_VOLTAGE) |
+                                static_cast<uint32_t>(PmicAdcBase::Channel::VBUS_VOLTAGE) |
+                                static_cast<uint32_t>(PmicAdcBase::Channel::VSYS_VOLTAGE));
 
     return res;
 }
@@ -590,30 +630,37 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
         Wire.beginTransmission(SY6970_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
             slaveAddress = SY6970_SLAVE_ADDRESS;
+            _pmuUsesSY6970 = true;
             log_i("Detected SY6970 PPM chip");
         }
         Wire.beginTransmission(BQ25896_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
             slaveAddress = BQ25896_SLAVE_ADDRESS;
+            _pmuUsesSY6970 = false;
             log_i("Detected Ti BQ25896 PPM chip");
         }
         if (slaveAddress == 0) {
             return false;
         }
-        if (BQ.init(Wire, boards->pmu->sda, boards->pmu->scl, slaveAddress)) {
-            BQ.enableMeasure();
-            BQ.disableOTG();
-            BQ.disableCharge();    //Default disable charge function
+        if (_pmuUsesSY6970) {
+            if (SY.begin(Wire, slaveAddress, boards->pmu->sda, boards->pmu->scl)) {
+                SY.adc().setContinuousMode(true);
+                SY.power().enableBoost(false);
+                SY.charger().enableCharging(false);
+            } else {
+                log_e("begin SY6970 failed!");
+                return false;
+            }
+        } else if (BQ.begin(Wire, slaveAddress, boards->pmu->sda, boards->pmu->scl)) {
+            BQ.adc().setContinuousMode(true);
+            BQ.power().enableBoost(false);
+            BQ.charger().enableCharging(false);
         } else {
             log_e("begin pmu failed !");
         }
     }
 
-#if SENSORLIB_VERSION_MINOR > 2
     _hasRTC = SensorPCF85063::begin(Wire, boards->pmu->sda, boards->pmu->scl);
-#else
-    _hasRTC = SensorPCF85063::init(Wire, boards->pmu->sda, boards->pmu->scl);
-#endif
     if (!_hasRTC) {
         log_e("begin rtc failed!");
     }
@@ -660,11 +707,11 @@ bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
 
     if (boards->pmu) {
         Wire.begin(boards->pmu->sda, boards->pmu->scl);
-        SY.init(Wire, boards->pmu->sda, boards->pmu->scl, SY6970_SLAVE_ADDRESS);
-        SY.enableMeasure();
-        SY.disableOTG();
+        SY.begin(Wire, SY6970_SLAVE_ADDRESS, boards->pmu->sda, boards->pmu->scl);
+        SY.adc().setContinuousMode(true);
+        SY.power().enableBoost(false);
         if (disable_state_led) {
-            SY.disableStatLed();
+            SY.getLed().setMode(PmicLedBase::Mode::DISABLE);
         }
     }
 
@@ -1043,7 +1090,7 @@ uint64_t LilyGo_AMOLED::readPMU()
         return 0;
     }
     if (boards == &BOARD_AMOLED_147) {
-        return XPowersAXP2101::getIrqStatus();
+        return AXP.getIrq()->readStatus(false);
     }
     return 0;
 }
@@ -1053,7 +1100,7 @@ void LilyGo_AMOLED::clearPMU()
     if (boards) {
         if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
             log_i("clearPMU");
-            XPowersAXP2101::clearIrqStatus();
+            AXP.getIrq()->clearStatus();
         }
     }
 }
@@ -1062,7 +1109,7 @@ void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
 {
     if (boards) {
         if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            XPowersAXP2101::enableIRQ(params);
+            AXP.getIrq()->enable(params);
         }
     }
 }
@@ -1070,7 +1117,7 @@ void LilyGo_AMOLED::disablePMUInterrupt(uint32_t params)
 {
     if (boards) {
         if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            XPowersAXP2101::disableIRQ(params);
+            AXP.getIrq()->disable(params);
         }
     }
 }
@@ -1088,12 +1135,12 @@ void LilyGo_AMOLED::sleep(bool touchpad_sleep_enable)
 
         if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
 
-            if (boards == &BOARD_AMOLED_241) {
-                SY.disableADCMeasure();
-                SY.disableOTG();
+            if (boards == &BOARD_AMOLED_241 || _pmuUsesSY6970) {
+                SY.adc().setContinuousMode(false);
+                SY.power().enableBoost(false);
             } else {
-                BQ.disableMeasure();
-                BQ.disableOTG();
+                BQ.adc().setContinuousMode(false);
+                BQ.power().enableBoost(false);
             }
 
             // Disable amoled power
@@ -1110,16 +1157,16 @@ void LilyGo_AMOLED::sleep(bool touchpad_sleep_enable)
             SensorCM32181::powerDown();
 
             // Turn off ADC data monitoring to save power
-            disableTemperatureMeasure();
-            disableBattDetection();
-            disableVbusVoltageMeasure();
-            disableBattVoltageMeasure();
-            disableSystemVoltageMeasure();
-            setChargingLedMode(XPOWERS_CHG_LED_OFF);
+            AXP.getAdc().disableChannels(static_cast<uint32_t>(PmicAdcBase::Channel::DIE_TEMPERATURE) |
+                                         static_cast<uint32_t>(PmicAdcBase::Channel::BAT_VOLTAGE) |
+                                         static_cast<uint32_t>(PmicAdcBase::Channel::VBUS_VOLTAGE) |
+                                         static_cast<uint32_t>(PmicAdcBase::Channel::VSYS_VOLTAGE));
+            AXP.enableModule(PmicAXP2101::Module::BAT_DETECT, false);
+            AXP.led().setMode(PmicLedBase::Mode::DISABLE);
 
             // Disable amoled power
-            disableBLDO1();
-            disableALDO3();
+            AXP.getChannel()->enable(AXP2101Channel::CH_BLDO1, false);
+            AXP.getChannel()->enable(AXP2101Channel::CH_ALDO3, false);
 
             // Don't turn off ALDO1
             // disableALDO1();

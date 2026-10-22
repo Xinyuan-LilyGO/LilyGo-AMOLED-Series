@@ -11,20 +11,17 @@
 #include <Arduino.h>
 
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(2,0,5)
-#error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
-#endif
-
-#if ESP_ARDUINO_VERSION > ESP_ARDUINO_VERSION_VAL(3,0,0)
-// #error "Please update the esp32 core version to a version greater than 2.0.5 and less than v3.0.0, how to update, please see here https://docs.espressif.com/projects/arduino-esp32/en/latest/"
+#error "Please update the esp32 core version to v2.0.5 or newer"
 #endif
 
 #include <driver/spi_master.h>
 #include <SPI.h>
-#include "XPowersLib.h"
 #include "initSequence.h"
-#include "TouchDrvCHSC5816.hpp"
-#include "TouchDrvCSTXXX.hpp"
-#include "SensorCM32181.hpp"
+#include "PmicXPowers.hpp"
+#include "PmicSilergy.hpp"
+#include "PmicTI.hpp"
+#include "TouchDrv.hpp"
+#include "LightSensorDrv.hpp"
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
@@ -36,8 +33,7 @@
 #include <driver/temperature_sensor.h>
 #endif
 
-#include "SensorPCF85063.hpp"
-#include "PowersBQ25896.tpp"
+#include "RtcDrv.hpp"
 
 #if ARDUINO_USB_CDC_ON_BOOT != 1
 #warning "If you need to monitor printed data, be sure to set USB_CDC_ON_BOOT to ENABLE, otherwise you will not see any data in the serial monitor"
@@ -47,8 +43,10 @@
 #error "Detected that PSRAM is not turned on. Please set PSRAM to OPI PSRAM in ArduinoIDE"
 #endif //BOARD_HAS_PSRAM
 
-#ifndef SENSORLIB_VERSION_MAJOR
-#error "Please search SensorLib through the arduino ide library manager and install version v0.2.4"
+#if !defined(SENSORLIB_VERSION_MAJOR) || \
+    (SENSORLIB_VERSION_MAJOR == 0 && SENSORLIB_VERSION_MINOR == 5 && SENSORLIB_VERSION_PATCH < 1) || \
+    (SENSORLIB_VERSION_MAJOR == 0 && SENSORLIB_VERSION_MINOR < 5)
+#error "SensorLib v0.5.1 or newer is required"
 #endif
 
 
@@ -301,17 +299,15 @@ enum AmoledBoardID {
 
 class LilyGo_AMOLED:
     public LilyGo_Display,
-    public XPowersAXP2101,
     public TouchDrvCHSC5816,
     public SensorCM32181,
     public TouchDrvCSTXXX,
     public SensorPCF85063
 {
 public:
-    // LILYGO_AMOLED_191_SPI USE BQ25896
-    PowersSY6970 SY;
-    // LILYGO_AMOLED_241 USE SY6970
-    PowersBQ25896 BQ;
+    PmicAXP2101 AXP;
+    PmicSY6970 SY;
+    PmicBQ25896 BQ;
 
     LilyGo_AMOLED();
 
@@ -380,16 +376,21 @@ public:
 
     // override
     uint8_t getPoint(int16_t *x_array, int16_t *y_array, uint8_t get_point = 1) override;
-    bool isPressed() override;
-    uint16_t getBattVoltage(void) override;
-    uint16_t getVbusVoltage(void) override;
-    bool isBatteryConnect(void) override;
-    uint16_t getSystemVoltage(void) override;
-    bool isCharging(void) override;
-    bool isVbusIn(void) override;
+    bool isPressed();
+    uint16_t getBattVoltage(void);
+    uint16_t getVbusVoltage(void);
+    bool isBatteryConnect(void);
+    uint16_t getSystemVoltage(void);
+    bool isCharging(void);
+    bool isVbusIn(void);
+    uint8_t getChargingLedMode();
+    void setChargingLedMode(uint8_t mode);
 
     void disableCharge(void) ;
     void enableCharge(void) ;
+    bool isEnableOTG();
+    void enableOTG();
+    void disableOTG();
 
     // PMU Function , only 1.47' inches support
     void attachPMU(void(*cb)(void));
@@ -422,6 +423,7 @@ private:
 
     bool initBUS(DriverBusType type = QSPI_DRIVER);
     bool initPMU();
+    static uint16_t readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel channel);
     void inline setCS();
     void inline clrCS();
     void writeCommand(uint32_t cmd, uint8_t *pdat, uint32_t length);
@@ -437,6 +439,7 @@ private:
 #endif
 
     bool  _hasRTC;
+    bool _pmuUsesSY6970;
 
     bool _disableTouch;
 
