@@ -53,9 +53,6 @@ LilyGo_AMOLED::LilyGo_AMOLED() :
     _boardKind(BoardKind::UNKNOWN),
     _width(0),
     _height(0),
-#if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
-    temp_sensor(nullptr),
-#endif
     _pmicType(PmicType::NONE),
     _disableTouch(false),
     _spiBusInitialized(false),
@@ -148,8 +145,7 @@ void LilyGo_AMOLED::releaseResources()
 
     if (spiDev) {
         spiDev->end();
-        delete spiDev;
-        spiDev = nullptr;
+        spiDev.reset();
     }
 
     free(pBuffer);
@@ -529,7 +525,7 @@ bool LilyGo_AMOLED::initBUS(DriverBusType type)
         }
     } else {
         pinMode(boards->display.d1, OUTPUT);    //set dc output
-        spiDev = new (std::nothrow) SPIClass(HSPI);
+        spiDev.reset(new (std::nothrow) SPIClass(HSPI));
         if (!spiDev) {
             log_e("Failed to allocate SPIClass");
             return false;

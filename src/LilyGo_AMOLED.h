@@ -23,13 +23,7 @@
 #include "PmicTI.hpp"
 #include "TouchDrv.hpp"
 #include "LightSensorDrv.hpp"
-#include <sys/cdefs.h>
 #include "LilyGo_Display.h"
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(5,0,0)
-#include <driver/temp_sensor.h>
-#else
-#include <driver/temperature_sensor.h>
-#endif
 
 #include "RtcDrv.hpp"
 
@@ -453,17 +447,13 @@ private:
     std::unique_ptr<SensorPCF85063> _rtc;
     uint16_t _width, _height;
 
-#if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
-    temperature_sensor_handle_t temp_sensor;
-#endif
-
     PmicType _pmicType;
 
     bool _disableTouch;
     bool _spiBusInitialized;
     bool _sdMounted;
 
-    SPIClass *spiDev;
+    std::unique_ptr<SPIClass> spiDev;
 };
 
 #ifndef LilyGo_Class
