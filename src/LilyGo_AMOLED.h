@@ -412,6 +412,14 @@ public:
     SensorPCF85063 *rtc() const { return _rtc.get(); }
 private:
 
+    enum class BoardKind : uint8_t {
+        UNKNOWN,
+        AMOLED_147,
+        AMOLED_191,
+        AMOLED_241,
+        AMOLED_191_SPI,
+    };
+
     enum class PmicType : uint8_t {
         NONE,
         AXP2101,
@@ -425,7 +433,8 @@ private:
     };
 
     bool initBUS(DriverBusType type = QSPI_DRIVER);
-    void selectBoard(const BoardsConfigure_t *configuration);
+    void selectBoard(const BoardsConfigure_t *configuration, BoardKind kind);
+    void releaseResources();
     bool initPMU();
     bool initTouch(uint8_t address, std::unique_ptr<TouchDrvInterface> driver);
     bool initPPM(PmicType type, uint8_t address);
@@ -437,6 +446,7 @@ private:
     spi_device_handle_t spi;
     uint8_t _brightness;
     const BoardsConfigure_t *boards;
+    BoardKind _boardKind;
     std::unique_ptr<PmicBase> _pmu;
     std::unique_ptr<TouchDrvInterface> _touch;
     std::unique_ptr<SensorCM32181> _lightSensor;
@@ -450,6 +460,8 @@ private:
     PmicType _pmicType;
 
     bool _disableTouch;
+    bool _spiBusInitialized;
+    bool _sdMounted;
 
     SPIClass *spiDev;
 };

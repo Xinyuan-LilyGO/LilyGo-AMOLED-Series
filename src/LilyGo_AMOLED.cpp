@@ -10,6 +10,7 @@
 #include "LilyGo_AMOLED.h"
 #include <driver/gpio.h>
 #include <SD.h>
+#include <new>
 #include <utility>
 
 #if ESP_ARDUINO_VERSION < ESP_ARDUINO_VERSION_VAL(3,0,0)
@@ -49,6 +50,7 @@ LilyGo_AMOLED::LilyGo_AMOLED() :
     spi(nullptr),
     _brightness(AMOLED_DEFAULT_BRIGHTNESS),
     boards(nullptr),
+    _boardKind(BoardKind::UNKNOWN),
     _width(0),
     _height(0),
 #if ESP_IDF_VERSION > ESP_IDF_VERSION_VAL(5,0,0)
@@ -56,6 +58,8 @@ LilyGo_AMOLED::LilyGo_AMOLED() :
 #endif
     _pmicType(PmicType::NONE),
     _disableTouch(false),
+    _spiBusInitialized(false),
+    _sdMounted(false),
     spiDev(nullptr)
 {
     // Prevent previously set hold
@@ -74,26 +78,18 @@ LilyGo_AMOLED::LilyGo_AMOLED() :
 
 LilyGo_AMOLED::~LilyGo_AMOLED()
 {
-    if (pBuffer) {
-        free(pBuffer);
-        pBuffer = NULL;
-    }
-
-    if (spiDev) {
-        spiDev->end();
-        spiDev = NULL;
-    }
+    releaseResources();
 }
 
 const char *LilyGo_AMOLED::getName()
 {
-    if (boards == &BOARD_AMOLED_147) {
+    if (_boardKind == BoardKind::AMOLED_147) {
         return "1.47 inch";
-    } else if (boards == &BOARD_AMOLED_191 ) {
+    } else if (_boardKind == BoardKind::AMOLED_191) {
         return "1.91 inch";
-    } else if (boards == &BOARD_AMOLED_241) {
+    } else if (_boardKind == BoardKind::AMOLED_241) {
         return "2.41 inch";
-    } else if (boards == &BOARD_AMOLED_191_SPI) {
+    } else if (_boardKind == BoardKind::AMOLED_191_SPI) {
         return "1.91 inch(SPI Interface)";
     }
     return "Unknown";
@@ -101,13 +97,13 @@ const char *LilyGo_AMOLED::getName()
 
 uint8_t LilyGo_AMOLED::getBoardID()
 {
-    if (boards == &BOARD_AMOLED_147) {
+    if (_boardKind == BoardKind::AMOLED_147) {
         return LILYGO_AMOLED_147;
-    } else if (boards == &BOARD_AMOLED_191 ) {
+    } else if (_boardKind == BoardKind::AMOLED_191) {
         return LILYGO_AMOLED_191;
-    } else if (boards == &BOARD_AMOLED_241) {
+    } else if (_boardKind == BoardKind::AMOLED_241) {
         return LILYGO_AMOLED_241;
-    } else if (boards == &BOARD_AMOLED_191_SPI) {
+    } else if (_boardKind == BoardKind::AMOLED_191_SPI) {
         return LILYGO_AMOLED_191_SPI;
     }
     return LILYGO_AMOLED_UNKNOWN;
@@ -134,15 +130,45 @@ uint16_t LilyGo_AMOLED::readVoltage(PmicAdcBase &adc, PmicAdcBase::Channel chann
     return adc.read(channel, value) ? static_cast<uint16_t>(value) : 0;
 }
 
-void LilyGo_AMOLED::selectBoard(const BoardsConfigure_t *configuration)
+void LilyGo_AMOLED::releaseResources()
 {
-    boards = configuration;
+    if (_sdMounted) {
+        SD.end();
+        _sdMounted = false;
+    }
+
+    if (spi) {
+        spi_bus_remove_device(spi);
+        spi = nullptr;
+    }
+    if (_spiBusInitialized) {
+        spi_bus_free(DEFAULT_SPI_HANDLER);
+        _spiBusInitialized = false;
+    }
+
+    if (spiDev) {
+        spiDev->end();
+        delete spiDev;
+        spiDev = nullptr;
+    }
+
+    free(pBuffer);
+    pBuffer = nullptr;
     _pmu.reset();
     _touch.reset();
     _lightSensor.reset();
     _rtc.reset();
     _pmicType = PmicType::NONE;
     _disableTouch = false;
+    _width = 0;
+    _height = 0;
+}
+
+void LilyGo_AMOLED::selectBoard(const BoardsConfigure_t *configuration, BoardKind kind)
+{
+    releaseResources();
+    boards = configuration;
+    _boardKind = kind;
 }
 
 void inline LilyGo_AMOLED::setCS()
@@ -328,7 +354,11 @@ uint32_t deviceScan(TwoWire *_port, Stream *stream)
 
 bool LilyGo_AMOLED::initPMU()
 {
-    std::unique_ptr<PmicAXP2101> pmu(new PmicAXP2101());
+    std::unique_ptr<PmicAXP2101> pmu(new (std::nothrow) PmicAXP2101());
+    if (!pmu) {
+        log_e("Failed to allocate AXP2101 driver");
+        return false;
+    }
     bool res = pmu->begin(Wire, AXP2101_SLAVE_ADDRESS, boards->pmu->sda, boards->pmu->scl);
     if (!res) {
         return false;
@@ -363,7 +393,11 @@ bool LilyGo_AMOLED::initPMU()
 bool LilyGo_AMOLED::initPPM(PmicType type, uint8_t address)
 {
     if (type == PmicType::SY6970) {
-        std::unique_ptr<PmicSY6970> pmu(new PmicSY6970());
+        std::unique_ptr<PmicSY6970> pmu(new (std::nothrow) PmicSY6970());
+        if (!pmu) {
+            log_e("Failed to allocate SY6970 driver");
+            return false;
+        }
         if (!pmu->begin(Wire, address, boards->pmu->sda, boards->pmu->scl)) {
             return false;
         }
@@ -379,7 +413,11 @@ bool LilyGo_AMOLED::initPPM(PmicType type, uint8_t address)
         return false;
     }
 
-    std::unique_ptr<PmicBQ25896> pmu(new PmicBQ25896());
+    std::unique_ptr<PmicBQ25896> pmu(new (std::nothrow) PmicBQ25896());
+    if (!pmu) {
+        log_e("Failed to allocate BQ25896 driver");
+        return false;
+    }
     if (!pmu->begin(Wire, address, boards->pmu->sda, boards->pmu->scl)) {
         return false;
     }
@@ -403,10 +441,10 @@ bool LilyGo_AMOLED::initTouch(uint8_t address, std::unique_ptr<TouchDrvInterface
     }
 
     driver->setMaxCoordinates(_width, _height);
-    if (boards == &BOARD_AMOLED_147) {
+    if (_boardKind == BoardKind::AMOLED_147) {
         driver->setSwapXY(true);
         driver->setMirrorXY(false, true);
-    } else if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_191_SPI) {
+    } else if (_boardKind == BoardKind::AMOLED_191 || _boardKind == BoardKind::AMOLED_191_SPI) {
         driver->setCenterButtonCoordinate(600, 120);
     }
 
@@ -482,15 +520,20 @@ bool LilyGo_AMOLED::initBUS(DriverBusType type)
             log_e("spi_bus_initialize fail!");
             return false;
         }
+        _spiBusInitialized = true;
         ret = spi_bus_add_device(DEFAULT_SPI_HANDLER, &devcfg, &spi);
         if (ret != ESP_OK) {
             log_e("spi_bus_add_device fail!");
+            spi = nullptr;
             return false;
         }
     } else {
         pinMode(boards->display.d1, OUTPUT);    //set dc output
-        spiDev = new SPIClass(HSPI);
-        assert(spiDev);
+        spiDev = new (std::nothrow) SPIClass(HSPI);
+        if (!spiDev) {
+            log_e("Failed to allocate SPIClass");
+            return false;
+        }
         spiDev->begin(boards->display.sck, -1 /*miso */, boards->display.d0);
     }
     // prevent initialization failure
@@ -572,20 +615,22 @@ bool LilyGo_AMOLED::beginAutomatic()
 
 bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
 {
-    selectBoard(&BOARD_AMOLED_191);
+    selectBoard(&BOARD_AMOLED_191, BoardKind::AMOLED_191);
 
-    initBUS();
+    if (!initBUS()) {
+        releaseResources();
+        return false;
+    }
 
     if (touchFunc && boards->touch) {
         if (boards->touch->sda != -1 && boards->touch->scl != -1) {
             Wire.begin(boards->touch->sda, boards->touch->scl);
-            deviceScan(&Wire, &Serial);
 
             // Try to find touch device
             Wire.beginTransmission(CST816_SLAVE_ADDRESS);
             if (Wire.endTransmission() == 0) {
                 bool res = initTouch(CST816_SLAVE_ADDRESS,
-                                     std::unique_ptr<TouchDrvInterface>(new TouchDrvCST816()));
+                                     std::unique_ptr<TouchDrvInterface>(new (std::nothrow) TouchDrvCST816()));
                 if (!res) {
                     log_e("Failed to find CST816T - check your wiring!");
                 }
@@ -600,15 +645,17 @@ bool LilyGo_AMOLED::beginAMOLED_191(bool touchFunc)
 
 bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
 {
-    selectBoard(&BOARD_AMOLED_191_SPI);
+    selectBoard(&BOARD_AMOLED_191_SPI, BoardKind::AMOLED_191_SPI);
 
-    initBUS(SPI_DRIVER);
+    if (!initBUS(SPI_DRIVER)) {
+        releaseResources();
+        return false;
+    }
 
     if (boards->pmu) {
         uint8_t slaveAddress = 0;
         PmicType pmicType = PmicType::NONE;
         Wire.begin(boards->pmu->sda, boards->pmu->scl);
-        deviceScan(&Wire, &Serial);
 
         Wire.beginTransmission(SY6970_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
@@ -623,30 +670,33 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
             log_i("Detected Ti BQ25896 PPM chip");
         }
         if (pmicType == PmicType::NONE) {
+            releaseResources();
             return false;
         }
         if (!initPPM(pmicType, slaveAddress)) {
             log_e("begin PMU failed!");
+            releaseResources();
             return false;
         }
     }
 
-    _rtc.reset(new SensorPCF85063());
-    if (!_rtc->begin(Wire, boards->pmu->sda, boards->pmu->scl)) {
-        _rtc.reset();
-        log_e("begin rtc failed!");
+    if (boards->pmu) {
+        _rtc.reset(new (std::nothrow) SensorPCF85063());
+        if (!_rtc || !_rtc->begin(Wire, boards->pmu->sda, boards->pmu->scl)) {
+            _rtc.reset();
+            log_e("begin rtc failed!");
+        }
     }
 
     if (touchFunc && boards->touch) {
         if (boards->touch->sda != -1 && boards->touch->scl != -1) {
             Wire.begin(boards->touch->sda, boards->touch->scl);
-            deviceScan(&Wire, &Serial);
 
             // Try to find touch device
             Wire.beginTransmission(CST816_SLAVE_ADDRESS);
             if (Wire.endTransmission() == 0) {
                 bool res = initTouch(CST816_SLAVE_ADDRESS,
-                                     std::unique_ptr<TouchDrvInterface>(new TouchDrvCST816()));
+                                     std::unique_ptr<TouchDrvInterface>(new (std::nothrow) TouchDrvCST816()));
                 if (!res) {
                     log_e("Failed to find CST816T - check your wiring!");
                 }
@@ -665,14 +715,18 @@ bool LilyGo_AMOLED::beginAMOLED_191_SPI(bool touchFunc)
 
 bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
 {
-    selectBoard(&BOARD_AMOLED_241);
+    selectBoard(&BOARD_AMOLED_241, BoardKind::AMOLED_241);
 
-    initBUS();
+    if (!initBUS()) {
+        releaseResources();
+        return false;
+    }
 
     if (boards->pmu) {
         Wire.begin(boards->pmu->sda, boards->pmu->scl);
         if (!initPPM(PmicType::SY6970, SY6970_SLAVE_ADDRESS)) {
             log_e("Failed to initialize SY6970");
+            releaseResources();
             return false;
         }
         if (disable_state_led) {
@@ -685,22 +739,15 @@ bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
         Wire.beginTransmission(CST226SE_SLAVE_ADDRESS);
         if (Wire.endTransmission() == 0) {
             bool res = initTouch(CST226SE_SLAVE_ADDRESS,
-                                 std::unique_ptr<TouchDrvInterface>(new TouchDrvCST226()));
+                                 std::unique_ptr<TouchDrvInterface>(new (std::nothrow) TouchDrvCST226()));
             if (!res) {
                 log_e("Failed to find CST226SE - check your wiring!");
             }
         }
     }
 
-    if (boards->sd && !disable_sd) {
-        SPI.begin(boards->sd->sck, boards->sd->miso, boards->sd->mosi);
-        // Set mount point to /fs
-        if (!SD.begin(boards->sd->cs, SPI, 4000000U, "/fs")) {
-            log_e("Failed to detect SD Card!");
-        }
-        if (SD.cardType() != CARD_NONE) {
-            log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
-        }
+    if (boards->sd && !disable_sd && !installSD()) {
+        log_e("Failed to detect SD Card!");
     }
 
     setRotation(0);
@@ -729,21 +776,36 @@ bool LilyGo_AMOLED::beginAMOLED_241(bool disable_sd, bool disable_state_led)
  */
 bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
 {
-    if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
+    if (!boards) {
+        log_e("Select a board before mounting SD");
+        return false;
+    }
+    if (_sdMounted) {
+        return SD.cardType() != CARD_NONE;
+    }
+
+    if (_boardKind == BoardKind::AMOLED_241 || _boardKind == BoardKind::AMOLED_191_SPI) {
+        if (!boards->sd) {
+            log_e("SD is not configured for this board");
+            return false;
+        }
         miso = boards->sd->miso;
         mosi = boards->sd->mosi;
         sclk = boards->sd->sck;
         cs = boards->sd->cs;
-    } else if (boards == &BOARD_AMOLED_147) {
+    } else if (_boardKind == BoardKind::AMOLED_147) {
         sclk = (sclk == -1)  ? AMOLED_147_DEFAULT_SCLK : sclk;
         miso = (miso == -1) ? AMOLED_147_DEFAULT_MISO : miso;
         mosi = (mosi == -1) ? AMOLED_147_DEFAULT_MOSI : mosi;
         cs = (cs == -1)   ? AMOLED_147_DEFAULT_CS : cs;
-    } else if (boards == &BOARD_AMOLED_191) {
+    } else if (_boardKind == BoardKind::AMOLED_191) {
         sclk = (sclk == -1)  ? AMOLED_191_DEFAULT_SCLK : sclk;
         miso = (miso == -1) ? AMOLED_191_DEFAULT_MISO : miso;
         mosi = (mosi == -1) ? AMOLED_191_DEFAULT_MOSI : mosi;
         cs = (cs == -1)   ? AMOLED_191_DEFAULT_CS : cs;
+    } else {
+        log_e("Unknown board; SD pin configuration is unavailable");
+        return false;
     }
 
     SPI.begin(sclk, miso, mosi);
@@ -753,6 +815,7 @@ bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
         log_e("Failed to detect SD Card!!");
         return false;
     }
+    _sdMounted = true;
     if (SD.cardType() != CARD_NONE) {
         log_i("SD Card Size: %llu MB\n", SD.cardSize() / (1024 * 1024));
         return true;
@@ -762,15 +825,19 @@ bool LilyGo_AMOLED::installSD(int miso, int mosi, int sclk, int cs)
 
 void LilyGo_AMOLED::uninstallSD()
 {
-    SD.end();
+    if (_sdMounted) {
+        SD.end();
+        _sdMounted = false;
+    }
 }
 
 bool LilyGo_AMOLED::beginAMOLED_147()
 {
-    selectBoard(&BOARD_AMOLED_147);
+    selectBoard(&BOARD_AMOLED_147, BoardKind::AMOLED_147);
 
     if (!initPMU()) {
         log_e("Failed to find AXP2101 - check your wiring!");
+        releaseResources();
         return false;
     }
 
@@ -778,7 +845,10 @@ bool LilyGo_AMOLED::beginAMOLED_147()
         deviceScan(&Wire, &Serial);
     }
 
-    initBUS();
+    if (!initBUS()) {
+        releaseResources();
+        return false;
+    }
 
 
     if (boards->display.frameBufferSize) {
@@ -787,17 +857,22 @@ bool LilyGo_AMOLED::beginAMOLED_147()
         } else {
             pBuffer = (uint16_t *)malloc(boards->display.frameBufferSize);
         }
-        assert(pBuffer);
+        if (!pBuffer) {
+            log_e("Failed to allocate AMOLED framebuffer");
+            releaseResources();
+            return false;
+        }
     }
 
     if (!initTouch(CHSC5816_SLAVE_ADDRESS,
-                   std::unique_ptr<TouchDrvInterface>(new TouchDrvCHSC5816()))) {
+                   std::unique_ptr<TouchDrvInterface>(new (std::nothrow) TouchDrvCHSC5816()))) {
         log_e("Failed to find CHSC5816 - check your wiring!");
     }
 
     // Share I2C Bus
-    _lightSensor.reset(new SensorCM32181());
-    bool res = _lightSensor->begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
+    _lightSensor.reset(new (std::nothrow) SensorCM32181());
+    bool res = _lightSensor && boards->sensor &&
+               _lightSensor->begin(Wire, CM32181_SLAVE_ADDRESS, boards->sensor->sda, boards->sensor->scl);
     if (!res) {
         _lightSensor.reset();
         log_e("Failed to find CM32181 - check your wiring!");
@@ -1042,11 +1117,10 @@ void LilyGo_AMOLED::attachPMU(void(*cb)(void))
 
 uint64_t LilyGo_AMOLED::readPMU()
 {
-    assert(boards);
-    if (!boards->pmu) {
+    if (!boards || !boards->pmu) {
         return 0;
     }
-    if (boards == &BOARD_AMOLED_147) {
+    if (_boardKind == BoardKind::AMOLED_147) {
         return _pmu && _pmu->getIrq() ? _pmu->getIrq()->readStatus(false) : 0;
     }
     return 0;
@@ -1054,33 +1128,27 @@ uint64_t LilyGo_AMOLED::readPMU()
 
 void LilyGo_AMOLED::clearPMU()
 {
-    if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            log_i("clearPMU");
-            if (_pmu && _pmu->getIrq()) {
-                _pmu->getIrq()->clearStatus();
-            }
+    if (boards && boards->pmu && _boardKind == BoardKind::AMOLED_147) {
+        log_i("clearPMU");
+        if (_pmu && _pmu->getIrq()) {
+            _pmu->getIrq()->clearStatus();
         }
     }
 }
 
 void LilyGo_AMOLED::enablePMUInterrupt(uint32_t params)
 {
-    if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            if (_pmu && _pmu->getIrq()) {
-                _pmu->getIrq()->enable(params);
-            }
+    if (boards && boards->pmu && _boardKind == BoardKind::AMOLED_147) {
+        if (_pmu && _pmu->getIrq()) {
+            _pmu->getIrq()->enable(params);
         }
     }
 }
 void LilyGo_AMOLED::disablePMUInterrupt(uint32_t params)
 {
-    if (boards) {
-        if (boards->pmu && (boards == &BOARD_AMOLED_147)) {
-            if (_pmu && _pmu->getIrq()) {
-                _pmu->getIrq()->disable(params);
-            }
+    if (boards && boards->pmu && _boardKind == BoardKind::AMOLED_147) {
+        if (_pmu && _pmu->getIrq()) {
+            _pmu->getIrq()->disable(params);
         }
     }
 }
@@ -1088,74 +1156,71 @@ void LilyGo_AMOLED::disablePMUInterrupt(uint32_t params)
 
 void LilyGo_AMOLED::sleep(bool touchpad_sleep_enable)
 {
-    assert(boards);
+    if (!boards) {
+        return;
+    }
 
-    //Wire amoled to sleep mode
+    // Put the AMOLED panel into sleep mode.
     lcd_cmd_t t = {LCD_CMD_SLPIN, {0x00}, 1}; //Sleep in
     writeCommand(t.addr, t.param, t.len);
 
-    if (boards) {
-
-        if (boards == &BOARD_AMOLED_241 || boards == &BOARD_AMOLED_191_SPI) {
-
-            if (_pmu) {
-                _pmu->getPower().enableBoost(false);
-                if (_pmicType == PmicType::SY6970) {
-                    static_cast<PmicSY6970 *>(_pmu.get())->adc().setContinuousMode(false);
-                } else if (_pmicType == PmicType::BQ25896) {
-                    static_cast<PmicBQ25896 *>(_pmu.get())->adc().setContinuousMode(false);
-                }
+    if (_boardKind == BoardKind::AMOLED_241 || _boardKind == BoardKind::AMOLED_191_SPI) {
+        if (_pmu) {
+            _pmu->getPower().enableBoost(false);
+            if (_pmicType == PmicType::SY6970) {
+                static_cast<PmicSY6970 *>(_pmu.get())->adc().setContinuousMode(false);
+            } else if (_pmicType == PmicType::BQ25896) {
+                static_cast<PmicBQ25896 *>(_pmu.get())->adc().setContinuousMode(false);
             }
+        }
 
-            // Disable amoled power
+        // Disable AMOLED power.
+        if (boards->PMICEnPins != -1) {
             digitalWrite(boards->PMICEnPins, LOW);
+        }
 
-            if (touchpad_sleep_enable) {
-                if (_touch) {
-                    _touch->sleep();
-                }
+        if (touchpad_sleep_enable && _touch) {
+            _touch->sleep();
+        }
+
+    } else if (_boardKind == BoardKind::AMOLED_147) {
+        log_i("PMU Disable AMOLED Power");
+
+        // Turn off sensor.
+        if (_lightSensor) {
+            _lightSensor->powerDown();
+        }
+
+        // Turn off ADC data monitoring to save power.
+        if (_pmu) {
+            _pmu->getAdc().disableChannels(static_cast<uint32_t>(PmicAdcBase::Channel::DIE_TEMPERATURE) |
+                                           static_cast<uint32_t>(PmicAdcBase::Channel::BAT_VOLTAGE) |
+                                           static_cast<uint32_t>(PmicAdcBase::Channel::VBUS_VOLTAGE) |
+                                           static_cast<uint32_t>(PmicAdcBase::Channel::VSYS_VOLTAGE));
+            static_cast<PmicAXP2101 *>(_pmu.get())->enableModule(PmicAXP2101::Module::BAT_DETECT, false);
+            _pmu->getLed().setMode(PmicLedBase::Mode::DISABLE);
+
+            // Disable AMOLED power while keeping ALDO1 enabled.
+            _pmu->getChannel()->enable(AXP2101Channel::CH_BLDO1, false);
+            _pmu->getChannel()->enable(AXP2101Channel::CH_ALDO3, false);
+        }
+
+        // Keep touch reset HIGH while entering deep sleep.
+        if (touchpad_sleep_enable && boards->touch) {
+            digitalWrite(boards->touch->rst, HIGH);
+            gpio_hold_en(static_cast<gpio_num_t>(boards->touch->rst));
+            gpio_deep_sleep_hold_en();
+            if (_touch) {
+                _touch->sleep();
             }
+        }
 
-        } else if (boards == &BOARD_AMOLED_147) {
-            log_i("PMU Disable AMOLED Power");
-
-            // Turn off Sensor
-            if (_lightSensor) {
-                _lightSensor->powerDown();
-            }
-
-            // Turn off ADC data monitoring to save power
-            if (_pmu) {
-                _pmu->getAdc().disableChannels(static_cast<uint32_t>(PmicAdcBase::Channel::DIE_TEMPERATURE) |
-                                               static_cast<uint32_t>(PmicAdcBase::Channel::BAT_VOLTAGE) |
-                                               static_cast<uint32_t>(PmicAdcBase::Channel::VBUS_VOLTAGE) |
-                                               static_cast<uint32_t>(PmicAdcBase::Channel::VSYS_VOLTAGE));
-                static_cast<PmicAXP2101 *>(_pmu.get())->enableModule(PmicAXP2101::Module::BAT_DETECT, false);
-                _pmu->getLed().setMode(PmicLedBase::Mode::DISABLE);
-
-                // Disable AMOLED power while keeping ALDO1 enabled.
-                _pmu->getChannel()->enable(AXP2101Channel::CH_BLDO1, false);
-                _pmu->getChannel()->enable(AXP2101Channel::CH_ALDO3, false);
-            }
-
-            // Keep touch reset to HIGH
-            if (touchpad_sleep_enable) {
-                digitalWrite(boards->touch->rst, HIGH);
-                gpio_hold_en((gpio_num_t )boards->touch->rst);
-                gpio_deep_sleep_hold_en();
-                // Enter sleep mode
-                if (_touch) {
-                    _touch->sleep();
-                }
-            }
-
-        } else {
-            if (boards->PMICEnPins != -1) {
-                // Disable amoled power
-                digitalWrite(boards->PMICEnPins, LOW);
-                if (touchpad_sleep_enable && _touch) {
-                    _touch->sleep();
-                }
+    } else {
+        if (boards->PMICEnPins != -1) {
+            // Disable AMOLED power.
+            digitalWrite(boards->PMICEnPins, LOW);
+            if (touchpad_sleep_enable && _touch) {
+                _touch->sleep();
             }
         }
     }
@@ -1180,15 +1245,14 @@ bool LilyGo_AMOLED::hasTouch()
 
 bool LilyGo_AMOLED::hasOTG()
 {
-    uint8_t board = getBoardID();
-    if (board == LILYGO_AMOLED_241 || board == LILYGO_AMOLED_191_SPI) {
-        return true;
-    }
-    return false;
+    return _pmu && (_pmicType == PmicType::SY6970 || _pmicType == PmicType::BQ25896);
 }
 
 void LilyGo_AMOLED::setRotation(uint8_t rotation)
 {
+    if (!boards) {
+        return;
+    }
     uint8_t data = 0x00;
     rotation %= 4;
     _rotation = rotation;
@@ -1199,7 +1263,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             _touch->setMirrorXY(mirrorX, mirrorY);
         }
     };
-    if (boards == &BOARD_AMOLED_191 || boards == &BOARD_AMOLED_191_SPI) {
+    if (_boardKind == BoardKind::AMOLED_191 || _boardKind == BoardKind::AMOLED_191_SPI) {
         switch (_rotation) {
         case 1:
             data = RM67162_MADCTL_RGB;
@@ -1227,7 +1291,7 @@ void LilyGo_AMOLED::setRotation(uint8_t rotation)
             break;
         }
         writeCommand(LCD_CMD_MADCTL, &data, 1);
-    } else if (boards == &BOARD_AMOLED_241) {
+    } else if (_boardKind == BoardKind::AMOLED_241) {
         switch (_rotation) {
         case 1:
             _offset_x = 16;
