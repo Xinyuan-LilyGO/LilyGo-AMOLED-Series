@@ -8,17 +8,25 @@ on:
       - "examples/**"
       - "src/**"
       - "libdeps/**"
+      - "library.json"
+      - "library.properties"
       - "platformio.ini"
       - ".github/workflows/platformio.yml"
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         examples:
           - examples/AdjustBrightness
+          - examples/Arduino_GFX_HelloWorld
+          - examples/Arduino_GFX_PDQgraphicstest
           - examples/DS18x20_Temperature
           - examples/Factory
+          - examples/FactoryV2
+          - examples/IR_RX_Test
+          - examples/IR_TX_Test
           - examples/Lvgl_Images
           - examples/LVGL_SD_Images
           - examples/LumenMeter
@@ -27,9 +35,11 @@ jobs:
           - examples/PPM_Example_for_T4S3
           - examples/SPI_SDCard
           - examples/PMU_Interrupt
+          - examples/PlayMP3FromPROGMEM
           - examples/CameraShield
           - examples/QWIIC_GPS_Shield
           - examples/QWIIC_HP303BSensor
+          - examples/QWIIC_I2C_Scan
           - examples/QWIIC_MAX3010X
           - examples/TFT_eSPI_Sprite
           - examples/TFT_eSPI_Sprite_ArcFill
@@ -39,63 +49,30 @@ jobs:
           - examples/TouchPaint
           - examples/LVGL_Rotation
           - examples/TFT_eSPI_Sprite_Rotation
-          - examples/lvgl/event
-          - examples/lvgl/get_started
-          - examples/lvgl/layouts/flex
-          - examples/lvgl/layouts/grid
-          - examples/lvgl/scroll
-          - examples/lvgl/style
-          - examples/lvgl/third_party/ImageDecoder
-          - examples/lvgl/third_party/gif
-          - examples/lvgl/widgets/animimg
-          - examples/lvgl/widgets/arc
-          - examples/lvgl/widgets/bar
-          - examples/lvgl/widgets/btn
-          - examples/lvgl/widgets/btnmatrix
-          - examples/lvgl/widgets/calendar
-          - examples/lvgl/widgets/canvas
-          - examples/lvgl/widgets/chart
-          - examples/lvgl/widgets/checkbox
-          - examples/lvgl/widgets/colorwheel
-          - examples/lvgl/widgets/dropdown
-          - examples/lvgl/widgets/img
-          - examples/lvgl/widgets/imgbtn
-          - examples/lvgl/widgets/keyboard
-          - examples/lvgl/widgets/label
-          - examples/lvgl/widgets/led
-          - examples/lvgl/widgets/line
-          - examples/lvgl/widgets/list
-          - examples/lvgl/widgets/menu
-          - examples/lvgl/widgets/meter
-          - examples/lvgl/widgets/msgbox
-          - examples/lvgl/widgets/obj
-          - examples/lvgl/widgets/roller
-          - examples/lvgl/widgets/slider
-          - examples/lvgl/widgets/span
-          - examples/lvgl/widgets/spinbox
-          - examples/lvgl/widgets/spinner
-          - examples/lvgl/widgets/switch
-          - examples/lvgl/widgets/table
-          - examples/lvgl/widgets/tabview
-          - examples/lvgl/widgets/textarea
-          - examples/lvgl/widgets/tileview
-          - examples/lvgl/widgets/win
+          - examples/TWAI_SelfTest
+          - examples/USB_Host_Keyboard_Mouse
+          - examples/lvgl_version_9
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
-      - uses: actions/setup-python@v4
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+      - uses: actions/setup-python@v7
         with:
-          python-version: "3.9"
+          python-version: "3.12"
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
       - name: Run PlatformIO
         run: |
-          export PLATFORMIO_SRC_DIR=${{ matrix.examples }}
-          pio run
+          environment="T-Display-AMOLED"
+          case "${{ matrix.examples }}" in
+            examples/Arduino_GFX_*) environment="T-Display-AMOLED-191-ArduinoGFX" ;;
+            examples/IR_RX_Test|examples/IR_TX_Test) environment="IRTest" ;;
+            examples/USB_Host_Keyboard_Mouse) environment="T-Display-AMOLED-USB-HOST" ;;
+          esac
+          PLATFORMIO_SRC_DIR="${{ matrix.examples }}" pio run -e "$environment"
