@@ -68,42 +68,47 @@ bool Arduino_Canvas_Mono::begin(int32_t speed)
 
 void Arduino_Canvas_Mono::writePixelPreclipped(int16_t x, int16_t y, uint16_t color)
 {
-  // change the pixel in the original orientation of the bitmap buffer
-  if (_verticalByte)
+  if (_framebuffer)
   {
-    // vertical buffer layout: 1 byte in the buffer contains 8 vertical pixels
-    int32_t pos = x + (y / 8) * _canvas_width;
-
-    if (color & 0b1000010000010000)
+    // change the pixel in the original orientation of the bitmap buffer
+    if (_verticalByte)
     {
-      _framebuffer[pos] |= (1 << (y & 7));
+      // vertical buffer layout: 1 byte in the buffer contains 8 vertical pixels
+      int32_t pos = x + (y / 8) * _canvas_width;
+
+      if (color & 0b1000010000010000)
+      {
+        _framebuffer[pos] |= (1 << (y & 7));
+      }
+      else
+      {
+        _framebuffer[pos] &= ~(1 << (y & 7));
+      }
     }
     else
     {
-      _framebuffer[pos] &= ~(1 << (y & 7));
-    }
-  }
-  else
-  {
-    // horizontal buffer layout: 1 byte in the buffer contains 8 horizontal pixels
-    int16_t w = (_canvas_width + 7) / 8;
-    int32_t pos = (y * w) + (x / 8);
+      // horizontal buffer layout: 1 byte in the buffer contains 8 horizontal pixels
+      int16_t w = (_canvas_width + 7) / 8;
+      int32_t pos = (y * w) + (x / 8);
 
-    if (color & 0b1000010000010000)
-    {
-      _framebuffer[pos] |= 0x80 >> (x & 7);
-    }
-    else
-    {
-      _framebuffer[pos] &= ~(0x80 >> (x & 7));
+      if (color & 0b1000010000010000)
+      {
+        _framebuffer[pos] |= 0x80 >> (x & 7);
+      }
+      else
+      {
+        _framebuffer[pos] &= ~(0x80 >> (x & 7));
+      }
     }
   }
 }
 
-void Arduino_Canvas_Mono::flush()
+void Arduino_Canvas_Mono::flush(bool force_flush)
 {
-  if (_output)
-    _output->drawBitmap(_output_x, _output_y, _framebuffer, _canvas_width, _canvas_height, WHITE, BLACK);
+  if (_framebuffer && _output)
+  {
+    _output->drawBitmap(_output_x, _output_y, _framebuffer, _canvas_width, _canvas_height, RGB565_WHITE, RGB565_BLACK);
+  }
 }
 
 uint8_t *Arduino_Canvas_Mono::getFramebuffer()

@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['offset_0',['offset',['../classaudio__driver_1_1_g_p_i_o_ext.html#aed7ea92f45bd273dde380a45ddced592',1,'audio_driver::GPIOExt']]],
+  ['operator_20bool_1',['operator bool',['../classaudio__driver_1_1_audio_board.html#a9b3baad8c612d81b96e46f84d7e97580',1,'audio_driver::AudioBoard::operator bool()'],['../classaudio__driver_1_1_audio_driver.html#a9b3baad8c612d81b96e46f84d7e97580',1,'audio_driver::AudioDriver::operator bool()'],['../structaudio__driver_1_1_pins_s_p_i.html#a9b3baad8c612d81b96e46f84d7e97580',1,'audio_driver::PinsSPI::operator bool()'],['../structaudio__driver_1_1_pins_i2_c.html#a9b3baad8c612d81b96e46f84d7e97580',1,'audio_driver::PinsI2C::operator bool()'],['../classaudio__driver__local_1_1_optional.html#a67b76affb3b5d35fa419ac234144038b',1,'audio_driver_local::Optional::operator bool()'],['../classaudio__driver__local_1_1_vector.html#a67b76affb3b5d35fa419ac234144038b',1,'audio_driver_local::Vector::operator bool()']]],
+  ['operator_21_3d_2',['operator!=',['../classaudio__driver__local_1_1_vector_1_1iterator.html#afc4c9788a5e05b3ed8be4691e94b88fc',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_2a_3',['operator*',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a3f534efce0b043d603eb8f5653268e7d',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_2b_4',['operator+',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a1e7f8def776ddca1af5b176bf3cf3567',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_2b_2b_5',['operator++',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a561eed6007b06b34b05a9feff66345a2',1,'audio_driver_local::Vector::iterator::operator++(int n)'],['../classaudio__driver__local_1_1_vector_1_1iterator.html#a6f339989c2f64e9ff87255fe9bc1fef0',1,'audio_driver_local::Vector::iterator::operator++()']]],
+  ['operator_2d_6',['operator-',['../classaudio__driver__local_1_1_vector_1_1iterator.html#ad29d0c7a1fabee5021ddedaf2bc0f68d',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_2d_2d_7',['operator--',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a99e7d6b50496e802f063418bd6cfea6b',1,'audio_driver_local::Vector::iterator::operator--()'],['../classaudio__driver__local_1_1_vector_1_1iterator.html#a286a407a79ebf3bac7c627bbe0cf1b34',1,'audio_driver_local::Vector::iterator::operator--(int n)']]],
+  ['operator_2d_3e_8',['operator-&gt;',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a4442b1b9eab40e7939e1e01cdedcb7ae',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_3c_9',['operator&lt;',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a206bf814b26d0006ee0790051b15490f',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_3c_3d_10',['operator&lt;=',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a39eba0b4243b7ee6f0f0ead2d8d54635',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_3d_11',['operator=',['../classaudio__driver_1_1_driver_pins.html#af9fdcd1f3e7a3e2e8dca4bd7cb353573',1,'audio_driver::DriverPins::operator=()'],['../classaudio__driver__local_1_1_vector.html#a2d2188dabaa11f4bd8376b7200055a78',1,'audio_driver_local::Vector::operator=()']]],
+  ['operator_3d_3d_12',['operator==',['../classaudio__driver__local_1_1_vector_1_1iterator.html#ac3efbb92ccf74e3271390ba0d3c7f030',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_3e_13',['operator&gt;',['../classaudio__driver__local_1_1_vector_1_1iterator.html#affd45f6cd8c0874296c6bc92a8a506d2',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_3e_3d_14',['operator&gt;=',['../classaudio__driver__local_1_1_vector_1_1iterator.html#a015f56731c626ef36632f7067149e497',1,'audio_driver_local::Vector::iterator']]],
+  ['operator_5b_5d_15',['operator[]',['../classaudio__driver__local_1_1_vector.html#ab8a9c78e6200f854f4c6ec9cd7328da6',1,'audio_driver_local::Vector::operator[](int index)'],['../classaudio__driver__local_1_1_vector.html#a1d9c5a77e341f57b0772e34c0bce6156',1,'audio_driver_local::Vector::operator[](const int index) const']]],
+  ['optional_16',['optional',['../classaudio__driver__local_1_1_optional.html#a8abdf29c53e2d866ae58f1550b479120',1,'audio_driver_local::Optional::Optional()'],['../classaudio__driver__local_1_1_optional.html#a83e27dc44351c7b10e39d6fcfc9711e6',1,'audio_driver_local::Optional::Optional(T value)'],['../classaudio__driver__local_1_1_optional.html',1,'Optional&lt; T &gt;']]],
+  ['optional_2eh_17',['Optional.h',['../_optional_8h.html',1,'']]],
+  ['output_18',['output',['../etc_8h.html#a61a3c9a18380aafb6e430e79bf596557',1,'OUTPUT:&#160;etc.h'],['../namespaceaudio__driver.html#a541db2b810d671856e3d258a0e184d4fa29c2c02a361c9d7028472e5d92cd4a54',1,'audio_driver::Output']]],
+  ['output_5fdevice_19',['output_device',['../structcodec__config__t.html#a53991a860287c34f4e412af745d4bb66',1,'codec_config_t']]],
+  ['output_5fdevice_5ft_20',['output_device_t',['../_driver_common_8h.html#a9144c83baaa7ebeaaecb236f9e21d264',1,'DriverCommon.h']]]
+];

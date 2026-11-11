@@ -45,7 +45,7 @@ Arduino_GFX *gfx4 = new Arduino_ILI9341(bus4, GFX_NOT_DEFINED /* RST */, 0 /* ro
  * End of Arduino_GFX setting
  ******************************************************************************/
 
-#if defined(TARGET_RP2040)
+#if defined(TARGET_RP2040) || defined(PICO_RP2350)
 #include <LittleFS.h>
 #include <SD.h>
 #elif defined(ESP32)
@@ -68,14 +68,14 @@ static GifClass gifClass4;
 
 void setup()
 {
+#ifdef DEV_DEVICE_INIT
+  DEV_DEVICE_INIT();
+#endif
+
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
   Serial.println("Arduino_GFX Multiple Display Animated GIF example!");
-
-#ifdef GFX_EXTRA_PRE_INIT
-  GFX_EXTRA_PRE_INIT();
-#endif
 
   // Init all displays
 
@@ -83,31 +83,31 @@ void setup()
   {
     Serial.println("gfx1->begin() failed!");
   }
-  gfx1->fillScreen(RED);
+  gfx1->fillScreen(RGB565_RED);
   delay(200);
 
   if (!gfx2->begin())
   {
     Serial.println("gfx2->begin() failed!");
   }
-  gfx2->fillScreen(YELLOW);
+  gfx2->fillScreen(RGB565_YELLOW);
   delay(200);
 
   if (!gfx3->begin())
   {
     Serial.println("gfx3->begin() failed!");
   }
-  gfx3->fillScreen(GREEN);
+  gfx3->fillScreen(RGB565_LIME);
   delay(200);
 
   if (!gfx4->begin())
   {
     Serial.println("gfx4->begin() failed!");
   }
-  gfx4->fillScreen(BLUE);
+  gfx4->fillScreen(RGB565_BLUE);
   delay(200);
 
-#if defined(TARGET_RP2040)
+#if defined(TARGET_RP2040) || defined(PICO_RP2350)
   if (!LittleFS.begin())
   // if (!SD.begin(SS))
 #elif defined(ESP32)
@@ -130,7 +130,7 @@ void setup()
 
 void loop()
 {
-#if defined(TARGET_RP2040)
+#if defined(TARGET_RP2040) || defined(PICO_RP2350)
   File gifFile1 = LittleFS.open(GIF_FILENAME1, "r");
   File gifFile2 = LittleFS.open(GIF_FILENAME2, "r");
   File gifFile3 = LittleFS.open(GIF_FILENAME3, "r");

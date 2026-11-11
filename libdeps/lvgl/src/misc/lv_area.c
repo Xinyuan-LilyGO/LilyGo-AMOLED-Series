@@ -6,10 +6,10 @@
 /*********************
  *      INCLUDES
  *********************/
-#include "../lv_conf_internal.h"
+#include "../lvgl_public.h"
+#include "../core/lv_global.h"
 
-#include "lv_area.h"
-#include "lv_math.h"
+#include "lv_area_private.h"
 
 /*********************
  *      DEFINES
@@ -37,65 +37,41 @@ static bool lv_point_within_circle(const lv_area_t * area, const lv_point_t * p)
  *   GLOBAL FUNCTIONS
  **********************/
 
-/**
- * Initialize an area
- * @param area_p pointer to an area
- * @param x1 left coordinate of the area
- * @param y1 top coordinate of the area
- * @param x2 right coordinate of the area
- * @param y2 bottom coordinate of the area
- */
-void lv_area_set(lv_area_t * area_p, lv_coord_t x1, lv_coord_t y1, lv_coord_t x2, lv_coord_t y2)
+void lv_area_set(lv_area_t * area_p, int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
+    LV_CHECK_ARG(area_p != NULL, return);
     area_p->x1 = x1;
     area_p->y1 = y1;
     area_p->x2 = x2;
     area_p->y2 = y2;
 }
 
-/**
- * Set the width of an area
- * @param area_p pointer to an area
- * @param w the new width of the area (w == 1 makes x1 == x2)
- */
-void lv_area_set_width(lv_area_t * area_p, lv_coord_t w)
+void lv_area_set_width(lv_area_t * area_p, int32_t w)
 {
+    LV_CHECK_ARG(area_p != NULL, return);
     area_p->x2 = area_p->x1 + w - 1;
 }
 
-/**
- * Set the height of an area
- * @param area_p pointer to an area
- * @param h the new height of the area (h == 1 makes y1 == y2)
- */
-void lv_area_set_height(lv_area_t * area_p, lv_coord_t h)
+void lv_area_set_height(lv_area_t * area_p, int32_t h)
 {
+    LV_CHECK_ARG(area_p != NULL, return);
     area_p->y2 = area_p->y1 + h - 1;
 }
 
-/**
- * Set the position of an area (width and height will be kept)
- * @param area_p pointer to an area
- * @param x the new x coordinate of the area
- * @param y the new y coordinate of the area
- */
-void _lv_area_set_pos(lv_area_t * area_p, lv_coord_t x, lv_coord_t y)
+void lv_area_set_pos(lv_area_t * area_p, int32_t x, int32_t y)
 {
-    lv_coord_t w = lv_area_get_width(area_p);
-    lv_coord_t h = lv_area_get_height(area_p);
+    LV_CHECK_ARG(area_p != NULL, return);
+    int32_t w = lv_area_get_width(area_p);
+    int32_t h = lv_area_get_height(area_p);
     area_p->x1   = x;
     area_p->y1   = y;
     lv_area_set_width(area_p, w);
     lv_area_set_height(area_p, h);
 }
 
-/**
- * Return with area of an area (x * y)
- * @param area_p pointer to an area
- * @return size of area
- */
 uint32_t lv_area_get_size(const lv_area_t * area_p)
 {
+    LV_CHECK_ARG(area_p != NULL, return 0);
     uint32_t size;
 
     size = (uint32_t)(area_p->x2 - area_p->x1 + 1) * (area_p->y2 - area_p->y1 + 1);
@@ -103,31 +79,29 @@ uint32_t lv_area_get_size(const lv_area_t * area_p)
     return size;
 }
 
-void lv_area_increase(lv_area_t * area, lv_coord_t w_extra, lv_coord_t h_extra)
+void lv_area_increase(lv_area_t * area, int32_t w_extra, int32_t h_extra)
 {
+    LV_CHECK_ARG(area != NULL, return);
     area->x1 -= w_extra;
     area->x2 += w_extra;
     area->y1 -= h_extra;
     area->y2 += h_extra;
 }
 
-void lv_area_move(lv_area_t * area, lv_coord_t x_ofs, lv_coord_t y_ofs)
+void lv_area_move(lv_area_t * area, int32_t x_ofs, int32_t y_ofs)
 {
+    LV_CHECK_ARG(area != NULL, return);
     area->x1 += x_ofs;
     area->x2 += x_ofs;
     area->y1 += y_ofs;
     area->y2 += y_ofs;
 }
 
-/**
- * Get the common parts of two areas
- * @param res_p pointer to an area, the result will be stored here
- * @param a1_p pointer to the first area
- * @param a2_p pointer to the second area
- * @return false: the two area has NO common parts, res_p is invalid
- */
-bool _lv_area_intersect(lv_area_t * res_p, const lv_area_t * a1_p, const lv_area_t * a2_p)
+bool lv_area_intersect(lv_area_t * res_p, const lv_area_t * a1_p, const lv_area_t * a2_p)
 {
+    LV_CHECK_ARG(res_p != NULL, return false);
+    LV_CHECK_ARG(a1_p != NULL, return false);
+    LV_CHECK_ARG(a2_p != NULL, return false);
     /*Get the smaller area from 'a1_p' and 'a2_p'*/
     res_p->x1 = LV_MAX(a1_p->x1, a2_p->x1);
     res_p->y1 = LV_MAX(a1_p->y1, a2_p->y1);
@@ -143,68 +117,64 @@ bool _lv_area_intersect(lv_area_t * res_p, const lv_area_t * a1_p, const lv_area
     return union_ok;
 }
 
-/**
- * Get resulting sub areas after removing the common parts of two areas from the first area
- * @param res_p pointer to an array of areas with a count of 4, the resulting areas will be stored here
- * @param a1_p pointer to the first area
- * @param a2_p pointer to the second area
- * @return number of results or -1 if no intersect
- */
-int8_t _lv_area_diff(lv_area_t * res_p, const lv_area_t * a1_p, const lv_area_t * a2_p)
+int8_t lv_area_diff(lv_area_t res_p[], const lv_area_t * a1_p, const lv_area_t * a2_p)
 {
+    LV_CHECK_ARG(res_p != NULL, return -1);
+    LV_CHECK_ARG(a1_p != NULL, return -1);
+    LV_CHECK_ARG(a2_p != NULL, return -1);
     /*Areas have no common parts*/
-    if(!_lv_area_is_on(a1_p, a2_p)) return -1;
+    if(!lv_area_is_on(a1_p, a2_p)) return -1;
 
     /*No remaining areas after removing common parts*/
-    if(_lv_area_is_in(a1_p, a2_p, 0)) return 0;
+    if(lv_area_is_in(a1_p, a2_p, 0)) return 0;
 
     /*Result counter*/
     int8_t res_c = 0;
 
     /*Get required information*/
     lv_area_t n;
-    lv_coord_t a1_w = lv_area_get_width(a1_p) - 1;
-    lv_coord_t a1_h = lv_area_get_height(a1_p) - 1;
+    int32_t a1_w = lv_area_get_width(a1_p) - 1;
+    int32_t a1_h = lv_area_get_height(a1_p) - 1;
 
     /*Compute top rectangle*/
-    lv_coord_t th = a2_p->y1 - a1_p->y1;
+    int32_t th = a2_p->y1 - a1_p->y1;
     if(th > 0) {
         n.x1 = a1_p->x1;
         n.y1 = a1_p->y1;
         n.x2 = a1_p->x2;
-        n.y2 = a1_p->y1 + th;
+        n.y2 = a1_p->y1 + th - 1;
         res_p[res_c++] = n;
     }
 
     /*Compute the bottom rectangle*/
-    lv_coord_t bh = a1_h - (a2_p->y2 - a1_p->y1);
+    int32_t bh = a1_h - (a2_p->y2 - a1_p->y1);
     if(bh > 0 && a2_p->y2 < a1_p->y2) {
         n.x1 = a1_p->x1;
-        n.y1 = a2_p->y2;
+        n.y1 = a2_p->y2 + 1;
         n.x2 = a1_p->x2;
         n.y2 = a2_p->y2 + bh;
         res_p[res_c++] = n;
     }
 
     /*Compute side height*/
-    lv_coord_t y1 = a2_p->y1 > a1_p->y1 ? a2_p->y1 : a1_p->y1;
-    lv_coord_t y2 = a2_p->y2 < a1_p->y2 ? a2_p->y2 : a1_p->y2;
-    lv_coord_t sh = y2 - y1;
+    int32_t y1 = a2_p->y1 > a1_p->y1 ? a2_p->y1 : a1_p->y1;
+    int32_t y2 = a2_p->y2 < a1_p->y2 ? a2_p->y2 : a1_p->y2;
+    int32_t sh = y2 - y1;
 
     /*Compute the left rectangle*/
-    lv_coord_t lw = a2_p->x1 - a1_p->x1;
-    if(lw > 0 && sh > 0) {
+    int32_t lw = a2_p->x1 - a1_p->x1;
+    if(lw > 0 && sh >= 0) {
         n.x1 = a1_p->x1;
         n.y1 = y1;
-        n.x2 = a1_p->x1 + lw;
+        n.x2 = a1_p->x1 + lw - 1;
         n.y2 = y1 + sh;
         res_p[res_c++] = n;
     }
 
     /*Compute the right rectangle*/
-    lv_coord_t rw = a1_w - (a2_p->x2 - a1_p->x1);
-    if(rw > 0) {
-        n.x1 = a2_p->x2;
+    int32_t rw = a1_w - (a2_p->x2 - a1_p->x1);
+    if(rw > 0 && sh >= 0) {
+        n.x1 = a2_p->x2 + 1;
         n.y1 = y1;
         n.x2 = a2_p->x2 + rw;
         n.y2 = y1 + sh;
@@ -215,29 +185,21 @@ int8_t _lv_area_diff(lv_area_t * res_p, const lv_area_t * a1_p, const lv_area_t 
     return res_c;
 }
 
-/**
- * Join two areas into a third which involves the other two
- * @param res_p pointer to an area, the result will be stored here
- * @param a1_p pointer to the first area
- * @param a2_p pointer to the second area
- */
-void _lv_area_join(lv_area_t * a_res_p, const lv_area_t * a1_p, const lv_area_t * a2_p)
+void lv_area_join(lv_area_t * a_res_p, const lv_area_t * a1_p, const lv_area_t * a2_p)
 {
+    LV_CHECK_ARG(a_res_p != NULL, return);
+    LV_CHECK_ARG(a1_p != NULL, return);
+    LV_CHECK_ARG(a2_p != NULL, return);
     a_res_p->x1 = LV_MIN(a1_p->x1, a2_p->x1);
     a_res_p->y1 = LV_MIN(a1_p->y1, a2_p->y1);
     a_res_p->x2 = LV_MAX(a1_p->x2, a2_p->x2);
     a_res_p->y2 = LV_MAX(a1_p->y2, a2_p->y2);
 }
 
-/**
- * Check if a point is on an area
- * @param a_p pointer to an area
- * @param p_p pointer to a point
- * @param radius radius of area (e.g. for rounded rectangle)
- * @return false:the point is out of the area
- */
-bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coord_t radius)
+bool lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, int32_t radius)
 {
+    LV_CHECK_ARG(a_p != NULL, return false);
+    LV_CHECK_ARG(p_p != NULL, return false);
     /*First check the basic area*/
     bool is_on_rect = false;
     if((p_p->x >= a_p->x1 && p_p->x <= a_p->x2) && ((p_p->y >= a_p->y1 && p_p->y <= a_p->y2))) {
@@ -250,9 +212,9 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
         /*No radius, it is within the rectangle*/
         return true;
     }
-    lv_coord_t w = lv_area_get_width(a_p) / 2;
-    lv_coord_t h = lv_area_get_height(a_p) / 2;
-    lv_coord_t max_radius = LV_MIN(w, h);
+    int32_t w = lv_area_get_width(a_p) / 2;
+    int32_t h = lv_area_get_height(a_p) / 2;
+    int32_t max_radius = LV_MIN(w, h);
     if(radius > max_radius)
         radius = max_radius;
 
@@ -263,7 +225,7 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
     corner_area.x2 = a_p->x1 + radius;
     corner_area.y1 = a_p->y1;
     corner_area.y2 = a_p->y1 + radius;
-    if(_lv_area_is_point_on(&corner_area, p_p, 0)) {
+    if(lv_area_is_point_on(&corner_area, p_p, 0)) {
         corner_area.x2 += radius;
         corner_area.y2 += radius;
         return lv_point_within_circle(&corner_area, p_p);
@@ -271,7 +233,7 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
     /*Bottom left*/
     corner_area.y1 = a_p->y2 - radius;
     corner_area.y2 = a_p->y2;
-    if(_lv_area_is_point_on(&corner_area, p_p, 0)) {
+    if(lv_area_is_point_on(&corner_area, p_p, 0)) {
         corner_area.x2 += radius;
         corner_area.y1 -= radius;
         return lv_point_within_circle(&corner_area, p_p);
@@ -279,7 +241,7 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
     /*Bottom right*/
     corner_area.x1 = a_p->x2 - radius;
     corner_area.x2 = a_p->x2;
-    if(_lv_area_is_point_on(&corner_area, p_p, 0)) {
+    if(lv_area_is_point_on(&corner_area, p_p, 0)) {
         corner_area.x1 -= radius;
         corner_area.y1 -= radius;
         return lv_point_within_circle(&corner_area, p_p);
@@ -287,7 +249,7 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
     /*Top right*/
     corner_area.y1 = a_p->y1;
     corner_area.y2 = a_p->y1 + radius;
-    if(_lv_area_is_point_on(&corner_area, p_p, 0)) {
+    if(lv_area_is_point_on(&corner_area, p_p, 0)) {
         corner_area.x1 -= radius;
         corner_area.y2 += radius;
         return lv_point_within_circle(&corner_area, p_p);
@@ -296,14 +258,10 @@ bool _lv_area_is_point_on(const lv_area_t * a_p, const lv_point_t * p_p, lv_coor
     return true;
 }
 
-/**
- * Check if two area has common parts
- * @param a1_p pointer to an area.
- * @param a2_p pointer to an other area
- * @return false: a1_p and a2_p has no common parts
- */
-bool _lv_area_is_on(const lv_area_t * a1_p, const lv_area_t * a2_p)
+bool lv_area_is_on(const lv_area_t * a1_p, const lv_area_t * a2_p)
 {
+    LV_CHECK_ARG(a1_p != NULL, return false);
+    LV_CHECK_ARG(a2_p != NULL, return false);
     if((a1_p->x1 <= a2_p->x2) && (a1_p->x2 >= a2_p->x1) && (a1_p->y1 <= a2_p->y2) && (a1_p->y2 >= a2_p->y1)) {
         return true;
     }
@@ -312,15 +270,10 @@ bool _lv_area_is_on(const lv_area_t * a1_p, const lv_area_t * a2_p)
     }
 }
 
-/**
- * Check if an area is fully on an other
- * @param ain_p pointer to an area which could be in 'aholder_p'
- * @param aholder_p pointer to an area which could involve 'ain_p'
- * @param radius radius of `aholder_p` (e.g. for rounded rectangle)
- * @return true: `ain_p` is fully inside `aholder_p`
- */
-bool _lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, lv_coord_t radius)
+bool lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, int32_t radius)
 {
+    LV_CHECK_ARG(ain_p != NULL, return false);
+    LV_CHECK_ARG(aholder_p != NULL, return false);
     bool is_in = false;
 
     if(ain_p->x1 >= aholder_p->x1 && ain_p->y1 >= aholder_p->y1 && ain_p->x2 <= aholder_p->x2 &&
@@ -334,34 +287,25 @@ bool _lv_area_is_in(const lv_area_t * ain_p, const lv_area_t * aholder_p, lv_coo
     /*Check if the corner points are inside the radius or not*/
     lv_point_t p;
 
-    p.x = ain_p->x1;
-    p.y = ain_p->y1;
-    if(_lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
+    lv_point_set(&p, ain_p->x1, ain_p->y1);
+    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
 
-    p.x = ain_p->x2;
-    p.y = ain_p->y1;
-    if(_lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
+    lv_point_set(&p, ain_p->x2, ain_p->y1);
+    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
 
-    p.x = ain_p->x1;
-    p.y = ain_p->y2;
-    if(_lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
+    lv_point_set(&p, ain_p->x1, ain_p->y2);
+    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
 
-    p.x = ain_p->x2;
-    p.y = ain_p->y2;
-    if(_lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
+    lv_point_set(&p, ain_p->x2, ain_p->y2);
+    if(lv_area_is_point_on(aholder_p, &p, radius) == false) return false;
 
     return true;
 }
 
-/**
- * Check if an area is fully out of an other
- * @param aout_p pointer to an area which could be in 'aholder_p'
- * @param aholder_p pointer to an area which could involve 'ain_p'
- * @param radius radius of `aholder_p` (e.g. for rounded rectangle)
- * @return true: `aout_p` is fully outside `aholder_p`
- */
-bool _lv_area_is_out(const lv_area_t * aout_p, const lv_area_t * aholder_p, lv_coord_t radius)
+bool lv_area_is_out(const lv_area_t * aout_p, const lv_area_t * aholder_p, int32_t radius)
 {
+    LV_CHECK_ARG(aout_p != NULL, return false);
+    LV_CHECK_ARG(aholder_p != NULL, return false);
     if(aout_p->x2 < aholder_p->x1 || aout_p->y2 < aholder_p->y1 || aout_p->x1 > aholder_p->x2 ||
        aout_p->y1 > aholder_p->y2) {
         return true;
@@ -372,42 +316,34 @@ bool _lv_area_is_out(const lv_area_t * aout_p, const lv_area_t * aholder_p, lv_c
     /*Check if the corner points are outside the radius or not*/
     lv_point_t p;
 
-    p.x = aout_p->x1;
-    p.y = aout_p->y1;
-    if(_lv_area_is_point_on(aholder_p, &p, radius)) return false;
+    lv_point_set(&p, aout_p->x1, aout_p->y1);
+    if(lv_area_is_point_on(aholder_p, &p, radius)) return false;
 
-    p.x = aout_p->x2;
-    p.y = aout_p->y1;
-    if(_lv_area_is_point_on(aholder_p, &p, radius)) return false;
+    lv_point_set(&p, aout_p->x2, aout_p->y1);
+    if(lv_area_is_point_on(aholder_p, &p, radius)) return false;
 
-    p.x = aout_p->x1;
-    p.y = aout_p->y2;
-    if(_lv_area_is_point_on(aholder_p, &p, radius)) return false;
+    lv_point_set(&p, aout_p->x1, aout_p->y2);
+    if(lv_area_is_point_on(aholder_p, &p, radius)) return false;
 
-    p.x = aout_p->x2;
-    p.y = aout_p->y2;
-    if(_lv_area_is_point_on(aholder_p, &p, radius)) return false;
+    lv_point_set(&p, aout_p->x2, aout_p->y2);
+    if(lv_area_is_point_on(aholder_p, &p, radius)) return false;
 
     return true;
 }
 
-bool _lv_area_is_equal(const lv_area_t * a, const lv_area_t * b)
+bool lv_area_is_equal(const lv_area_t * a, const lv_area_t * b)
 {
+    LV_CHECK_ARG(a != NULL, return false);
+    LV_CHECK_ARG(b != NULL, return false);
     return a->x1 == b->x1 && a->x2 == b->x2 && a->y1 == b->y1 && a->y2 == b->y2;
 }
 
-/**
- * Align an area to an other
- * @param base an are where the other will be aligned
- * @param to_align the area to align
- * @param align `LV_ALIGN_...`
- * @param res x/y coordinates where `to_align` align area should be placed
- */
-void lv_area_align(const lv_area_t * base, lv_area_t * to_align, lv_align_t align, lv_coord_t ofs_x, lv_coord_t ofs_y)
+void lv_area_align(const lv_area_t * base, lv_area_t * to_align, lv_align_t align, int32_t ofs_x, int32_t ofs_y)
 {
-
-    lv_coord_t x;
-    lv_coord_t y;
+    LV_CHECK_ARG(base != NULL, return);
+    LV_CHECK_ARG(to_align != NULL, return);
+    int32_t x;
+    int32_t y;
     switch(align) {
         case LV_ALIGN_CENTER:
             x = lv_area_get_width(base) / 2 - lv_area_get_width(to_align) / 2;
@@ -520,64 +456,177 @@ void lv_area_align(const lv_area_t * base, lv_area_t * to_align, lv_align_t alig
     x += base->x1;
     y += base->y1;
 
-    lv_coord_t w = lv_area_get_width(to_align);
-    lv_coord_t h = lv_area_get_height(to_align);
+    int32_t w = lv_area_get_width(to_align);
+    int32_t h = lv_area_get_height(to_align);
     to_align->x1 = x + ofs_x;
     to_align->y1 = y + ofs_y;
     to_align->x2 = to_align->x1 + w - 1;
     to_align->y2 = to_align->y1 + h - 1;
 }
 
-#define _LV_TRANSFORM_TRIGO_SHIFT 10
-void lv_point_transform(lv_point_t * p, int32_t angle, int32_t zoom, const lv_point_t * pivot)
+#define LV_TRANSFORM_TRIGO_SHIFT 10
+
+void lv_point_transform(lv_point_t * point, int32_t angle, int32_t scale_x, int32_t scale_y, const lv_point_t * pivot,
+                        bool zoom_first)
 {
-    if(angle == 0 && zoom == 256) {
+    LV_CHECK_ARG(point != NULL, return);
+    LV_CHECK_ARG(pivot != NULL, return);
+    lv_point_array_transform(point, 1, angle, scale_x, scale_y, pivot, zoom_first);
+}
+
+void lv_point_array_transform(lv_point_t * points, size_t count, int32_t angle, int32_t scale_x, int32_t scale_y,
+                              const lv_point_t * pivot,
+                              bool zoom_first)
+{
+    LV_CHECK_ARG(points != NULL, return);
+    LV_CHECK_ARG(count > 0, return);
+    LV_CHECK_ARG(pivot != NULL, return);
+    if(angle == 0 && scale_x == 256 && scale_y == 256) {
         return;
     }
+    uint32_t i;
+    for(i = 0; i < count; i++) {
+        points[i].x -= pivot->x;
+        points[i].y -= pivot->y;
 
-    p->x -= pivot->x;
-    p->y -= pivot->y;
+    }
 
     if(angle == 0) {
-        p->x = (((int32_t)(p->x) * zoom) >> 8) + pivot->x;
-        p->y = (((int32_t)(p->y) * zoom) >> 8) + pivot->y;
+        for(i = 0; i < count; i++) {
+            points[i].x = (((int32_t)(points[i].x) * scale_x) >> 8) + pivot->x;
+            points[i].y = (((int32_t)(points[i].y) * scale_y) >> 8) + pivot->y;
+        }
         return;
     }
 
-    static int32_t angle_prev = INT32_MIN;
-    static int32_t sinma;
-    static int32_t cosma;
-    if(angle_prev != angle) {
-        int32_t angle_limited = angle;
-        if(angle_limited > 3600) angle_limited -= 3600;
-        if(angle_limited < 0) angle_limited += 3600;
+    int32_t angle_limited = angle;
+    if(angle_limited > 3600) angle_limited -= 3600;
+    if(angle_limited < 0) angle_limited += 3600;
 
-        int32_t angle_low = angle_limited / 10;
-        int32_t angle_high = angle_low + 1;
-        int32_t angle_rem = angle_limited  - (angle_low * 10);
+    int32_t angle_low = angle_limited / 10;
+    int32_t angle_high = angle_low + 1;
+    int32_t angle_rem = angle_limited  - (angle_low * 10);
 
-        int32_t s1 = lv_trigo_sin(angle_low);
-        int32_t s2 = lv_trigo_sin(angle_high);
+    int32_t s1 = lv_trigo_sin(angle_low);
+    int32_t s2 = lv_trigo_sin(angle_high);
 
-        int32_t c1 = lv_trigo_sin(angle_low + 90);
-        int32_t c2 = lv_trigo_sin(angle_high + 90);
+    int32_t c1 = lv_trigo_sin(angle_low + 90);
+    int32_t c2 = lv_trigo_sin(angle_high + 90);
 
-        sinma = (s1 * (10 - angle_rem) + s2 * angle_rem) / 10;
-        cosma = (c1 * (10 - angle_rem) + c2 * angle_rem) / 10;
-        sinma = sinma >> (LV_TRIGO_SHIFT - _LV_TRANSFORM_TRIGO_SHIFT);
-        cosma = cosma >> (LV_TRIGO_SHIFT - _LV_TRANSFORM_TRIGO_SHIFT);
-        angle_prev = angle;
+    int32_t sinma = (s1 * (10 - angle_rem) + s2 * angle_rem) / 10;
+    sinma = sinma >> (LV_TRIGO_SHIFT - LV_TRANSFORM_TRIGO_SHIFT);
+    int32_t cosma = (c1 * (10 - angle_rem) + c2 * angle_rem) / 10;
+    cosma = cosma >> (LV_TRIGO_SHIFT - LV_TRANSFORM_TRIGO_SHIFT);
+
+    for(i = 0; i < count; i++) {
+        int32_t x = points[i].x;
+        int32_t y = points[i].y;
+        if(scale_x == 256 && scale_y == 256) {
+            points[i].x = ((cosma * x - sinma * y) >> LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
+            points[i].y = ((sinma * x + cosma * y) >> LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
+        }
+        else {
+            if(zoom_first) {
+                x *= scale_x;
+                y *= scale_y;
+                points[i].x = (((cosma * x - sinma * y)) >> (LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->x;
+                points[i].y = (((sinma * x + cosma * y)) >> (LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->y;
+            }
+            else {
+                points[i].x = (((cosma * x - sinma * y) * scale_x) >> (LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->x;
+                points[i].y = (((sinma * x + cosma * y) * scale_y) >> (LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->y;
+            }
+        }
     }
-    int32_t x = p->x;
-    int32_t y = p->y;
-    if(zoom == 256) {
-        p->x = ((cosma * x - sinma * y) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->x;
-        p->y = ((sinma * x + cosma * y) >> _LV_TRANSFORM_TRIGO_SHIFT) + pivot->y;
+}
+
+int32_t lv_area_get_width(const lv_area_t * area_p)
+{
+    LV_CHECK_ARG(area_p != NULL, return 0);
+    return (int32_t)(area_p->x2 - area_p->x1 + 1);
+}
+
+int32_t lv_area_get_height(const lv_area_t * area_p)
+{
+    LV_CHECK_ARG(area_p != NULL, return 0);
+    return (int32_t)(area_p->y2 - area_p->y1 + 1);
+}
+
+lv_point_t lv_point_from_precise(const lv_point_precise_t * p)
+{
+    LV_CHECK_ARG(p != NULL, return (lv_point_t) {
+        0
+    });
+    lv_point_t point = {
+        (int32_t)p->x, (int32_t)p->y
+    };
+
+    return point;
+}
+
+lv_point_precise_t lv_point_to_precise(const lv_point_t * p)
+{
+    LV_CHECK_ARG(p != NULL, return (lv_point_precise_t) {
+        0
+    });
+    lv_point_precise_t point = {
+        (lv_value_precise_t)p->x, (lv_value_precise_t)p->y
+    };
+
+    return point;
+}
+
+void lv_point_set(lv_point_t * p, int32_t x, int32_t y)
+{
+    LV_CHECK_ARG(p != NULL, return);
+    p->x = x;
+    p->y = y;
+}
+
+void lv_point_precise_set(lv_point_precise_t * p, lv_value_precise_t x, lv_value_precise_t y)
+{
+    LV_CHECK_ARG(p != NULL, return);
+    p->x = x;
+    p->y = y;
+}
+
+void lv_point_swap(lv_point_t * p1, lv_point_t * p2)
+{
+    LV_CHECK_ARG(p1 != NULL, return);
+    LV_CHECK_ARG(p2 != NULL, return);
+    lv_point_t tmp = *p1;
+    *p1 = *p2;
+    *p2 = tmp;
+}
+
+void lv_point_precise_swap(lv_point_precise_t * p1, lv_point_precise_t * p2)
+{
+    LV_CHECK_ARG(p1 != NULL, return);
+    LV_CHECK_ARG(p2 != NULL, return);
+    lv_point_precise_t tmp = *p1;
+    *p1 = *p2;
+    *p2 = tmp;
+}
+
+int32_t lv_pct(int32_t x)
+{
+    return LV_PCT(x);
+}
+
+int32_t lv_pct_to_px(int32_t v, int32_t base)
+{
+    if(LV_COORD_IS_PCT(v)) {
+        return (LV_COORD_GET_PCT(v) * base) / 100;
     }
-    else {
-        p->x = (((cosma * x - sinma * y) * zoom) >> (_LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->x;
-        p->y = (((sinma * x + cosma * y) * zoom) >> (_LV_TRANSFORM_TRIGO_SHIFT + 8)) + pivot->y;
-    }
+
+    return v;
+}
+
+void lv_area_copy(lv_area_t * dest, const lv_area_t * src)
+{
+    LV_CHECK_ARG(dest != NULL, return);
+    LV_CHECK_ARG(src != NULL, return);
+    *dest = *src;
 }
 
 /**********************
@@ -586,15 +635,15 @@ void lv_point_transform(lv_point_t * p, int32_t angle, int32_t zoom, const lv_po
 
 static bool lv_point_within_circle(const lv_area_t * area, const lv_point_t * p)
 {
-    lv_coord_t r = (area->x2 - area->x1) / 2;
+    int32_t r = (area->x2 - area->x1) / 2;
 
     /*Circle center*/
-    lv_coord_t cx = area->x1 + r;
-    lv_coord_t cy = area->y1 + r;
+    int32_t cx = area->x1 + r;
+    int32_t cy = area->y1 + r;
 
     /*Simplify the code by moving everything to (0, 0)*/
-    lv_coord_t px = p->x - cx;
-    lv_coord_t py = p->y - cy;
+    int32_t px = p->x - cx;
+    int32_t py = p->y - cy;
 
     uint32_t r_sqrd = r * r;
     uint32_t dist = (px * px) + (py * py);

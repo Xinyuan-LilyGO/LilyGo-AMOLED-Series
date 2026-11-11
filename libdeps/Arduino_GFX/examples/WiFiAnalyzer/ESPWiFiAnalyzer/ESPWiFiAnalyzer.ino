@@ -1,7 +1,7 @@
-/*
+/*******************************************************************************
  * ESP WiFi Analyzer
- * Require ESP8266/ESP32 board support.
- */
+ * Requires ESP8266/ESP32 board
+ ******************************************************************************/
 
 // POWER SAVING SETTING
 #define SCAN_INTERVAL 3000
@@ -16,7 +16,11 @@
  * Defalult pin list for non display dev kit:
  * Arduino Nano, Micro and more: CS:  9, DC:  8, RST:  7, BL:  6, SCK: 13, MOSI: 11, MISO: 12
  * ESP32 various dev board     : CS:  5, DC: 27, RST: 33, BL: 22, SCK: 18, MOSI: 23, MISO: nil
- * ESP32-C3 various dev board  : CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C2/3 various dev board: CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C5 various dev board  : CS: 23, DC: 24, RST: 25, BL: 26, SCK: 10, MOSI:  8, MISO: nil
+ * ESP32-C6 various dev board  : CS: 18, DC: 22, RST: 23, BL: 15, SCK: 21, MOSI: 19, MISO: nil
+ * ESP32-H2 various dev board  : CS:  0, DC: 12, RST:  8, BL: 22, SCK: 10, MOSI: 25, MISO: nil
+ * ESP32-P4 various dev board  : CS: 26, DC: 27, RST: 25, BL: 24, SCK: 36, MOSI: 32, MISO: nil
  * ESP32-S2 various dev board  : CS: 34, DC: 38, RST: 33, BL: 21, SCK: 36, MOSI: 35, MISO: nil
  * ESP32-S3 various dev board  : CS: 40, DC: 41, RST: 42, BL: 48, SCK: 36, MOSI: 35, MISO: nil
  * ESP8266 various dev board   : CS: 15, DC:  4, RST:  2, BL:  5, SCK: 14, MOSI: 13, MISO: 12
@@ -49,27 +53,37 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, DF_GFX_RST, 3 /* rotation */, false 
  ******************************************************************************/
 
 #if defined(ESP32)
-#include "WiFi.h"
+#include <WiFi.h>
 #else
-#include "ESP8266WiFi.h"
+#include <ESP8266WiFi.h>
 #define log_i(format, ...) Serial.printf(format, ##__VA_ARGS__)
 #endif
 
-int16_t w, h, text_size, banner_height, graph_baseline, graph_height, channel_width, signal_width;
+int16_t w, h, banner_text_size, banner_height, graph_baseline, graph_height, channel_width, signal_width;
 
 // RSSI RANGE
-#define RSSI_CEILING -40
+#define RSSI_CEILING -30
+#define RSSI_SHOW_SSID -70
 #define RSSI_FLOOR -100
 
-// Channel color mapping from channel 1 to 14
+// Channel legend mapping
+uint8_t channel_legend[] = {
+    1, 2, 3, 4, 5, 6, 7,      // 0-6:     1,  2,  3,  4,  5,  6,  7,
+    8, 9, 10, 11, 12, 13, 0}; // 7-13:    8,  9, 10, 11, 12, 13, 14
+
+// Channel color mapping
 uint16_t channel_color[] = {
-    RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, MAGENTA,
-    RED, ORANGE, YELLOW, GREEN, CYAN, BLUE, MAGENTA};
+    RGB565_RED, RGB565_ORANGE, RGB565_YELLOW, RGB565_LIME, RGB565_CYAN, RGB565_BLUE, RGB565_MAGENTA,
+    RGB565_RED, RGB565_ORANGE, RGB565_YELLOW, RGB565_LIME, RGB565_CYAN, RGB565_BLUE, RGB565_MAGENTA};
 
 uint8_t scan_count = 0;
 
 void setup()
 {
+#ifdef DEV_DEVICE_INIT
+  DEV_DEVICE_INIT();
+#endif
+
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
@@ -79,10 +93,6 @@ void setup()
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
-
-#ifdef GFX_EXTRA_PRE_INIT
-  GFX_EXTRA_PRE_INIT();
-#endif
 
 #if defined(LCD_PWR_PIN)
   pinMode(LCD_PWR_PIN, OUTPUT);    // sets the pin as output
@@ -99,23 +109,38 @@ void setup()
   {
     Serial.println("gfx->begin() failed!");
   }
+  gfx->fillScreen(RGB565_BLACK);
+
   w = gfx->width();
   h = gfx->height();
-  text_size = (h < 200) ? 1 : 2;
-  banner_height = text_size * 3 * 4;
-  graph_baseline = h - 20;                            // minus 2 text lines
-  graph_height = graph_baseline - banner_height - 30; // minus 3 text lines
-  channel_width = w / 17;
+  banner_text_size = (w < 300) ? 1 : 2;
+  banner_height = (banner_text_size * 8) + 2;
+  graph_height = h - banner_height - 30; // minus 3 text lines
+  graph_baseline = banner_height + 10 + graph_height;
+  channel_width = w / 16;
   signal_width = channel_width * 2;
 
   // init banner
-  gfx->setTextSize(text_size);
-  gfx->fillScreen(BLACK);
-  gfx->setTextColor(RED);
+  gfx->fillRect(0, 0, w, banner_text_size * 8, RGB565_PURPLE);
+  gfx->setTextSize(banner_text_size);
   gfx->setCursor(0, 0);
-  gfx->print("ESP");
-  gfx->setTextColor(WHITE);
-  gfx->print(" WiFi Analyzer");
+  gfx->setTextColor(RGB565_WHITE, RGB565_RED);
+  gfx->print(" ESP");
+  gfx->setTextColor(RGB565_WHITE, RGB565_DARKORANGE);
+#if defined(ESP32)
+  gfx->print("32 ");
+#elif defined(ESP8266)
+  gfx->print("8266 ");
+#endif
+  gfx->setTextColor(RGB565_WHITE, RGB565_MEDIUMBLUE);
+  gfx->print(" WiFi ");
+  gfx->setTextColor(RGB565_WHITE, RGB565_PURPLE);
+  gfx->print(" Analyzer");
+  gfx->setTextSize(1);
+
+#ifdef CANVAS
+  gfx->flush();
+#endif
 }
 
 bool matchBssidPrefix(uint8_t *a, uint8_t *b)
@@ -132,10 +157,10 @@ bool matchBssidPrefix(uint8_t *a, uint8_t *b)
 
 void loop()
 {
-  uint8_t ap_count_list[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  int32_t noise_list[] = {RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR};
-  int32_t peak_list[] = {RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR, RSSI_FLOOR};
-  int16_t peak_id_list[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  uint8_t ap_count_list[sizeof(channel_legend)];
+  int32_t noise_list[sizeof(channel_legend)];
+  int32_t peak_list[sizeof(channel_legend)];
+  int16_t peak_id_list[sizeof(channel_legend)];
   int32_t channel;
   int16_t idx;
   int32_t rssi;
@@ -144,22 +169,26 @@ void loop()
   uint16_t color;
   int16_t height, offset, text_width;
 
+  // init array value
+  for (int i = 0; i < sizeof(channel_legend); ++i)
+  {
+    ap_count_list[i] = 0;
+    noise_list[i] = RSSI_FLOOR;
+    peak_list[i] = RSSI_FLOOR;
+    peak_id_list[i] = -1;
+  }
+
   // WiFi.scanNetworks will return the number of networks found
-#if defined(ESP32)
-  int n = WiFi.scanNetworks(false /* async */, true /* show_hidden */, true /* passive */, 500 /* max_ms_per_chan */);
-#else
   int n = WiFi.scanNetworks(false /* async */, true /* show_hidden */);
-#endif
 
   // clear old graph
-  gfx->fillRect(0, banner_height, w, h - banner_height, BLACK);
-  gfx->setTextSize(1);
+  gfx->fillRect(0, banner_height, w, h - banner_height, RGB565_BLACK);
 
   if (n == 0)
   {
-    gfx->setTextColor(WHITE);
+    gfx->setTextColor(RGB565_WHITE);
     gfx->setCursor(0, banner_height);
-    gfx->println("no networks found");
+    gfx->println("No networks found");
   }
   else
   {
@@ -169,12 +198,16 @@ void loop()
       idx = channel - 1;
       rssi = WiFi.RSSI(i);
       bssid = WiFi.BSSID(i);
+      ssid = WiFi.SSID(i);
 
-      // channel peak stat
-      if (peak_list[idx] < rssi)
+      // channel peak stat, find peak ssid
+      if (ssid.length() > 0)
       {
-        peak_list[idx] = rssi;
-        peak_id_list[idx] = i;
+        if (peak_list[idx] < rssi)
+        {
+          peak_list[idx] = rssi;
+          peak_id_list[idx] = i;
+        }
       }
 
       // check signal come from same AP
@@ -239,7 +272,7 @@ void loop()
       rssi = WiFi.RSSI(i);
       color = channel_color[idx];
       height = constrain(map(rssi, RSSI_FLOOR, RSSI_CEILING, 1, graph_height), 1, graph_height);
-      offset = (channel + 1) * channel_width;
+      offset = (idx + 2) * channel_width;
 
       // trim rssi with RSSI_FLOOR
       if (rssi < RSSI_FLOOR)
@@ -254,10 +287,10 @@ void loop()
       gfx->writeEllipseHelper(offset, graph_baseline + 1, signal_width, height, 0b0011, color);
       gfx->endWrite();
 
-      if (i == peak_id_list[idx])
+      if ((rssi >= RSSI_SHOW_SSID) && (i == peak_id_list[idx]))
       {
         // Print SSID, signal strengh and if not encrypted
-        String ssid = WiFi.SSID(i);
+        ssid = WiFi.SSID(i);
         if (ssid.length() == 0)
         {
           ssid = WiFi.BSSIDstr(i);
@@ -276,7 +309,7 @@ void loop()
           }
         }
         gfx->setTextColor(color);
-        gfx->setCursor(offset, graph_baseline - 10 - height);
+        gfx->setCursor(offset, ((height + 8) > graph_height) ? (graph_baseline - graph_height) : (graph_baseline - 10 - height));
         gfx->print(ssid);
         gfx->print('(');
         gfx->print(rssi);
@@ -294,7 +327,7 @@ void loop()
   }
 
   // print WiFi stat
-  gfx->setTextColor(WHITE);
+  gfx->setTextColor(RGB565_WHITE);
   gfx->setCursor(0, banner_height);
   gfx->print(n);
   gfx->print(" networks found, lesser noise channels: ");
@@ -303,7 +336,7 @@ void loop()
   for (channel = 2; channel <= 11; channel++) // channels 12-14 may not available
   {
     idx = channel - 1;
-    log_i("min_noise: %d, noise_list[%d]: %d", min_noise, idx, noise_list[idx]);
+    // log_i("min_noise: %d, noise_list[%d]: %d", min_noise, idx, noise_list[idx]);
     if (noise_list[idx] < min_noise)
     {
       min_noise = noise_list[idx];
@@ -328,23 +361,29 @@ void loop()
     }
   }
 
-  // draw graph base axle
-  gfx->drawFastHLine(0, graph_baseline, gfx->width(), WHITE);
-  for (channel = 1; channel <= 14; channel++)
+  // draw 2.4 GHz graph base axle
+  gfx->drawFastHLine(0, graph_baseline, w, RGB565_WHITE);
+  for (idx = 0; idx < 14; idx++)
   {
-    idx = channel - 1;
-    offset = (channel + 1) * channel_width;
-    gfx->setTextColor(channel_color[idx]);
-    gfx->setCursor(offset - ((channel < 10) ? 3 : 6), graph_baseline + 2);
-    gfx->print(channel);
+    channel = channel_legend[idx];
+    offset = (idx + 2) * channel_width;
+    if (channel > 0)
+    {
+      gfx->setTextColor(channel_color[idx]);
+      gfx->setCursor(offset - ((channel < 10) ? 3 : 6), graph_baseline + 2);
+      gfx->print(channel);
+    }
     if (ap_count_list[idx] > 0)
     {
-      gfx->setCursor(offset - ((ap_count_list[idx] < 10) ? 9 : 12), graph_baseline + 8 + 2);
-      gfx->print('{');
+      gfx->setTextColor(RGB565_LIGHTGREY);
+      gfx->setCursor(offset - ((ap_count_list[idx] < 10) ? 3 : 6), graph_baseline + 8 + 2);
       gfx->print(ap_count_list[idx]);
-      gfx->print('}');
     }
   }
+
+#ifdef CANVAS
+  gfx->flush();
+#endif
 
   // Wait a bit before scanning again
   delay(SCAN_INTERVAL);

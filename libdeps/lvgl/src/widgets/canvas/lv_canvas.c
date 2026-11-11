@@ -1,0 +1,485 @@
+/**
+ * @file lv_canvas.c
+ *
+ */
+
+/**
+ * Modified by NXP in 2024
+ */
+
+/*********************
+ *      INCLUDES
+ *********************/
+
+#include "lv_canvas_private.h"
+
+#if LV_USE_CANVAS
+
+#include "../../display/lv_display_private.h"
+#include "../../core/lv_obj_class_private.h"
+#include "../../lvgl_public.h"
+#include "../../draw/lv_draw_private.h"
+#include "../../misc/cache/lv_cache.h"
+#include "../../core/lv_obj_style_internal.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+#define MY_CLASS (&lv_canvas_class)
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+static void lv_canvas_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj);
+static bool layer_is_descendant(const lv_layer_t * layer, const lv_layer_t * ancestor);
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+const lv_obj_class_t lv_canvas_class = {
+    .constructor_cb = lv_canvas_constructor,
+    .destructor_cb = lv_canvas_destructor,
+    .instance_size = sizeof(lv_canvas_t),
+    .base_class = &lv_image_class,
+    .name = "lv_canvas",
+};
+
+/**********************
+ *      MACROS
+ **********************/
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+lv_obj_t * lv_canvas_create(lv_obj_t * parent)
+{
+    LV_LOG_INFO("begin");
+    lv_obj_t * obj = lv_obj_class_create_obj(MY_CLASS, parent);
+    lv_obj_class_init_obj(obj);
+    return obj;
+}
+
+/*=====================
+ * Setter functions
+ *====================*/
+
+void lv_canvas_set_buffer(lv_obj_t * obj, void * buf, int32_t w, int32_t h, lv_color_format_t cf)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+    LV_CHECK_ARG(buf != NULL, return);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    uint32_t stride = lv_draw_buf_width_to_stride(w, cf);
+    lv_result_t res = lv_draw_buf_init(&canvas->static_buf, w, h, cf, stride, buf, stride * h);
+    if(res != LV_RESULT_OK) {
+        return;
+    }
+    canvas->draw_buf = &canvas->static_buf;
+
+    const void * src = lv_image_get_src(obj);
+    if(src) {
+        lv_image_cache_drop(src);
+    }
+
+    lv_image_set_src(obj, canvas->draw_buf);
+    lv_image_cache_drop(canvas->draw_buf);
+}
+
+void lv_canvas_set_draw_buf(lv_obj_t * obj, lv_draw_buf_t * draw_buf)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+    LV_CHECK_ARG(draw_buf != NULL, return);
+    LV_CHECK_ARG_MSG(draw_buf->handlers != NULL, return, "draw_buf has no handlers, is it initialized?");
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    canvas->draw_buf = draw_buf;
+
+    const void * src = lv_image_get_src(obj);
+    if(src) {
+        lv_image_cache_drop(src);
+    }
+
+    lv_image_set_src(obj, draw_buf);
+    lv_image_cache_drop(draw_buf);
+}
+
+void lv_canvas_set_px(lv_obj_t * obj, int32_t x, int32_t y, lv_color_t color, lv_opa_t opa)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    lv_draw_buf_t * draw_buf = canvas->draw_buf;
+
+    if(draw_buf == NULL) return;
+
+    lv_color_format_t cf = draw_buf->header.cf;
+    uint8_t * data = lv_draw_buf_goto_xy(draw_buf, x, y);
+    if(data == NULL) return;
+
+    if(LV_COLOR_FORMAT_IS_INDEXED(cf)) {
+        uint8_t shift;
+        uint8_t c_int = color.blue;
+        switch(cf) {
+            case LV_COLOR_FORMAT_I1:
+                shift = 7 - (x & 0x7);
+                break;
+            case LV_COLOR_FORMAT_I2:
+                shift = 6 - 2 * (x & 0x3);
+                break;
+            case LV_COLOR_FORMAT_I4:
+                shift = 4 - 4 * (x & 0x1);
+                break;
+            case LV_COLOR_FORMAT_I8:
+                /*Indexed8 format is a easy case, process and return.*/
+                shift = 0;
+                *data = c_int;
+            default:
+                return;
+        }
+
+        uint8_t bpp = lv_color_format_get_bpp(cf);
+        uint8_t mask = (1 << bpp) - 1;
+        c_int &= mask;
+        *data = (*data & ~(mask << shift)) | (c_int << shift);
+    }
+    else if(cf == LV_COLOR_FORMAT_L8) {
+        *data = lv_color_luminance(color);
+    }
+    else if(cf == LV_COLOR_FORMAT_A8) {
+        *data = opa;
+    }
+    else if(cf == LV_COLOR_FORMAT_RGB565) {
+        lv_color16_t * buf = (lv_color16_t *)data;
+        buf->red = color.red >> 3;
+        buf->green = color.green >> 2;
+        buf->blue = color.blue >> 3;
+    }
+    else if(cf == LV_COLOR_FORMAT_RGB888) {
+        data[2] = color.red;
+        data[1] = color.green;
+        data[0] = color.blue;
+    }
+    else if(cf == LV_COLOR_FORMAT_XRGB8888) {
+        data[2] = color.red;
+        data[1] = color.green;
+        data[0] = color.blue;
+        data[3] = 0xFF;
+    }
+    else if(cf == LV_COLOR_FORMAT_ARGB8888) {
+        lv_color32_t * buf = (lv_color32_t *)data;
+        buf->red = color.red;
+        buf->green = color.green;
+        buf->blue = color.blue;
+        buf->alpha = opa;
+    }
+    else if(cf == LV_COLOR_FORMAT_AL88) {
+        lv_color16a_t * buf = (lv_color16a_t *)data;
+        buf->lumi = lv_color_luminance(color);
+        buf->alpha = 255;
+    }
+    lv_obj_invalidate(obj);
+}
+
+void lv_canvas_set_palette(lv_obj_t * obj, uint8_t index, lv_color32_t color)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+
+    if(canvas->draw_buf == NULL) return;
+
+    lv_draw_buf_set_palette(canvas->draw_buf, index, color);
+    lv_obj_invalidate(obj);
+}
+
+/*=====================
+ * Getter functions
+ *====================*/
+
+lv_draw_buf_t * lv_canvas_get_draw_buf(lv_obj_t * obj)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return NULL);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    return canvas->draw_buf;
+}
+
+lv_color32_t lv_canvas_get_px(lv_obj_t * obj, int32_t x, int32_t y)
+{
+    lv_color32_t ret = { 0 };
+    LV_CHECK_OBJ(obj, MY_CLASS, return ret);
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    LV_CHECK_ARG(canvas->draw_buf != NULL, return ret);
+    LV_CHECK_ARG(lv_draw_buf_is_position_valid(canvas->draw_buf, x, y), return ret);
+
+    lv_image_header_t * header = &canvas->draw_buf->header;
+    const uint8_t * px = lv_draw_buf_goto_xy(canvas->draw_buf, x, y);
+    LV_ASSERT(px != NULL);
+
+    switch(header->cf) {
+        case LV_COLOR_FORMAT_ARGB8888:
+            ret = *(lv_color32_t *)px;
+            break;
+        case LV_COLOR_FORMAT_RGB888:
+        case LV_COLOR_FORMAT_XRGB8888:
+            ret.red = px[2];
+            ret.green = px[1];
+            ret.blue = px[0];
+            ret.alpha = 0xFF;
+            break;
+        case LV_COLOR_FORMAT_RGB565: {
+                lv_color16_t * c16 = (lv_color16_t *) px;
+                ret.red = (c16->red * 2106) >> 8;  /*To make it rounded*/
+                ret.green = (c16->green * 1037) >> 8;
+                ret.blue = (c16->blue * 2106) >> 8;
+                ret.alpha = 0xFF;
+                break;
+            }
+        case LV_COLOR_FORMAT_A8: {
+                lv_color_t alpha_color = lv_obj_get_style_image_recolor_internal(obj, LV_PART_MAIN);
+                ret.red = alpha_color.red;
+                ret.green = alpha_color.green;
+                ret.blue = alpha_color.blue;
+                ret.alpha = px[0];
+                break;
+            }
+        case LV_COLOR_FORMAT_L8: {
+                ret.red = *px;
+                ret.green = *px;
+                ret.blue = *px;
+                ret.alpha = 0xFF;
+                break;
+            }
+        default:
+            lv_memzero(&ret, sizeof(lv_color32_t));
+            break;
+    }
+
+    return ret;
+}
+
+lv_image_dsc_t * lv_canvas_get_image(lv_obj_t * obj)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return NULL);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    return (lv_image_dsc_t *)canvas->draw_buf;
+}
+
+const void * lv_canvas_get_buf(lv_obj_t * obj)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return NULL);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    if(canvas->draw_buf)
+        return canvas->draw_buf->unaligned_data;
+
+    return NULL;
+}
+
+/*=====================
+ * Other functions
+ *====================*/
+
+void lv_canvas_copy_buf(lv_obj_t * obj, const lv_area_t * canvas_area, lv_draw_buf_t * src_buf,
+                        const lv_area_t * src_area)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+    LV_CHECK_ARG(canvas_area != NULL, return);
+    LV_CHECK_ARG(src_buf != NULL, return);
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    LV_CHECK_ARG(canvas->draw_buf != NULL, return);
+    LV_CHECK_ARG_MSG(canvas->draw_buf->header.cf == src_buf->header.cf, return, "Color formats must be the same");
+
+    lv_draw_buf_copy(canvas->draw_buf, canvas_area, src_buf, src_area);
+}
+
+void lv_canvas_fill_bg(lv_obj_t * obj, lv_color_t color, lv_opa_t opa)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    lv_draw_buf_t * draw_buf = canvas->draw_buf;
+    LV_CHECK_ARG(draw_buf != NULL, return);
+
+    lv_image_header_t * header = &draw_buf->header;
+    uint32_t x;
+    uint32_t y;
+
+    uint32_t stride = header->stride;
+    uint8_t * data = draw_buf->data;
+    if(header->cf == LV_COLOR_FORMAT_RGB565) {
+        uint16_t c16 = lv_color_to_u16(color);
+        for(y = 0; y < header->h; y++) {
+            uint16_t * buf16 = (uint16_t *)(data + y * stride);
+            for(x = 0; x < header->w; x++) {
+                buf16[x] = c16;
+            }
+        }
+    }
+    else if(header->cf == LV_COLOR_FORMAT_XRGB8888 || header->cf == LV_COLOR_FORMAT_ARGB8888) {
+        uint32_t c32 = lv_color_to_u32(color);
+        if(header->cf == LV_COLOR_FORMAT_ARGB8888) {
+            c32 &= 0x00ffffff;
+            c32 |= (uint32_t)opa << 24;
+        }
+        for(y = 0; y < header->h; y++) {
+            uint32_t * buf32 = (uint32_t *)(data + y * stride);
+            for(x = 0; x < header->w; x++) {
+                buf32[x] = c32;
+            }
+        }
+    }
+    else if(header->cf == LV_COLOR_FORMAT_RGB888) {
+        for(y = 0; y < header->h; y++) {
+            uint8_t * buf8 = (uint8_t *)(data + y * stride);
+            for(x = 0; x < header->w * 3; x += 3) {
+                buf8[x + 0] = color.blue;
+                buf8[x + 1] = color.green;
+                buf8[x + 2] = color.red;
+            }
+        }
+    }
+    else if(header->cf == LV_COLOR_FORMAT_L8) {
+        uint8_t c8 = lv_color_luminance(color);
+        for(y = 0; y < header->h; y++) {
+            uint8_t * buf = (uint8_t *)(data + y * stride);
+            for(x = 0; x < header->w; x++) {
+                buf[x] = c8;
+            }
+        }
+    }
+    else if(header->cf == LV_COLOR_FORMAT_AL88) {
+        lv_color16a_t c;
+        c.lumi = lv_color_luminance(color);
+        c.alpha = 255;
+        for(y = 0; y < header->h; y++) {
+            lv_color16a_t * buf = (lv_color16a_t *)(data + y * stride);
+            for(x = 0; x < header->w; x++) {
+                buf[x] = c;
+            }
+        }
+    }
+
+    else {
+        for(y = 0; y < header->h; y++) {
+            for(x = 0; x < header->w; x++) {
+                lv_canvas_set_px(obj, x, y, color, opa);
+            }
+        }
+    }
+
+    lv_draw_buf_flush_cache(canvas->draw_buf, NULL);
+    lv_obj_invalidate(obj);
+}
+
+void lv_canvas_init_layer(lv_obj_t * obj, lv_layer_t * layer)
+{
+    LV_CHECK_OBJ(obj, MY_CLASS, return);
+    LV_CHECK_ARG(layer != NULL, return);
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    LV_CHECK_ARG(canvas->draw_buf != NULL, return);
+
+    lv_layer_init(layer);
+    lv_image_header_t * header = &canvas->draw_buf->header;
+    lv_area_t canvas_area = {0, 0, header->w - 1,  header->h - 1};
+
+    layer->draw_buf = canvas->draw_buf;
+    layer->display = lv_obj_get_display(obj);
+    layer->color_format = header->cf;
+    layer->buf_area = canvas_area;
+    layer->_clip_area = canvas_area;
+    layer->phy_clip_area = canvas_area;
+
+    lv_draw_unit_send_event(NULL, LV_EVENT_CHILD_CREATED, layer);
+}
+
+void lv_canvas_finish_layer(lv_obj_t * canvas, lv_layer_t * layer)
+{
+    LV_CHECK_OBJ(canvas, MY_CLASS, return);
+    LV_CHECK_ARG(layer != NULL, return);
+
+    if(layer->draw_task_head == NULL) {
+        lv_draw_unit_send_event(NULL, LV_EVENT_CHILD_DELETED, layer);
+        return;
+    }
+
+    layer->all_tasks_added = true;
+
+    bool task_dispatched;
+    lv_display_t * display = layer->display;
+    LV_ASSERT(display != NULL);
+
+    while(layer->draw_task_head) {
+        lv_draw_dispatch_wait_for_request();
+
+        task_dispatched = lv_draw_dispatch_layer(display, layer);
+
+        /*TODO(v10): dispatching a layer can create new sub layers that the layer depends on.
+         * These sub layers are created in display's layer list because `lv_draw_layer_create`
+         * attaches this layer to the display layer head, so in here we need to iterate over that
+         * list and dispatchs any sub layers that are required by the main layer
+         */
+        lv_layer_t * sub_layer = display->layer_head;
+        while(sub_layer) {
+            if(layer_is_descendant(sub_layer, layer) && lv_draw_dispatch_layer(display, sub_layer)) {
+                task_dispatched = true;
+            }
+            sub_layer = sub_layer->next;
+        }
+
+        if(!task_dispatched) {
+            lv_draw_wait_for_finish();
+            lv_draw_dispatch_request();
+        }
+    }
+
+    lv_draw_unit_send_event(NULL, LV_EVENT_SCREEN_LOAD_START, layer);
+    lv_draw_unit_send_event(NULL, LV_EVENT_CHILD_DELETED, layer);
+    lv_obj_invalidate(canvas);
+}
+
+uint32_t lv_canvas_buf_size(int32_t w, int32_t h, uint8_t bpp, uint8_t stride)
+{
+    return (uint32_t)LV_CANVAS_BUF_SIZE(w, h, bpp, stride);
+}
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+
+static void lv_canvas_constructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
+{
+    LV_UNUSED(class_p);
+    LV_UNUSED(obj);
+}
+
+static void lv_canvas_destructor(const lv_obj_class_t * class_p, lv_obj_t * obj)
+{
+    LV_UNUSED(class_p);
+    LV_TRACE_OBJ_CREATE("begin");
+    LV_ASSERT(obj != NULL);
+
+    lv_canvas_t * canvas = (lv_canvas_t *)obj;
+    if(canvas->draw_buf == NULL) return;
+
+    lv_image_cache_drop(&canvas->draw_buf);
+}
+static bool layer_is_descendant(const lv_layer_t * layer, const lv_layer_t * ancestor)
+{
+    layer = layer->parent;
+    while(layer) {
+        if(layer == ancestor) return true;
+        layer = layer->parent;
+    }
+
+    return false;
+}
+
+#endif

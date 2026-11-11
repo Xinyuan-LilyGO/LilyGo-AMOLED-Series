@@ -1,0 +1,65 @@
+
+/**
+ * @file lv_sprintf_clib.c
+ *
+ */
+
+/*********************
+ *      INCLUDES
+ *********************/
+
+#include "../../lvgl_public.h"
+#if LV_USE_STDLIB_SPRINTF == LV_STDLIB_CLIB
+
+#include <stdio.h>
+#include LV_STDARG_INCLUDE
+
+/*********************
+ *      DEFINES
+ *********************/
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+int lv_snprintf(char * buffer, size_t count, const char * format, ...)
+{
+    LV_ASSERT(format != NULL);
+    LV_ASSERT_MSG(count == 0 || buffer != NULL, "NULL buffer with non-zero count");
+
+    va_list va;
+    va_start(va, format);
+    const int ret = vsnprintf(buffer, count, format, va);
+    va_end(va);
+    return ret;
+}
+
+int lv_vsnprintf(char * buffer, size_t count, const char * format, va_list va)
+{
+    LV_ASSERT(format != NULL);
+    LV_ASSERT_MSG(count == 0 || buffer != NULL, "NULL buffer with non-zero count");
+
+    return vsnprintf(buffer, count, format, va);
+}
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+
+#endif

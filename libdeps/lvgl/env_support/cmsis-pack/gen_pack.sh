@@ -21,7 +21,7 @@ if [ `uname -s` = "Linux" ]
   CMSIS_PACK_PATH="/home/$USER/.arm/Packs/ARM/CMSIS/5.7.0/"
   PATH_TO_ADD="$CMSIS_PACK_PATH/CMSIS/Utilities/Linux64/"
 else
-  CMSIS_PACK_PATH="/C/Users/$USER/AppData/Local/Arm/Packs/ARM/CMSIS/5.7.0"
+  CMSIS_PACK_PATH="/C/Users/$USER/AppData/Local/Arm/Packs/ARM/CMSIS"  #"/C/Users/$USER/AppData/Local/Arm/Packs/ARM/CMSIS/5.7.0"
   PATH_TO_ADD="/C/Program Files (x86)/7-Zip/:/C/Program Files/7-Zip/:$CMSIS_PACK_PATH/CMSIS/Utilities/Win32/:/C/xmllint/"
 fi
 [[ ":$PATH:" != *":$PATH_TO_ADD}:"* ]] && PATH="${PATH}:${PATH_TO_ADD}"
@@ -44,7 +44,8 @@ PACK_BUILD=build/
 # alternative: specify directory names to be added to pack base directory
 PACK_DIRS="
   ../../src
-  ../../docs
+  ../../include
+  ../../libs
   ../../demos
 "
 
@@ -53,8 +54,9 @@ PACK_DIRS="
 PACK_BASE_FILES="
   ../../LICENCE.txt
   ../../README.md
-  ../../README_zh.md
   ../../lvgl.h
+  ../../lv_version.h
+  ../../lvgl_private.h
   lv_conf_cmsis.h
   lv_cmsis_pack.txt
 "
@@ -138,10 +140,6 @@ fi
 mkdir -p ${PACK_BUILD}/examples
 mkdir -p ${PACK_BUILD}/examples/porting
 
-# Copy files into build base directory: $PACK_BUILD
-# pdsc file is mandatory in base directory:
-cp -f  ./$PACK_VENDOR.$PACK_NAME.pdsc ${PACK_BUILD}
-cp -f ../../examples/porting/* ${PACK_BUILD}/examples/porting
 
 
 # directories
@@ -162,13 +160,20 @@ do
   cp -f  "$f" $PACK_BUILD/
 done
 
+# Copy files into build base directory: $PACK_BUILD
+# pdsc file is mandatory in base directory:
+cp -f  ./$PACK_VENDOR.$PACK_NAME.pdsc ${PACK_BUILD}
+cp -f ../../examples/porting/* ${PACK_BUILD}/examples/porting
+cp -f ./lv_os_custom_c.txt ${PACK_BUILD}/src/osal/lv_os_custom.c
+cp -f ./lv_os_custom_h.txt ${PACK_BUILD}/src/osal/lv_os_custom.h
+
 mv "${PACK_BUILD}/lv_cmsis_pack.txt" "${PACK_BUILD}/lv_cmsis_pack.c"
 
 # Run Schema Check (for Linux only):
 # sudo apt-get install libxml2-utils
 
 echo Running schema check for $PACK_VENDOR.$PACK_NAME.pdsc
-$XMLLINT --noout --schema ${CMSIS_PACK_PATH}/CMSIS/Utilities/PACK.xsd $PACK_BUILD/$PACK_VENDOR.$PACK_NAME.pdsc
+$XMLLINT --noout --schema ${CMSIS_PACK_PATH}/PACK.xsd $PACK_BUILD/$PACK_VENDOR.$PACK_NAME.pdsc
 errorlevel=$?
 if [ $errorlevel -ne 0 ]; then
   echo "build aborted: Schema check of $PACK_VENDOR.$PACK_NAME.pdsc against PACK.xsd failed"
@@ -188,15 +193,18 @@ fi
 PACKNAME=`cat PackName.txt`
 rm -rf PackName.txt
 
-echo remove unrequired files and folders...
-rm -rf $PACK_BUILD/demos/keypad_encoder
-rm -rf $PACK_BUILD/demos/music
-rm -rf $PACK_BUILD/demos/stress
-rm -rf $PACK_BUILD/demos/widgets/screenshot1.gif
-
 # echo apply patches...
 # rm -rf $PACK_BUILD/demos/lv_demos.h
 # cp -f ./lv_demos.h $PACK_BUILD/demos/
+
+echo delete files...
+find $PACK_BUILD/demos/ -type f -name "*.png" -delete
+find $PACK_BUILD/demos/ -type f -name "*.gif" -delete
+find $PACK_BUILD/demos/ -type f -name "*.gif" -delete
+find $PACK_BUILD/demos/ -type f -name "*.ttf" -delete
+find $PACK_BUILD/demos/ -type f -name "*.otf" -delete
+find $PACK_BUILD/demos/ -type f -name "*.jpg" -delete
+find $PACK_BUILD/demos/ -type f -name "*.fnt" -delete
 
 # Archiving
 # $ZIP a $PACKNAME

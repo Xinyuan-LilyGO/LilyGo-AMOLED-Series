@@ -1,0 +1,452 @@
+/**
+ * @file lv_sysmon.c
+ *
+ */
+
+/*********************
+ *      INCLUDES
+ *********************/
+
+#include "lv_sysmon_private.h"
+#include "../../misc/lv_timer_private.h"
+
+#if LV_USE_SYSMON
+
+#include "../../core/lv_global.h"
+#include "../../display/lv_display_private.h"
+
+#ifndef LV_SYSMON_GET_IDLE
+    #define LV_SYSMON_GET_IDLE lv_os_get_idle_percent
+#endif
+
+extern uint32_t LV_SYSMON_GET_IDLE(void);
+
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    #ifndef LV_SYSMON_GET_PROC_IDLE
+        #define LV_SYSMON_GET_PROC_IDLE lv_os_get_proc_idle_percent
+    #endif
+    extern uint32_t LV_SYSMON_GET_PROC_IDLE(void);
+#endif
+
+/*********************
+ *      DEFINES
+ *********************/
+#ifndef LV_SYSMON_REFR_PERIOD_DEF
+    #define LV_SYSMON_REFR_PERIOD_DEF 300 /* ms */
+#endif
+
+#if LV_USE_MEM_MONITOR
+    #define sysmon_mem LV_GLOBAL_DEFAULT()->sysmon_mem
+#endif
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+
+#if LV_USE_PERF_MONITOR
+    static void perf_update_timer_cb(lv_timer_t * t);
+    static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
+    static void perf_monitor_disp_event_cb(lv_event_t * e);
+    static void perf_dump_info(lv_display_t * disp);
+    static void perf_control(lv_display_t * disp, bool start);
+#endif
+
+#if LV_USE_MEM_MONITOR
+    static void mem_update_timer_cb(lv_timer_t * t);
+    static void mem_observer_cb(lv_observer_t * observer, lv_subject_t * subject);
+#endif
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+void lv_sysmon_builtin_init(void)
+{
+#if LV_USE_MEM_MONITOR
+    static lv_mem_monitor_t mem_info;
+    sysmon_mem.subject = lv_subject_create(LV_SUBJECT_TYPE_POINTER);
+    if(sysmon_mem.subject == NULL) {
+        LV_LOG_WARN("Couldn't create sysmon subject");
+        return;
+    }
+    lv_subject_set_pointer(sysmon_mem.subject, &mem_info);
+    sysmon_mem.timer = lv_timer_create(mem_update_timer_cb, LV_SYSMON_REFR_PERIOD_DEF, &mem_info);
+#endif
+}
+
+void lv_sysmon_builtin_deinit(void)
+{
+#if LV_USE_MEM_MONITOR
+    lv_timer_delete(sysmon_mem.timer);
+    lv_subject_delete(sysmon_mem.subject);
+    sysmon_mem.subject = NULL;
+#endif
+}
+
+lv_obj_t * lv_sysmon_create(lv_display_t * disp)
+{
+    LV_LOG_INFO("begin");
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    lv_obj_t * label = lv_label_create(lv_display_get_layer_sys(disp));
+    lv_obj_set_style_bg_opa(label, LV_OPA_50, 0);
+    lv_obj_set_style_bg_color(label, lv_color_black(), 0);
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+    lv_obj_set_style_pad_all(label, 3, 0);
+    lv_label_set_text(label, "?");
+    return label;
+}
+
+#if LV_USE_PERF_MONITOR
+
+void lv_sysmon_show_performance(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    if(disp->perf_label == NULL) {
+
+        disp->perf_sysmon_backend.subject = lv_subject_create(LV_SUBJECT_TYPE_POINTER);
+        if(!disp->perf_sysmon_backend.subject) {
+            LV_LOG_WARN("Couldn't create sysmon subject");
+            return;
+
+        }
+        disp->perf_label = lv_sysmon_create(disp);
+        if(disp->perf_label == NULL) {
+            LV_LOG_WARN("Couldn't create sysmon");
+            lv_subject_delete(disp->perf_sysmon_backend.subject);
+            disp->perf_sysmon_backend.subject = NULL;
+            return;
+        }
+
+        lv_subject_set_pointer(disp->perf_sysmon_backend.subject, &disp->perf_sysmon_info);
+        lv_obj_align(disp->perf_label, LV_USE_PERF_MONITOR_POS, 0, 0);
+        lv_subject_add_observer_obj(disp->perf_sysmon_backend.subject, perf_observer_cb, disp->perf_label, NULL);
+        disp->perf_sysmon_backend.timer = lv_timer_create(perf_update_timer_cb, LV_SYSMON_REFR_PERIOD_DEF, disp);
+        lv_display_add_event_cb(disp, perf_monitor_disp_event_cb, LV_EVENT_ALL, NULL);
+    }
+
+    lv_obj_set_hidden(disp->perf_label, LV_USE_PERF_MONITOR_LOG_MODE);
+}
+
+void lv_sysmon_hide_performance(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    lv_obj_set_hidden(disp->perf_label, true);
+}
+
+void lv_sysmon_performance_dump(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    perf_dump_info(disp);
+}
+
+void lv_sysmon_performance_resume(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    perf_control(disp, true);
+}
+
+void lv_sysmon_performance_pause(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    perf_control(disp, false);
+}
+
+#endif
+
+#if LV_USE_MEM_MONITOR
+
+void lv_sysmon_show_memory(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    if(disp->mem_label == NULL) {
+        disp->mem_label = lv_sysmon_create(disp);
+        if(disp->mem_label == NULL) {
+            LV_LOG_WARN("Couldn't create sysmon");
+            return;
+        }
+
+        lv_obj_align(disp->mem_label, LV_USE_MEM_MONITOR_POS, 0, 0);
+        lv_subject_add_observer_obj(sysmon_mem.subject, mem_observer_cb, disp->mem_label, NULL);
+    }
+
+    lv_obj_set_hidden(disp->mem_label, false);
+}
+
+void lv_sysmon_hide_memory(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    lv_obj_set_hidden(disp->mem_label, true);
+}
+
+#endif
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+
+#if LV_USE_PERF_MONITOR
+
+static void perf_monitor_disp_event_cb(lv_event_t * e)
+{
+    LV_ASSERT(e != NULL);
+    lv_display_t * disp = lv_event_get_target(e);
+    LV_ASSERT(disp != NULL);
+    lv_sysmon_perf_info_t * info = &disp->perf_sysmon_info;
+    LV_ASSERT(info != NULL);
+
+    lv_event_code_t code = lv_event_get_code(e);
+
+    switch(code) {
+        case LV_EVENT_REFR_START:
+            info->measured.refr_interval_sum += lv_tick_elaps(info->measured.refr_start);
+            info->measured.refr_start = lv_tick_get();
+            break;
+        case LV_EVENT_REFR_READY:
+            info->measured.refr_elaps_sum += lv_tick_elaps(info->measured.refr_start);
+            info->measured.refr_cnt++;
+            break;
+        case LV_EVENT_RENDER_START:
+            info->measured.render_in_progress = 1;
+            info->measured.render_start = lv_tick_get();
+            break;
+        case LV_EVENT_RENDER_READY:
+            info->measured.render_in_progress = 0;
+            info->measured.render_elaps_sum += lv_tick_elaps(info->measured.render_start);
+            info->measured.render_cnt++;
+            break;
+        case LV_EVENT_FLUSH_START:
+        case LV_EVENT_FLUSH_WAIT_START:
+            if(info->measured.render_in_progress) {
+                info->measured.flush_in_render_start = lv_tick_get();
+            }
+            else {
+                info->measured.flush_not_in_render_start = lv_tick_get();
+            }
+            break;
+        case LV_EVENT_FLUSH_FINISH:
+        case LV_EVENT_FLUSH_WAIT_FINISH:
+            if(info->measured.render_in_progress) {
+                info->measured.flush_in_render_elaps_sum += lv_tick_elaps(info->measured.flush_in_render_start);
+            }
+            else {
+                info->measured.flush_not_in_render_elaps_sum += lv_tick_elaps(info->measured.flush_not_in_render_start);
+            }
+            break;
+        case LV_EVENT_DELETE:
+            lv_timer_delete(disp->perf_sysmon_backend.timer);
+            lv_subject_delete(disp->perf_sysmon_backend.subject);
+            break;
+        default:
+            break;
+    }
+}
+
+static void perf_dump_info(lv_display_t * disp)
+{
+    LV_ASSERT(disp != NULL);
+    lv_sysmon_perf_info_t * info = &disp->perf_sysmon_info;
+    LV_ASSERT(info != NULL);
+    info->calculated.run_cnt++;
+
+    uint32_t time_since_last_report = lv_tick_elaps(info->measured.last_report_timestamp);
+    lv_timer_t * disp_refr_timer = lv_display_get_refr_timer(lv_display_get_default());
+    uint32_t disp_refr_period = disp_refr_timer ? disp_refr_timer->period : LV_DEF_REFR_PERIOD;
+
+    info->calculated.fps = time_since_last_report ? (1000 * info->measured.refr_cnt / time_since_last_report) : 0;
+    info->calculated.fps = LV_MIN(info->calculated.fps,
+                                  1000 / disp_refr_period);   /*Limit due to possible off-by-one error*/
+
+    info->calculated.cpu = 100 - LV_SYSMON_GET_IDLE();
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    info->calculated.cpu_proc = 100 - LV_SYSMON_GET_PROC_IDLE();
+#endif /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
+    info->calculated.refr_avg_time = info->measured.refr_cnt ? (info->measured.refr_elaps_sum / info->measured.refr_cnt) :
+                                     0;
+
+    info->calculated.flush_avg_time = info->measured.render_cnt ?
+                                      ((info->measured.flush_in_render_elaps_sum + info->measured.flush_not_in_render_elaps_sum)
+                                       / info->measured.render_cnt) : 0;
+    /*Flush time was measured in rendering time so subtract it*/
+    info->calculated.render_avg_time = info->measured.render_cnt ? ((info->measured.render_elaps_sum -
+                                                                     info->measured.flush_in_render_elaps_sum) /
+                                                                    info->measured.render_cnt) : 0;
+
+    info->calculated.cpu_avg_total = ((info->calculated.cpu_avg_total * (info->calculated.run_cnt - 1)) +
+                                      info->calculated.cpu) / info->calculated.run_cnt;
+    info->calculated.fps_avg_total = ((info->calculated.fps_avg_total * (info->calculated.run_cnt - 1)) +
+                                      info->calculated.fps) / info->calculated.run_cnt;
+
+    lv_subject_set_pointer(disp->perf_sysmon_backend.subject, info);
+
+    lv_sysmon_perf_info_t prev_info = *info;
+    lv_memzero(info, sizeof(lv_sysmon_perf_info_t));
+    info->measured.refr_start = prev_info.measured.refr_start;
+    info->calculated.cpu_avg_total = prev_info.calculated.cpu_avg_total;
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    info->calculated.cpu_proc = prev_info.calculated.cpu_proc;
+#endif  /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
+    info->calculated.fps_avg_total = prev_info.calculated.fps_avg_total;
+    info->calculated.run_cnt = prev_info.calculated.run_cnt;
+
+    info->measured.last_report_timestamp = lv_tick_get();
+}
+
+static void perf_update_timer_cb(lv_timer_t * t)
+{
+    LV_ASSERT(t != NULL);
+    lv_display_t * disp = lv_timer_get_user_data(t);
+    LV_ASSERT(disp != NULL);
+
+    perf_dump_info(disp);
+}
+
+static void perf_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_ASSERT(observer != NULL);
+    LV_ASSERT(subject != NULL);
+    const lv_sysmon_perf_info_t * perf = lv_subject_get_pointer(subject);
+    LV_ASSERT(perf != NULL);
+
+#if LV_USE_PERF_MONITOR_LOG_MODE
+    LV_UNUSED(observer);
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    LV_LOG("sysmon: "
+           "%" LV_PRIu32 " FPS (refr_cnt: %" LV_PRIu32 " | redraw_cnt: %" LV_PRIu32"), "
+           "refr %" LV_PRIu32 "ms (render %" LV_PRIu32 "ms | flush %" LV_PRIu32 "ms), "
+           "CPU (total %" LV_PRIu32 "%% proc %" LV_PRIu32 "%%)\n",
+           perf->calculated.fps, perf->measured.refr_cnt, perf->measured.render_cnt,
+           perf->calculated.refr_avg_time, perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
+           perf->calculated.cpu, perf->calculated.cpu_proc);
+#else
+    LV_LOG("sysmon: "
+           "%" LV_PRIu32 " FPS (refr_cnt: %" LV_PRIu32 " | redraw_cnt: %" LV_PRIu32"), "
+           "refr %" LV_PRIu32 "ms (render %" LV_PRIu32 "ms | flush %" LV_PRIu32 "ms), "
+           "CPU %" LV_PRIu32 "%%\n",
+           perf->calculated.fps, perf->measured.refr_cnt, perf->measured.render_cnt,
+           perf->calculated.refr_avg_time, perf->calculated.render_avg_time, perf->calculated.flush_avg_time,
+           perf->calculated.cpu);
+#endif
+#else
+    lv_obj_t * label = lv_observer_get_target(observer);
+    LV_ASSERT(label != NULL);
+#if LV_SYSMON_PROC_IDLE_AVAILABLE
+    lv_label_set_text_fmt(
+        label,
+        "%" LV_PRIu32" FPS | CPU (%" LV_PRIu32 "%% | %" LV_PRIu32 "%%)\n"
+        "%" LV_PRIu32" ms (%" LV_PRIu32" | %" LV_PRIu32")",
+        perf->calculated.fps, perf->calculated.cpu, perf->calculated.cpu_proc,
+        perf->calculated.render_avg_time + perf->calculated.flush_avg_time,
+        perf->calculated.render_avg_time, perf->calculated.flush_avg_time
+    );
+#else
+    lv_label_set_text_fmt(
+        label,
+        "%" LV_PRIu32" FPS, %" LV_PRIu32 "%% CPU\n"
+        "%" LV_PRIu32" ms (%" LV_PRIu32" | %" LV_PRIu32")",
+        perf->calculated.fps, perf->calculated.cpu,
+        perf->calculated.render_avg_time + perf->calculated.flush_avg_time,
+        perf->calculated.render_avg_time, perf->calculated.flush_avg_time
+    );
+#endif /*LV_SYSMON_PROC_IDLE_AVAILABLE*/
+#endif /*LV_USE_PERF_MONITOR_LOG_MODE*/
+}
+
+static void perf_control(lv_display_t * disp, bool start)
+{
+    LV_ASSERT(disp != NULL);
+    if(disp->perf_sysmon_backend.timer == NULL) return;
+
+    if(start) {
+        lv_timer_resume(disp->perf_sysmon_backend.timer);
+    }
+    else {
+        lv_timer_pause(disp->perf_sysmon_backend.timer);
+    }
+}
+
+#endif
+
+#if LV_USE_MEM_MONITOR
+
+static void mem_update_timer_cb(lv_timer_t * t)
+{
+    LV_ASSERT(t != NULL);
+    lv_mem_monitor_t * mem_mon = lv_timer_get_user_data(t);
+    LV_ASSERT(mem_mon != NULL);
+    lv_mem_monitor(mem_mon);
+    lv_subject_set_pointer(sysmon_mem.subject, mem_mon);
+}
+
+static void mem_observer_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_ASSERT(observer != NULL);
+    LV_ASSERT(subject != NULL);
+    lv_obj_t * label = lv_observer_get_target(observer);
+    const lv_mem_monitor_t * mon = lv_subject_get_pointer(subject);
+    LV_ASSERT(label != NULL);
+    LV_ASSERT(mon != NULL);
+
+    size_t used_size = mon->total_size - mon->free_size;
+    size_t used_kb = used_size / 1024;
+    size_t used_kb_tenth = (used_size - (used_kb * 1024)) / 102;
+    size_t max_used_kb = mon->max_used / 1024;
+    size_t max_used_kb_tenth = (mon->max_used - (max_used_kb * 1024)) / 102;
+    lv_label_set_text_fmt(label,
+                          "%zu.%zu kB (%d%%)\n"
+                          "%zu.%zu kB max, %d%% frag.",
+                          used_kb, used_kb_tenth, mon->used_pct,
+                          max_used_kb, max_used_kb_tenth,
+                          mon->frag_pct);
+}
+
+#endif
+
+#endif /*LV_USE_SYSMON*/

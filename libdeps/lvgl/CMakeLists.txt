@@ -1,17 +1,50 @@
 cmake_minimum_required(VERSION 3.12.4)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT ESP_PLATFORM)
-  project(lvgl HOMEPAGE_URL https://github.com/lvgl/lvgl)
+  if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_LIST_DIR)
+    project(
+      lvgl
+      LANGUAGES C CXX
+      HOMEPAGE_URL https://github.com/lvgl/lvgl)
+  else()
+    enable_language(C CXX)
+  endif()
+  if(NOT (CMAKE_C_COMPILER_ID STREQUAL "MSVC"))
+    enable_language(ASM)
+  endif()
 endif()
 
 set(LVGL_ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 if(ESP_PLATFORM)
   include(${CMAKE_CURRENT_LIST_DIR}/env_support/cmake/esp.cmake)
-elseif(ZEPHYR_BASE)
-  include(${CMAKE_CURRENT_LIST_DIR}/env_support/cmake/zephyr.cmake)
 elseif(MICROPY_DIR)
   include(${CMAKE_CURRENT_LIST_DIR}/env_support/cmake/micropython.cmake)
 else()
-  include(${CMAKE_CURRENT_LIST_DIR}/env_support/cmake/custom.cmake)
+  include(${CMAKE_CURRENT_LIST_DIR}/env_support/cmake/main.cmake)
+endif()
+
+if(MSVC)
+  # Required for reliable variadic macro dispatch (e.g. LV_CHECK_OBJ) on MSVC.
+  target_compile_options(lvgl PUBLIC /Zc:preprocessor)
+
+  #[[
+      unfortunately CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS does not work for global data.
+      for global data we still need decl specs.
+      Check out the docs to learn more about the limitations of CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS
+      https://cmake.org/cmake/help/latest/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
+
+      For all compiled sources within the library (i.e. basically all lvgl files) we need to use dllexport.
+      For all compiled sources from outside the library (i.e. files which include lvgl headers) we need to use dllimport.
+      We can do this by using CMakes INTERFACE and PRIVATE keyword.
+    ]]
+  if (BUILD_SHARED_LIBS)
+    target_compile_definitions(
+      lvgl
+      INTERFACE "LV_ATTRIBUTE_EXTERN_DATA=__declspec(dllimport)"
+      PRIVATE "LV_ATTRIBUTE_EXTERN_DATA=__declspec(dllexport)")
+  endif()
 endif()

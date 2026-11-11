@@ -25,6 +25,11 @@
 // GC9A01 IPS LCD 240x240
 // Arduino_GFX *gfx = new Arduino_GC9A01(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
+// GC9C01 IPS LCD 360x360
+// Arduino_GFX *g = new Arduino_GC9C01(bus, TFT_RST, 0 /* rotation */);
+// #define CANVAS
+// Arduino_Canvas *gfx = new Arduino_Canvas(360 /* width */, 360 /* height */, g);
+
 // GC9106 IPS LCD 80x160
 // Arduino_GFX *gfx = new Arduino_GC9106(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
@@ -91,6 +96,12 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* 
 // NT39125 LCD 240x376
 // Arduino_GFX *gfx = new Arduino_NT39125(bus, TFT_RST, 0 /* rotation */, false /* IPS */, 240, 376, 0, 0, 0, 56);
 
+// 1.65"/1.68" NV3007 LCD 142x428
+// Arduino_GFX *gfx = new Arduino_NV3007(bus, TFT_RST, 0 /* rotation */, false /* IPS */, 142 /* width */, 428 /* height */, 12 /* col offset 1 */, 0 /* row offset 1 */, 14 /* col offset 2 */, 0 /* row offset 2 */);
+
+// 2.79" NV3007 LCD 142x428
+// Arduino_GFX *gfx = new Arduino_NV3007(bus, TFT_RST, 0 /* rotation */, false /* IPS */, 142 /* width */, 428 /* height */, 12 /* col offset 1 */, 0 /* row offset 1 */, 14 /* col offset 2 */, 0 /* row offset 2 */, nv3007_279_init_operations, sizeof(nv3007_279_init_operations));
+
 // NV3041A IPS LCD
 // Arduino_GFX *gfx = new Arduino_NV3041A(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
 
@@ -115,6 +126,8 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* 
 // ST7735 LCD
 // 0.42" 96x54
 // Arduino_GFX *gfx = new Arduino_ST7735(bus, TFT_RST, 0 /* rotation */, false /* IPS */, 96 /* width */, 54 /* height */, 16 /* col offset 1 */, 106 /* row offset 1 */, 16 /* col offset 2 */, 0 /* row offset 2 */);
+// 0.85" 128x128
+// Arduino_GFX *gfx = new Arduino_ST7735(bus, TFT_RST, 0 /* rotation */, true /* IPS */, 128 /* width */, 128 /* height */, 2 /* col offset 1 */, 1 /* row offset 1 */, 2 /* col offset 2 */, 1 /* row offset 2 */);
 // 1.8" REDTAB 128x160
 // Arduino_GFX *gfx = new Arduino_ST7735(bus, TFT_RST, 0 /* rotation */);
 // 1.8" BLACKTAB 128x160
@@ -137,6 +150,8 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* 
 // Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */);
 // 2.4" IPS LCD 240x320
 // Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */);
+// 2.25" LCD 76x284
+// Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, false /* IPS */, 76 /* width */, 284 /* height */, 82 /* col offset 1 */, 18 /* row offset 1 */, 82 /* col offset 2 */, 18 /* row offset 2 */);
 // 1.9" IPS round corner LCD 170x320
 // Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */, 170 /* width */, 320 /* height */, 35 /* col offset 1 */, 0 /* row offset 1 */, 35 /* col offset 2 */, 0 /* row offset 2 */);
 // 1.69" IPS round corner LCD 240x280
@@ -148,7 +163,19 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, TFT_RST, 0 /* rotation */, false /* 
 // 1.14" IPS LCD 135x240
 // Arduino_GFX *gfx = new Arduino_ST7789(bus, TFT_RST, 0 /* rotation */, true /* IPS */, 135 /* width */, 240 /* height */, 52 /* col offset 1 */, 40 /* row offset 1 */, 53 /* col offset 2 */, 40 /* row offset 2 */);
 
+// 1.5" ST77916
+// Arduino_GFX *gfx = new Arduino_ST77916(bus, 5 /* RST */, 0 /* rotation */, true /* IPS */, 360 /* width */, 360 /* height */,
+//     0 /* col offset 1 */, 0 /* row offset 1 */, 0 /* col offset 2 */, 0 /* row offset 2 */,
+//     st77916_150_init_operations, sizeof(st77916_150_init_operations));
+
+// 1.8" ST77916
+// Arduino_GFX *gfx = new Arduino_ST77916(bus, 5 /* RST */, 0 /* rotation */, true /* IPS */, 360 /* width */, 360 /* height */,
+//     0 /* col offset 1 */, 0 /* row offset 1 */, 0 /* col offset 2 */, 0 /* row offset 2 */,
+//     st77916_180_init_operations, sizeof(st77916_180_init_operations));
+
 // ST7796 LCD
+// 1.55" IPS LCD 320x360
+// Arduino_GFX *gfx = new Arduino_ST7796(bus, TFT_RST, 3 /* rotation */, true /* IPS */, 320 /* width */, 360 /* height */, 0 /* col offset 1 */, 0 /* row offset 1 */, 0 /* col offset 2 */, 120 /* row offset 2 */);
 // 4" LCD 320x480
 // Arduino_GFX *gfx = new Arduino_ST7796(bus, TFT_RST, 0 /* rotation */);
 // 4" IPS LCD 320x480

@@ -6,8 +6,13 @@
 #include "Arduino_ILI9341.h"
 #include "SPI.h"
 
-Arduino_ILI9341::Arduino_ILI9341(Arduino_DataBus *bus, int8_t rst, uint8_t r, bool ips)
-    : Arduino_TFT(bus, rst, r, ips, ILI9341_TFTWIDTH, ILI9341_TFTHEIGHT, 0, 0, 0, 0)
+Arduino_ILI9341::Arduino_ILI9341(
+  Arduino_DataBus *bus, int8_t rst, uint8_t r,
+    bool ips, int16_t w, int16_t h,
+    uint8_t col_offset1, uint8_t row_offset1, uint8_t col_offset2, uint8_t row_offset2,
+    const uint8_t *init_operations, size_t init_operations_len)
+    : Arduino_TFT(bus, rst, r, ips, w, h, col_offset1, row_offset1, col_offset2, row_offset2),
+      _init_operations(init_operations), _init_operations_len(init_operations_len)
 {
 }
 
@@ -54,7 +59,7 @@ void Arduino_ILI9341::writeAddrWindow(int16_t x, int16_t y, uint16_t w, uint16_t
     _currentX = x;
     _currentW = w;
     x += _xStart;
-    _bus->writeC8D16D16(ILI9341_CASET, x, x + w - 1);
+    _bus->writeC8D16D16Split(ILI9341_CASET, x, x + w - 1);
   }
 
   if ((y != _currentY) || (h != _currentH))
@@ -62,7 +67,7 @@ void Arduino_ILI9341::writeAddrWindow(int16_t x, int16_t y, uint16_t w, uint16_t
     _currentY = y;
     _currentH = h;
     y += _yStart;
-    _bus->writeC8D16D16(ILI9341_PASET, y, y + h - 1);
+    _bus->writeC8D16D16Split(ILI9341_PASET, y, y + h - 1);
   }
 
   _bus->writeCommand(ILI9341_RAMWR); // write to RAM
@@ -106,7 +111,7 @@ void Arduino_ILI9341::tftInit()
     delay(ILI9341_RST_DELAY);
   }
 
-  _bus->batchOperation(ili9341_init_operations, sizeof(ili9341_init_operations));
+  _bus->batchOperation(_init_operations, _init_operations_len);
 
   invertDisplay(false);
 }

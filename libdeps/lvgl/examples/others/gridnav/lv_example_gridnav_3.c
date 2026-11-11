@@ -4,7 +4,7 @@
 static void cont_sub_event_cb(lv_event_t * e)
 {
     uint32_t k = lv_event_get_key(e);
-    lv_obj_t * obj = lv_event_get_current_target(e);
+    lv_obj_t * obj = lv_event_get_target_obj(e);
     if(k == LV_KEY_ENTER) {
         lv_group_focus_obj(obj);
     }
@@ -15,18 +15,32 @@ static void cont_sub_event_cb(lv_event_t * e)
 }
 
 /**
- * Nested grid navigations
+ * @title Nested grid navigation with scroll-first
+ * @brief Outer gridnav wraps buttons and two sub-containers, one scrollable and one enter-to-focus.
+ *
+ * The outer container registers with
+ * `(lv_gridnav_ctrl_t)(LV_GRIDNAV_CTRL_ROLLOVER | LV_GRIDNAV_CTRL_SCROLL_FIRST)` so arrow keys scroll
+ * a long text child before moving focus. It holds two buttons, a scrollable sub
+ * container with placeholder text, and a second sub container that has its own
+ * gridnav. The inner gridnav's `LV_EVENT_KEY` handler calls `lv_group_focus_obj`
+ * on `LV_KEY_ENTER` and `lv_group_focus_next` on `LV_KEY_ESC` so enter steps in
+ * and escape steps back out.
  */
 void lv_example_gridnav_3(void)
 {
-    /*It's assumed that the default group is set and
+    /*The example requires that a default group is set and
      *there is a keyboard indev*/
+    lv_group_t * group = lv_group_get_default();
+    if(!group) {
+        LV_LOG_WARN("Gridnav example requires a default group");
+        return;
+    }
 
-    lv_obj_t * cont_main = lv_obj_create(lv_scr_act());
-    lv_gridnav_add(cont_main, LV_GRIDNAV_CTRL_ROLLOVER | LV_GRIDNAV_CTRL_SCROLL_FIRST);
+    lv_obj_t * cont_main = lv_obj_create(lv_screen_active());
+    lv_gridnav_add(cont_main, (lv_gridnav_ctrl_t)(LV_GRIDNAV_CTRL_ROLLOVER | LV_GRIDNAV_CTRL_SCROLL_FIRST));
 
     /*Only the container needs to be in a group*/
-    lv_group_add_obj(lv_group_get_default(), cont_main);
+    lv_group_add_obj(group, cont_main);
 
     /*Use flex here, but works with grid or manually placed objects as well*/
     lv_obj_set_flex_flow(cont_main, LV_FLEX_FLOW_ROW_WRAP);
@@ -36,17 +50,17 @@ void lv_example_gridnav_3(void)
     lv_obj_t * btn;
     lv_obj_t * label;
 
-    btn = lv_btn_create(cont_main);
+    btn = lv_button_create(cont_main);
     lv_group_remove_obj(btn);
     label = lv_label_create(btn);
     lv_label_set_text(label, "Button 1");
 
-    btn = lv_btn_create(cont_main);
+    btn = lv_button_create(cont_main);
     lv_group_remove_obj(btn);
     label = lv_label_create(btn);
     lv_label_set_text(label, "Button 2");
 
-    /*Create an other container with long text to show how LV_GRIDNAV_CTRL_SCROLL_FIRST works*/
+    /*Create another container with long text to show how LV_GRIDNAV_CTRL_SCROLL_FIRST works*/
     lv_obj_t * cont_sub1 = lv_obj_create(cont_main);
     lv_obj_set_size(cont_sub1, lv_pct(100), 100);
 
@@ -65,11 +79,11 @@ void lv_example_gridnav_3(void)
                       "Hello world!\n"
                       "Hello world!");
 
-    /*Create a third container that can be focused with ENTER and contains an other grid nav*/
+    /*Create a third container that can be focused with ENTER and contains another grid nav*/
     lv_obj_t * cont_sub2 = lv_obj_create(cont_main);
     lv_gridnav_add(cont_sub2, LV_GRIDNAV_CTRL_ROLLOVER);
     /*Only the container needs to be in a group*/
-    lv_group_add_obj(lv_group_get_default(), cont_sub2);
+    lv_group_add_obj(group, cont_sub2);
 
     lv_obj_add_event_cb(cont_sub2, cont_sub_event_cb, LV_EVENT_KEY, NULL);
 
@@ -82,12 +96,12 @@ void lv_example_gridnav_3(void)
     lv_label_set_text(label, "Use ENTER/ESC to focus/defocus this container");
     lv_obj_set_width(label, lv_pct(100));
 
-    btn = lv_btn_create(cont_sub2);
+    btn = lv_button_create(cont_sub2);
     lv_group_remove_obj(btn);
     label = lv_label_create(btn);
     lv_label_set_text(label, "Button 3");
 
-    btn = lv_btn_create(cont_sub2);
+    btn = lv_button_create(cont_sub2);
     lv_group_remove_obj(btn);
     label = lv_label_create(btn);
     lv_label_set_text(label, "Button 4");

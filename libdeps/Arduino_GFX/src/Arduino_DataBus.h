@@ -9,6 +9,8 @@
 
 #include "YCbCr2RGB.h"
 
+#define GFX_SKIP_DATABUS_UNDERLAYING_BEGIN -4
+#define GFX_SKIP_DATABUS_BEGIN -3
 #define GFX_SKIP_OUTPUT_BEGIN -2
 #define GFX_NOT_DEFINED -1
 #define GFX_STR_HELPER(x) #x
@@ -30,7 +32,7 @@ typedef uint32_t ARDUINOGFX_PORT_t;
 #define USE_FAST_PINIO   ///< Use direct PORT register access
 #define HAS_PORT_SET_CLR ///< PORTs have set & clear registers
 typedef uint16_t ARDUINOGFX_PORT_t;
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
 #define USE_FAST_PINIO   ///< Use direct PORT register access
 #define HAS_PORT_SET_CLR ///< PORTs have set & clear registers
 typedef uint32_t ARDUINOGFX_PORT_t;

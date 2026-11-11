@@ -6,7 +6,11 @@
  * Defalult pin list for non display dev kit:
  * Arduino Nano, Micro and more: CS:  9, DC:  8, RST:  7, BL:  6, SCK: 13, MOSI: 11, MISO: 12
  * ESP32 various dev board     : CS:  5, DC: 27, RST: 33, BL: 22, SCK: 18, MOSI: 23, MISO: nil
- * ESP32-C3 various dev board  : CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C2/3 various dev board: CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C5 various dev board  : CS: 23, DC: 24, RST: 25, BL: 26, SCK: 10, MOSI:  8, MISO: nil
+ * ESP32-C6 various dev board  : CS: 18, DC: 22, RST: 23, BL: 15, SCK: 21, MOSI: 19, MISO: nil
+ * ESP32-H2 various dev board  : CS:  0, DC: 12, RST:  8, BL: 22, SCK: 10, MOSI: 25, MISO: nil
+ * ESP32-P4 various dev board  : CS: 26, DC: 27, RST: 25, BL: 24, SCK: 36, MOSI: 32, MISO: nil
  * ESP32-S2 various dev board  : CS: 34, DC: 38, RST: 33, BL: 21, SCK: 36, MOSI: 35, MISO: nil
  * ESP32-S3 various dev board  : CS: 40, DC: 41, RST: 42, BL: 48, SCK: 36, MOSI: 35, MISO: nil
  * ESP8266 various dev board   : CS: 15, DC:  4, RST:  2, BL:  5, SCK: 14, MOSI: 13, MISO: 12
@@ -43,21 +47,21 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, DF_GFX_RST, 0 /* rotation */, false 
 
 void setup(void)
 {
+#ifdef DEV_DEVICE_INIT
+  DEV_DEVICE_INIT();
+#endif
+
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
   Serial.println("Arduino_GFX U8g2 Font Print UTF8 example");
-
-#ifdef GFX_EXTRA_PRE_INIT
-  GFX_EXTRA_PRE_INIT();
-#endif
 
   // Init Display
   if (!gfx->begin())
   {
     Serial.println("gfx->begin() failed!");
   }
-  gfx->fillScreen(BLACK);
+  gfx->fillScreen(RGB565_BLACK);
   gfx->setUTF8Print(true); // enable UTF8 support for the Arduino print() function
 
 #ifdef GFX_BL
@@ -71,46 +75,46 @@ void setup(void)
   /* U8g2 font list: https://github.com/olikraus/u8g2/wiki/fntlistall */
   /* U8g2 Unifont list: https://github.com/olikraus/u8g2/wiki/fntgrpunifont */
   gfx->setFont(u8g2_font_unifont_tr);
-  gfx->setTextColor(RED);
+  gfx->setTextColor(RGB565_RED);
   gfx->setCursor(1, 16);
   gfx->getTextBounds("Hello World!", 1, 16, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("Hello World!");
 
   gfx->setFont(u8g2_font_unifont_t_polish);
-  gfx->setTextColor(YELLOW);
+  gfx->setTextColor(RGB565_YELLOW);
   gfx->setCursor(1, 36);
   gfx->getTextBounds("Witaj świecie!", 1, 36, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("Witaj świecie!");
 
   gfx->setFont(u8g2_font_unifont_t_vietnamese1);
-  gfx->setTextColor(GREEN);
+  gfx->setTextColor(RGB565_LIME);
   gfx->setCursor(1, 56);
   gfx->getTextBounds("Chào thế giới!", 1, 56, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("Chào thế giới!");
 
 #ifdef U8G2_USE_LARGE_FONTS
   gfx->setFont(u8g2_font_unifont_t_chinese2);
-  gfx->setTextColor(CYAN);
+  gfx->setTextColor(RGB565_CYAN);
   gfx->setCursor(1, 76);
   gfx->getTextBounds("世界你好!", 1, 76, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("世界你好!");
 
   gfx->setFont(u8g2_font_unifont_t_japanese1);
-  gfx->setTextColor(BLUE);
+  gfx->setTextColor(RGB565_BLUE);
   gfx->setCursor(1, 96);
   gfx->getTextBounds("こんにちは世界!", 1, 96, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("こんにちは世界!");
 
   gfx->setFont(u8g2_font_unifont_t_korean1);
-  gfx->setTextColor(MAGENTA);
+  gfx->setTextColor(RGB565_MAGENTA);
   gfx->setCursor(1, 116);
   gfx->getTextBounds("안녕하세요, 세계입니다!", 1, 116, &x1, &y1, &w, &h);
-  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RED);
+  gfx->drawRect(x1 - 1, y1 - 1, w + 2, h + 2, RGB565_RED);
   gfx->println("안녕하세요, 세계입니다!");
 #endif // U8G2_USE_LARGE_FONTS
 }

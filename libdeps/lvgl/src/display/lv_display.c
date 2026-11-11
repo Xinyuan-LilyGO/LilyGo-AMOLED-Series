@@ -1,0 +1,1766 @@
+/**
+ * @file lv_display.c
+ *
+ */
+
+/*********************
+ *      INCLUDES
+ *********************/
+
+#include "../display/lv_display_private.h"
+#include "../misc/lv_event_private.h"
+#include "../misc/lv_anim_private.h"
+#include "../draw/lv_draw_private.h"
+#include "../core/lv_obj_private.h"
+#include "../core/lv_refr_private.h"
+#include "../core/lv_global.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+#define disp_def LV_GLOBAL_DEFAULT()->disp_default
+#define disp_ll_p &(LV_GLOBAL_DEFAULT()->disp_ll)
+
+#if LV_DRAW_DISABLE_TILED_RENDERING
+    #define DEFAULT_TILE_CNT 1
+#else
+    #if LV_DRAW_SW_DRAW_UNIT_CNT < 1
+        #error LV_DRAW_SW_DRAW_UNIT_CNT should be at least 1
+    #endif
+    #define DEFAULT_TILE_CNT LV_DRAW_SW_DRAW_UNIT_CNT
+#endif
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+typedef enum {
+    LV_LOAD_SCREEN_RESULT_OK,
+    LV_LOAD_SCREEN_RESULT_OLD_SCREEN_DELETED,
+    LV_LOAD_SCREEN_RESULT_NEW_SCREEN_DELETED,
+    LV_LOAD_SCREEN_RESULT_BOTH_SCREENS_DELETED,
+    LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED,
+} lv_load_screen_result_t;
+
+/**********************
+ *  STATIC PROTOTYPES
+ **********************/
+
+static bool old_screen_deleted(lv_load_screen_result_t res);
+static bool new_screen_deleted(lv_load_screen_result_t res);
+
+static lv_obj_tree_walk_res_t invalidate_layout_cb(lv_obj_t * obj, void * user_data);
+static void update_resolution(lv_display_t * disp);
+static void screen_event_delete_cb(lv_event_t * e);
+static lv_load_screen_result_t load_new_screen(lv_obj_t * scr);
+static void scr_load_anim_start(lv_anim_t * a);
+static void opa_scale_anim(void * obj, int32_t v);
+static void set_x_anim(void * obj, int32_t v);
+static void set_y_anim(void * obj, int32_t v);
+static void scr_anim_completed(lv_anim_t * a);
+static bool is_out_anim(lv_screen_load_anim_t a);
+static void disp_event_cb(lv_event_t * e);
+
+/**********************
+ *  STATIC VARIABLES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+/**********************
+ *   GLOBAL FUNCTIONS
+ **********************/
+
+lv_display_t * lv_display_create(int32_t hor_res, int32_t ver_res)
+{
+    LV_CHECK_ARG(hor_res > 0, return NULL);
+    LV_CHECK_ARG(ver_res > 0, return NULL);
+    lv_display_t * disp = lv_ll_ins_head(disp_ll_p);
+    LV_ASSERT_MALLOC(disp);
+    if(!disp) return NULL;
+
+    lv_memzero(disp, sizeof(lv_display_t));
+
+    disp->hor_res          = hor_res;
+    disp->ver_res          = ver_res;
+    disp->physical_hor_res = -1;
+    disp->physical_ver_res = -1;
+    disp->offset_x         = 0;
+    disp->offset_y         = 0;
+    disp->antialiasing     = LV_COLOR_DEPTH > 8 ? 1 : 0;
+    disp->dpi              = LV_DPI_DEF;
+    disp->color_format = LV_COLOR_FORMAT_DEFAULT;
+#if LV_USE_EXT_DATA
+    disp->ext_data.free_cb = NULL;
+    disp->ext_data.data = NULL;
+#endif
+
+    disp->tile_cnt = DEFAULT_TILE_CNT;
+
+    lv_area_t disp_area = {
+        0, 0, hor_res - 1, ver_res - 1
+    };
+
+    /* TODO: (v10) make `lv_draw_layer_init` take in a display pointer
+    * instead of assuming it needs to be bound to the refreshing display*/
+    lv_display_t * original_refr_disp = lv_refr_get_disp_refreshing();
+    lv_refr_set_disp_refreshing(disp);
+    disp->layer_head = lv_draw_layer_create(NULL, disp->color_format, &disp_area);
+    if(!disp->layer_head) {
+        lv_ll_remove(disp_ll_p, disp);
+        return NULL;
+    }
+    lv_refr_set_disp_refreshing(original_refr_disp);
+
+    disp->inv_en_cnt = 1;
+    disp->last_activity_time = lv_tick_get();
+
+    lv_ll_init(&disp->sync_areas, sizeof(lv_area_t));
+
+    lv_display_t * disp_def_tmp = disp_def;
+    disp_def                 = disp; /*Temporarily change the default screen to create the default screens on the
+                                        new display*/
+    /*Create a refresh timer*/
+    disp->refr_timer = lv_timer_create(lv_display_refr_timer, LV_DEF_REFR_PERIOD, disp);
+    LV_ASSERT_MALLOC(disp->refr_timer);
+    if(disp->refr_timer == NULL) {
+        lv_free(disp);
+        return NULL;
+    }
+
+#if LV_USE_THEME_DEFAULT
+    if(lv_theme_default_is_inited() == false) {
+        disp->theme = lv_theme_default_init(disp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
+                                            LV_THEME_DEFAULT_DARK, LV_FONT_DEFAULT);
+    }
+    else {
+        disp->theme = lv_theme_default_get();
+    }
+#elif LV_USE_THEME_SIMPLE
+    if(lv_theme_simple_is_inited() == false) {
+        disp->theme = lv_theme_simple_init(disp);
+    }
+    else {
+        disp->theme = lv_theme_simple_get();
+    }
+#elif LV_USE_THEME_MONO
+    if(lv_theme_mono_is_inited() == false) {
+        disp->theme = lv_theme_mono_init(disp, false, LV_FONT_DEFAULT);
+    }
+    else {
+        disp->theme = lv_theme_mono_get();
+    }
+#endif
+
+    disp->bottom_layer = lv_obj_create(NULL); /*Create bottom layer on the display*/
+    disp->act_scr   = lv_obj_create(NULL); /*Create a default screen on the display*/
+    disp->top_layer = lv_obj_create(NULL); /*Create top layer on the display*/
+    disp->sys_layer = lv_obj_create(NULL); /*Create sys layer on the display*/
+    lv_obj_remove_style_all(disp->bottom_layer);
+    lv_obj_remove_style_all(disp->top_layer);
+    lv_obj_remove_style_all(disp->sys_layer);
+    lv_obj_set_clickable(disp->top_layer, false);
+    lv_obj_set_clickable(disp->sys_layer, false);
+
+    if(lv_color_format_has_alpha(disp->color_format)) {
+        lv_obj_remove_local_style_prop(disp->bottom_layer, LV_STYLE_BG_OPA, 0);
+    }
+    else {
+        lv_obj_set_style_bg_opa(disp->bottom_layer, 255, 0);
+    }
+
+    lv_obj_set_scrollbar_mode(disp->bottom_layer, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(disp->top_layer, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(disp->sys_layer, LV_SCROLLBAR_MODE_OFF);
+
+    lv_obj_invalidate(disp->act_scr);
+
+    disp_def = disp_def_tmp; /*Revert the default display*/
+    if(disp_def == NULL) disp_def = disp; /*Initialize the default display*/
+
+    lv_display_add_event_cb(disp, disp_event_cb, LV_EVENT_REFR_REQUEST, NULL);
+
+    lv_timer_ready(disp->refr_timer); /*Be sure the screen will be refreshed immediately on start up*/
+
+#if LV_USE_PERF_MONITOR
+    lv_sysmon_show_performance(disp);
+#endif
+
+#if LV_USE_MEM_MONITOR
+    lv_sysmon_show_memory(disp);
+#endif
+
+    return disp;
+}
+
+void lv_display_delete(lv_display_t * disp)
+{
+    if(!disp) {
+        return;
+    }
+    const bool was_default = disp == lv_display_get_default();
+    const bool was_refr = disp == lv_refr_get_disp_refreshing();
+
+    lv_display_send_event(disp, LV_EVENT_DELETE, NULL);
+    lv_event_mark_deleted(disp);
+    lv_event_remove_all(&(disp->event_list));
+
+    /*Detach the input devices*/
+    lv_indev_t * indev;
+    indev = lv_indev_get_next(NULL);
+    while(indev) {
+        if(lv_indev_get_display(indev) == disp) {
+            lv_indev_set_display(indev, NULL);
+        }
+        indev = lv_indev_get_next(indev);
+    }
+
+    /* Delete screen and other obj */
+    if(disp->sys_layer) {
+        lv_obj_delete(disp->sys_layer);
+        disp->sys_layer = NULL;
+    }
+    if(disp->top_layer) {
+        lv_obj_delete(disp->top_layer);
+        disp->top_layer = NULL;
+    }
+
+    if(disp->bottom_layer) {
+        lv_obj_delete(disp->bottom_layer);
+        disp->bottom_layer = NULL;
+    }
+
+    disp->act_scr = NULL;
+
+    while(disp->screen_cnt != 0) {
+        /*Delete the screens*/
+        lv_obj_delete(disp->screens[0]);
+    }
+
+    lv_ll_clear(&disp->sync_areas);
+    lv_ll_remove(disp_ll_p, disp);
+    if(disp->refr_timer) lv_timer_delete(disp->refr_timer);
+
+    lv_draw_layer_delete(disp->layer_head);
+
+#if LV_USE_EXT_DATA
+    if(disp->ext_data.free_cb) {
+        disp->ext_data.free_cb(disp->ext_data.data);
+        disp->ext_data.data = NULL;
+    }
+#endif
+
+    lv_free(disp);
+
+    if(was_default) lv_display_set_default(lv_ll_get_head(disp_ll_p));
+
+    if(was_refr) lv_refr_set_disp_refreshing(NULL);
+}
+
+void lv_display_set_default(lv_display_t * disp)
+{
+    disp_def = disp;
+}
+
+lv_display_t * lv_display_get_default(void)
+{
+    return disp_def;
+}
+
+lv_display_t * lv_display_get_next(lv_display_t * disp)
+{
+    if(disp == NULL)
+        return lv_ll_get_head(disp_ll_p);
+    else
+        return lv_ll_get_next(disp_ll_p, disp);
+}
+
+/*---------------------
+ * RESOLUTION
+ *--------------------*/
+
+void lv_display_set_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(hor_res > 0, return);
+    LV_CHECK_ARG(ver_res > 0, return);
+
+    if(disp->hor_res == hor_res && disp->ver_res == ver_res) return;
+
+    disp->hor_res = hor_res;
+    disp->ver_res = ver_res;
+
+    update_resolution(disp);
+}
+
+void lv_display_set_physical_resolution(lv_display_t * disp, int32_t hor_res, int32_t ver_res)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(hor_res > 0, return);
+    LV_CHECK_ARG(ver_res > 0, return);
+
+    disp->physical_hor_res = hor_res;
+    disp->physical_ver_res = ver_res;
+
+    lv_obj_invalidate(disp->sys_layer);
+}
+
+void lv_display_set_offset(lv_display_t * disp, int32_t x, int32_t y)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->offset_x = x;
+    disp->offset_y = y;
+
+    lv_obj_invalidate(disp->sys_layer);
+
+}
+
+void lv_display_set_dpi(lv_display_t * disp, int32_t dpi)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->dpi = dpi;
+}
+
+int32_t lv_display_get_horizontal_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+        case LV_DISPLAY_ROTATION_270:
+            return disp->ver_res;
+        default:
+            return disp->hor_res;
+    }
+}
+
+int32_t lv_display_get_vertical_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+        case LV_DISPLAY_ROTATION_270:
+            return disp->hor_res;
+        default:
+            return disp->ver_res;
+    }
+}
+
+int32_t lv_display_get_original_horizontal_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    return disp->hor_res;
+}
+
+int32_t lv_display_get_original_vertical_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    return disp->ver_res;
+}
+
+int32_t lv_display_get_physical_horizontal_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+        case LV_DISPLAY_ROTATION_270:
+            return disp->physical_ver_res > 0 ? disp->physical_ver_res : disp->ver_res;
+        default:
+            return disp->physical_hor_res > 0 ? disp->physical_hor_res : disp->hor_res;
+    }
+}
+
+int32_t lv_display_get_physical_vertical_resolution(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+        case LV_DISPLAY_ROTATION_270:
+            return disp->physical_hor_res > 0 ? disp->physical_hor_res : disp->hor_res;
+        default:
+            return disp->physical_ver_res > 0 ? disp->physical_ver_res : disp->ver_res;
+    }
+}
+
+int32_t lv_display_get_offset_x(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            return disp->offset_y;
+        case LV_DISPLAY_ROTATION_180:
+            return lv_display_get_physical_horizontal_resolution(disp) - disp->offset_x;
+        case LV_DISPLAY_ROTATION_270:
+            return lv_display_get_physical_horizontal_resolution(disp) - disp->offset_y;
+        default:
+            return disp->offset_x;
+    }
+}
+
+int32_t lv_display_get_offset_y(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return 0);
+    switch(disp->rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            return disp->offset_x;
+        case LV_DISPLAY_ROTATION_180:
+            return lv_display_get_physical_vertical_resolution(disp) - disp->offset_y;
+        case LV_DISPLAY_ROTATION_270:
+            return lv_display_get_physical_vertical_resolution(disp) - disp->offset_x;
+        default:
+            return disp->offset_y;
+    }
+}
+
+int32_t lv_display_get_dpi(const lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_DPI_DEF);
+
+    return disp->dpi;
+}
+
+/*---------------------
+ * BUFFERING
+ *--------------------*/
+
+void lv_display_set_draw_buf_handlers(lv_display_t * disp, const lv_draw_buf_handlers_t * handlers)
+{
+    LV_ASSERT(disp != NULL);
+    LV_ASSERT(handlers != NULL);
+
+    if(disp->buf_1) disp->buf_1->handlers = handlers;
+    if(disp->buf_2) disp->buf_2->handlers = handlers;
+    if(disp->buf_3) disp->buf_3->handlers = handlers;
+}
+
+void lv_display_set_draw_buffers(lv_display_t * disp, lv_draw_buf_t * buf1, lv_draw_buf_t * buf2)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(buf1 != NULL, return);
+
+    disp->buf_1 = buf1;
+    disp->buf_2 = buf2;
+    disp->buf_act = disp->buf_1;
+
+    disp->stride_is_auto = 0;
+}
+
+void lv_display_set_3rd_draw_buffer(lv_display_t * disp, lv_draw_buf_t * buf3)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    if(disp == NULL) return;
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG_MSG(disp->buf_1 != NULL, return, "buf1 should already exist in order to provide a third buffer");
+    LV_CHECK_ARG_MSG(disp->buf_2 != NULL, return, "buf2 should already exist in order to provide a third buffer");
+
+    disp->buf_3 = buf3;
+}
+
+void lv_display_set_buffers(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
+                            lv_display_render_mode_t render_mode)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(buf1 != NULL, return);
+    lv_display_set_buffers_with_stride(disp, buf1, buf2, buf_size, LV_STRIDE_AUTO, render_mode);
+}
+
+void lv_display_set_buffers_with_stride(lv_display_t * disp, void * buf1, void * buf2, uint32_t buf_size,
+                                        uint32_t stride, lv_display_render_mode_t render_mode)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(buf1 != NULL, return);
+
+    lv_color_format_t cf = lv_display_get_color_format(disp);
+    uint32_t w = lv_display_get_original_horizontal_resolution(disp);
+    uint32_t h = lv_display_get_original_vertical_resolution(disp);
+
+    LV_CHECK_ARG_MSG(w != 0 && h != 0, return, "display resolution is 0");
+
+    /* buf1 or buf2 is not aligned according to LV_DRAW_BUF_ALIGN */
+    LV_CHECK_ARG_FORMAT_MSG(buf1 == lv_draw_buf_align(buf1, cf), return, "buf1 is not properly aligned: %p", buf1);
+    LV_CHECK_ARG_FORMAT_MSG(buf2 == NULL ||
+                            buf2 == lv_draw_buf_align(buf2, cf), return, "buf2 is not properly aligned: %p", buf2);
+
+    bool is_auto_stride = stride == LV_STRIDE_AUTO;
+    if(is_auto_stride) {
+        stride = lv_draw_buf_width_to_stride(w, cf);
+    }
+
+    if(render_mode == LV_DISPLAY_RENDER_MODE_PARTIAL) {
+        LV_CHECK_ARG_FORMAT_MSG(stride != 0, return, "stride is 0, check your color format %d and width: %" LV_PRIu32, cf, w);
+        /* for partial mode, we calculate the height based on the buf_size and stride */
+        h = buf_size / stride;
+        LV_CHECK_ARG_MSG(h, return, "the buffer is too small");
+    }
+    else {
+        LV_CHECK_ARG_FORMAT_MSG(stride * h <= buf_size, return, "%s mode requires screen sized buffer(s)",
+                                render_mode == LV_DISPLAY_RENDER_MODE_FULL ? "FULL" : "DIRECT");
+    }
+
+    lv_draw_buf_init(&disp->_static_buf1, w, h, cf, stride, buf1, buf_size);
+    if(buf2) {
+        lv_draw_buf_init(&disp->_static_buf2, w, h, cf, stride, buf2, buf_size);
+    }
+    lv_display_set_draw_buffers(disp, &disp->_static_buf1, buf2 ? &disp->_static_buf2 : NULL);
+    lv_display_set_render_mode(disp, render_mode);
+    disp->stride_is_auto = is_auto_stride;
+}
+
+void lv_display_set_render_mode(lv_display_t * disp, lv_display_render_mode_t render_mode)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    disp->render_mode = render_mode;
+}
+
+
+lv_display_flush_cb_t lv_display_get_flush_cb(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    return disp->flush_cb;
+}
+
+void lv_display_set_flush_cb(lv_display_t * disp, lv_display_flush_cb_t flush_cb)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->flush_cb = flush_cb;
+}
+
+void lv_display_set_flush_wait_cb(lv_display_t * disp, lv_display_flush_wait_cb_t wait_cb)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->flush_wait_cb = wait_cb;
+}
+
+void lv_display_set_sync_cb(lv_display_t * disp, lv_display_sync_cb_t sync_cb)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->sync_cb = sync_cb;
+}
+
+void lv_display_set_sync_wait_cb(lv_display_t * disp, lv_display_sync_wait_cb_t wait_cb)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->sync_wait_cb = wait_cb;
+}
+
+void lv_display_set_color_format(lv_display_t * disp, lv_color_format_t color_format)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->color_format = color_format;
+    disp->layer_head->color_format = color_format;
+
+    if(disp->buf_1) disp->buf_1->header.cf = color_format;
+    if(disp->buf_2) disp->buf_2->header.cf = color_format;
+    if(disp->buf_3) disp->buf_3->header.cf = color_format;
+
+    if(lv_color_format_has_alpha(disp->color_format)) {
+        lv_obj_remove_local_style_prop(disp->bottom_layer, LV_STYLE_BG_OPA, 0);
+    }
+    else {
+        lv_obj_set_style_bg_opa(disp->bottom_layer, 255, 0);
+    }
+
+    lv_display_send_event(disp, LV_EVENT_COLOR_FORMAT_CHANGED, NULL);
+}
+
+lv_color_format_t lv_display_get_color_format(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_COLOR_FORMAT_UNKNOWN);
+
+    return disp->color_format;
+}
+
+void lv_display_set_tile_cnt(lv_display_t * disp, uint32_t tile_cnt)
+{
+
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG_FORMAT_MSG(tile_cnt < 256, return, "tile_cnt must be smaller than 256 (%" LV_PRId32 " was used)",
+                            tile_cnt);
+#if LV_DRAW_DISABLE_TILED_RENDERING
+    if(tile_cnt > 1) {
+        LV_LOG_WARN("The enabled draw unit renders on the GPU and cannot render tiles. "
+                    "Using 1 tile instead of %" LV_PRIu32, tile_cnt);
+        tile_cnt = 1;
+    }
+#endif
+
+    disp->tile_cnt = tile_cnt;
+}
+
+uint32_t lv_display_get_tile_cnt(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    return disp->tile_cnt;
+}
+
+void lv_display_set_antialiasing(lv_display_t * disp, bool en)
+{
+    LV_LOG_WARN("Disabling anti-aliasing is not supported since v9. This function will be removed.");
+
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->antialiasing = en;
+}
+
+bool lv_display_get_antialiasing(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return false);
+
+    return disp->antialiasing;
+}
+
+lv_display_render_mode_t lv_display_get_render_mode(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+    return disp->render_mode;
+}
+
+LV_ATTRIBUTE_FLUSH_READY void lv_display_flush_ready(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    disp->flushing = 0;
+}
+
+LV_ATTRIBUTE_FLUSH_READY bool lv_display_flush_is_last(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return false);
+    return disp->flushing_last;
+}
+
+LV_ATTRIBUTE_SYNC_READY void lv_display_sync_ready(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    disp->syncing = 0;
+}
+
+LV_ATTRIBUTE_SYNC_READY bool lv_display_sync_is_last(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return false);
+    return disp->syncing_last;
+}
+
+bool lv_display_is_double_buffered(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return false);
+    return disp->buf_2 != NULL;
+}
+
+/*---------------------
+  * SCREENS
+  *--------------------*/
+
+lv_obj_t * lv_display_get_screen_active(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->act_scr;
+}
+
+lv_obj_t * lv_display_get_screen_loading(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->scr_to_load;
+}
+
+lv_obj_t * lv_display_get_screen_prev(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->prev_scr;
+}
+
+lv_obj_t * lv_display_get_layer_top(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->top_layer;
+}
+
+lv_obj_t * lv_display_get_layer_sys(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->sys_layer;
+}
+
+lv_obj_t * lv_display_get_layer_bottom(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->bottom_layer;
+}
+
+#if LV_USE_OBJ_NAME
+
+lv_obj_t * lv_display_get_screen_by_name(const lv_display_t * disp, const char * screen_name)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    LV_CHECK_ARG(screen_name != NULL, return NULL);
+
+    uint32_t i;
+    for(i = 0; i < disp->screen_cnt; i++) {
+        const char * n = lv_obj_get_name(disp->screens[i]);
+        if(n && lv_streq(screen_name, n)) return disp->screens[i];
+    }
+
+    return NULL;
+
+}
+
+#endif /*LV_USE_OBJ_NAME*/
+
+void lv_screen_load(lv_obj_t * scr)
+{
+    LV_CHECK_ARG(scr != NULL, return);
+    lv_screen_load_anim(scr, LV_SCREEN_LOAD_ANIM_NONE, 0, 0, false);
+}
+
+void lv_screen_load_anim(lv_obj_t * scr, lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay,
+                         bool auto_del)
+{
+    LV_CHECK_ARG(scr != NULL, return);
+    lv_display_t * d = lv_obj_get_display(scr);
+    lv_obj_t * act_scr = d->act_scr;
+
+    if(act_scr == scr || d->scr_to_load == scr) {
+        return;
+    }
+
+    /*If another screen load animation is in progress
+     *make target screen loaded immediately. */
+    if(d->scr_to_load && act_scr != d->scr_to_load) {
+        lv_anim_delete(d->scr_to_load, NULL);
+        lv_obj_set_pos(d->scr_to_load, 0, 0);
+        lv_obj_remove_local_style_prop(d->scr_to_load, LV_STYLE_OPA, 0);
+
+        d->prev_scr = d->act_scr;
+        act_scr = d->scr_to_load; /*Active screen changed.*/
+        lv_load_screen_result_t res = load_new_screen(d->scr_to_load);
+        if(res == LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED) {
+            return;
+        }
+        if(old_screen_deleted(res)) {
+            d->prev_scr = NULL;
+        }
+        if(new_screen_deleted(res)) {
+            return;
+        }
+    }
+
+    d->scr_to_load = scr;
+
+    if(d->prev_scr && d->del_prev) {
+        lv_obj_delete(d->prev_scr);
+    }
+    d->prev_scr = NULL;
+
+    d->draw_prev_over_act = is_out_anim(anim_type);
+    d->del_prev = auto_del;
+
+    /*Be sure there is no other animation on the screens*/
+    lv_anim_delete(scr, NULL);
+    if(act_scr) lv_anim_delete(act_scr, NULL);
+
+    /*Be sure both screens are in a normal position*/
+    lv_obj_set_pos(scr, 0, 0);
+    if(act_scr) lv_obj_set_pos(act_scr, 0, 0);
+    lv_obj_remove_local_style_prop(scr, LV_STYLE_OPA, 0);
+    if(act_scr) lv_obj_remove_local_style_prop(act_scr, LV_STYLE_OPA, 0);
+
+    /*Shortcut for immediate load*/
+    if(time == 0 && delay == 0) {
+        lv_load_screen_result_t res = load_new_screen(scr);
+        if(res == LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED) {
+            return;
+        }
+        if(new_screen_deleted(res)) {
+            d->act_scr = NULL;
+        }
+        if(!old_screen_deleted(res) && auto_del && act_scr) {
+            lv_obj_delete(act_scr);
+        }
+        return;
+    }
+
+    lv_anim_t a_new;
+    lv_anim_init(&a_new);
+    lv_anim_set_var(&a_new, scr);
+    lv_anim_set_start_cb(&a_new, scr_load_anim_start);
+    lv_anim_set_completed_cb(&a_new, scr_anim_completed);
+    lv_anim_set_duration(&a_new, time);
+    lv_anim_set_delay(&a_new, delay);
+
+    lv_anim_t a_old;
+    lv_anim_init(&a_old);
+    lv_anim_set_var(&a_old, act_scr);
+    lv_anim_set_duration(&a_old, time);
+    lv_anim_set_delay(&a_old, delay);
+
+    switch(anim_type) {
+        case LV_SCREEN_LOAD_ANIM_NONE:
+            /*Create a dummy animation to apply the delay*/
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
+            lv_anim_set_values(&a_new, 0, 0);
+            break;
+        case LV_SCREEN_LOAD_ANIM_OVER_LEFT:
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
+            lv_anim_set_values(&a_new, lv_display_get_horizontal_resolution(d), 0);
+            break;
+        case LV_SCREEN_LOAD_ANIM_OVER_RIGHT:
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
+            lv_anim_set_values(&a_new, -lv_display_get_horizontal_resolution(d), 0);
+            break;
+        case LV_SCREEN_LOAD_ANIM_OVER_TOP:
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
+            lv_anim_set_values(&a_new, lv_display_get_vertical_resolution(d), 0);
+            break;
+        case LV_SCREEN_LOAD_ANIM_OVER_BOTTOM:
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
+            lv_anim_set_values(&a_new, -lv_display_get_vertical_resolution(d), 0);
+            break;
+        case LV_SCREEN_LOAD_ANIM_MOVE_LEFT:
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
+            lv_anim_set_values(&a_new, lv_display_get_horizontal_resolution(d), 0);
+
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
+            lv_anim_set_values(&a_old, 0, -lv_display_get_horizontal_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_MOVE_RIGHT:
+            lv_anim_set_exec_cb(&a_new, set_x_anim);
+            lv_anim_set_values(&a_new, -lv_display_get_horizontal_resolution(d), 0);
+
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
+            lv_anim_set_values(&a_old, 0, lv_display_get_horizontal_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_MOVE_TOP:
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
+            lv_anim_set_values(&a_new, lv_display_get_vertical_resolution(d), 0);
+
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
+            lv_anim_set_values(&a_old, 0, -lv_display_get_vertical_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_MOVE_BOTTOM:
+            lv_anim_set_exec_cb(&a_new, set_y_anim);
+            lv_anim_set_values(&a_new, -lv_display_get_vertical_resolution(d), 0);
+
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
+            lv_anim_set_values(&a_old, 0, lv_display_get_vertical_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_FADE_IN:
+            lv_anim_set_exec_cb(&a_new, opa_scale_anim);
+            lv_anim_set_values(&a_new, LV_OPA_TRANSP, LV_OPA_COVER);
+            break;
+        case LV_SCREEN_LOAD_ANIM_FADE_OUT:
+            lv_anim_set_exec_cb(&a_old, opa_scale_anim);
+            lv_anim_set_values(&a_old, LV_OPA_COVER, LV_OPA_TRANSP);
+            break;
+        case LV_SCREEN_LOAD_ANIM_OUT_LEFT:
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
+            lv_anim_set_values(&a_old, 0, -lv_display_get_horizontal_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_OUT_RIGHT:
+            lv_anim_set_exec_cb(&a_old, set_x_anim);
+            lv_anim_set_values(&a_old, 0, lv_display_get_horizontal_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_OUT_TOP:
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
+            lv_anim_set_values(&a_old, 0, -lv_display_get_vertical_resolution(d));
+            break;
+        case LV_SCREEN_LOAD_ANIM_OUT_BOTTOM:
+            lv_anim_set_exec_cb(&a_old, set_y_anim);
+            lv_anim_set_values(&a_old, 0, lv_display_get_vertical_resolution(d));
+            break;
+    }
+
+    if(act_scr) lv_obj_send_event(act_scr, LV_EVENT_SCREEN_UNLOAD_START, NULL);
+
+    lv_anim_start(&a_new);
+    if(act_scr) lv_anim_start(&a_old);
+}
+
+/*---------------------
+ * OTHERS
+ *--------------------*/
+
+lv_event_dsc_t * lv_display_add_event_cb(lv_display_t * disp, lv_event_cb_t event_cb, lv_event_code_t filter,
+                                         void * user_data)
+{
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return lv_event_add(&disp->event_list, event_cb, filter, user_data);
+}
+
+uint32_t lv_display_get_event_count(lv_display_t * disp)
+{
+    LV_CHECK_ARG(disp != NULL, return 0);
+    return lv_event_get_count(&disp->event_list);
+}
+
+lv_event_dsc_t * lv_display_get_event_dsc(lv_display_t * disp, uint32_t index)
+{
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    return lv_event_get_dsc(&disp->event_list, index);
+
+}
+
+bool lv_display_remove_event(lv_display_t * disp, uint32_t index)
+{
+    LV_CHECK_ARG(disp != NULL, return false);
+
+    return lv_event_remove(&disp->event_list, index);
+}
+
+uint32_t lv_display_remove_event_cb_with_user_data(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    LV_CHECK_ARG(disp != NULL, return 0);
+
+    uint32_t event_cnt = lv_display_get_event_count(disp);
+    uint32_t removed_count = 0;
+    int32_t i;
+
+    for(i = event_cnt - 1; i >= 0; i--) {
+        lv_event_dsc_t * dsc = lv_display_get_event_dsc(disp, i);
+        if(dsc && dsc->cb == event_cb && dsc->user_data == user_data) {
+            lv_display_remove_event(disp, i);
+            removed_count ++;
+        }
+    }
+
+    return removed_count;
+}
+
+lv_result_t lv_display_send_event(lv_display_t * disp, lv_event_code_t code, void * param)
+{
+    LV_CHECK_ARG(disp != NULL, return LV_RESULT_INVALID);
+    return lv_event_push_and_send(&disp->event_list, code, disp, param);
+}
+
+lv_area_t * lv_event_get_invalidated_area(lv_event_t * e)
+{
+    LV_CHECK_ARG(e != NULL, return NULL);
+    LV_CHECK_ARG(e->code == LV_EVENT_INVALIDATE_AREA, return NULL);
+    return lv_event_get_param(e);
+}
+
+void lv_display_set_rotation(lv_display_t * disp, lv_display_rotation_t rotation)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->rotation = rotation;
+    update_resolution(disp);
+}
+
+lv_display_rotation_t lv_display_get_rotation(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_DISPLAY_ROTATION_0);
+    return disp->rotation;
+}
+
+void lv_display_set_matrix_rotation(lv_display_t * disp, bool enable)
+{
+    LV_CHECK_ARG_MSG(LV_DRAW_TRANSFORM_USE_MATRIX == 1, return, "LV_DRAW_TRANSFORM_USE_MATRIX is not enabled");
+
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG_FORMAT_MSG(disp->render_mode == LV_DISPLAY_RENDER_MODE_DIRECT ||
+                            disp->render_mode == LV_DISPLAY_RENDER_MODE_FULL, return, "Unsupported rendering mode: %d", disp->render_mode);
+
+    disp->matrix_rotation = enable;
+}
+
+bool lv_display_get_matrix_rotation(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return false);
+    LV_CHECK_ARG_MSG(LV_DRAW_TRANSFORM_USE_MATRIX == 1, return false, "LV_DRAW_TRANSFORM_USE_MATRIX is not enabled");
+    return disp->matrix_rotation;
+}
+
+void lv_display_set_theme(lv_display_t * disp, lv_theme_t * th)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->theme = th;
+
+    if(disp->screen_cnt == 4 &&
+       lv_obj_get_child_count(disp->screens[0]) == 0 &&
+       lv_obj_get_child_count(disp->screens[1]) == 0 &&
+       lv_obj_get_child_count(disp->screens[2]) == 0) {
+        lv_theme_apply(disp->screens[0]);
+
+        if(!th) {
+            /* When th is NULL, clear all styles */
+            for(uint32_t i = 1; i < disp->screen_cnt; i++) {
+                lv_theme_apply(disp->screens[i]);
+            }
+        }
+    }
+}
+
+lv_theme_t * lv_display_get_theme(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    return disp->theme;
+}
+
+uint32_t lv_display_get_inactive_time(const lv_display_t * disp)
+{
+    if(disp) {
+        return lv_tick_elaps(disp->last_activity_time);
+    }
+
+    lv_display_t * d;
+    uint32_t t = UINT32_MAX;
+    d          = lv_display_get_next(NULL);
+    while(d) {
+        uint32_t elaps = lv_tick_elaps(d->last_activity_time);
+        t = LV_MIN(t, elaps);
+        d = lv_display_get_next(d);
+    }
+
+    return t;
+}
+
+void lv_display_trigger_activity(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->last_activity_time = lv_tick_get();
+}
+
+void lv_display_enable_invalidation(lv_display_t * disp, bool en)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    disp->inv_en_cnt += en ? 1 : -1;
+}
+
+bool lv_display_is_invalidation_enabled(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+
+    LV_CHECK_ARG(disp != NULL, return false);
+    return disp->inv_en_cnt > 0;
+}
+
+lv_timer_t * lv_display_get_refr_timer(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    return disp->refr_timer;
+}
+
+void lv_display_delete_refr_timer(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    lv_timer_delete(disp->refr_timer);
+    disp->refr_timer = NULL;
+}
+
+lv_result_t lv_display_send_vsync_event(lv_display_t * disp, void * param)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_RESULT_INVALID);
+
+    if(disp->vsync_count > 0)
+        return lv_display_send_event(disp, LV_EVENT_VSYNC, param);
+
+    return LV_RESULT_INVALID;
+}
+
+bool lv_display_register_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return false);
+
+    lv_display_add_event_cb(disp, event_cb, LV_EVENT_VSYNC, user_data);
+
+    /*only send once*/
+    if(disp->vsync_count == 0)
+        lv_display_send_event(disp, LV_EVENT_VSYNC_REQUEST, disp);
+
+    disp->vsync_count++;
+    return true;
+}
+
+bool lv_display_unregister_vsync_event(lv_display_t * disp, lv_event_cb_t event_cb, void * user_data)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return false);
+
+    uint32_t removed_count = lv_display_remove_event_cb_with_user_data(disp, event_cb, user_data);
+    if(removed_count == 0)
+        return false;
+
+    disp->vsync_count -= removed_count;
+    /*only send once*/
+    if(disp->vsync_count == 0)
+        lv_display_send_event(disp, LV_EVENT_VSYNC_REQUEST, NULL);
+
+    return true;
+}
+
+void lv_display_set_user_data(lv_display_t * disp, void * user_data)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+    disp->user_data = user_data;
+}
+
+void lv_display_set_driver_data(lv_display_t * disp, void * driver_data)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->driver_data = driver_data;
+}
+
+void * lv_display_get_user_data(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->user_data;
+}
+
+void * lv_display_get_driver_data(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+
+    return disp->driver_data;
+}
+
+lv_draw_buf_t * lv_display_get_buf_active(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return NULL);
+    return disp->buf_act;
+}
+
+void lv_display_rotate_area(lv_display_t * disp, lv_area_t * area)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(area != NULL, return);
+    lv_display_rotation_t rotation = lv_display_get_rotation(disp);
+
+    if(rotation == LV_DISPLAY_ROTATION_0) return;
+
+    int32_t w = lv_area_get_width(area);
+    int32_t h = lv_area_get_height(area);
+
+    switch(rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            area->y2 = disp->ver_res - area->x1 - 1;
+            area->x1 = area->y1;
+            area->x2 = area->x1 + h - 1;
+            area->y1 = area->y2 - w + 1;
+            break;
+        case LV_DISPLAY_ROTATION_180:
+            area->y2 = disp->ver_res - area->y1 - 1;
+            area->y1 = area->y2 - h + 1;
+            area->x2 = disp->hor_res - area->x1 - 1;
+            area->x1 = area->x2 - w + 1;
+            break;
+        case LV_DISPLAY_ROTATION_270:
+            area->x1 = disp->hor_res - area->y2 - 1;
+            area->y2 = area->x2;
+            area->x2 = area->x1 + h - 1;
+            area->y1 = area->y2 - w + 1;
+            break;
+        default:
+            break;
+    }
+}
+
+void lv_display_rotate_point(lv_display_t * disp, lv_point_t * point)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(point != NULL, return);
+    lv_display_rotation_t rotation = lv_display_get_rotation(disp);
+
+    if(rotation == LV_DISPLAY_ROTATION_0) return;
+
+    const int32_t x = point->x;
+    const int32_t y = point->y;
+
+    switch(rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            point->x = disp->ver_res - y - 1;
+            point->y = x;
+            break;
+        case LV_DISPLAY_ROTATION_180:
+            point->x = disp->hor_res - x - 1;
+            point->y = disp->ver_res - y - 1;
+            break;
+        case LV_DISPLAY_ROTATION_270:
+            point->x = y;
+            point->y = disp->hor_res - x - 1;
+            break;
+        default:
+            break;
+    }
+}
+
+void lv_display_rotate_point_ccw(lv_display_t * disp, lv_point_t * point)
+{
+    LV_CHECK_ARG(disp != NULL, return);
+    LV_CHECK_ARG(point != NULL, return);
+
+    lv_display_rotation_t rotation = lv_display_get_rotation(disp);
+
+    if(rotation == LV_DISPLAY_ROTATION_0) return;
+
+    const int32_t x = point->x;
+    const int32_t y = point->y;
+
+    switch(rotation) {
+        case LV_DISPLAY_ROTATION_90:
+            point->x = y;
+            point->y = disp->hor_res - x - 1;
+            break;
+        case LV_DISPLAY_ROTATION_180:
+            point->x = disp->hor_res - x - 1;
+            point->y = disp->ver_res - y - 1;
+            break;
+        case LV_DISPLAY_ROTATION_270:
+            point->x = disp->ver_res - y - 1;
+            point->y = x;
+            break;
+        default:
+            break;
+    }
+}
+
+uint32_t lv_display_get_draw_buf_size(lv_display_t * disp)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return 0);
+    LV_CHECK_ARG(disp->buf_1 != NULL, return 0);
+    return disp->buf_1->data_size;
+}
+
+uint32_t lv_display_get_invalidated_draw_buf_size(lv_display_t * disp, uint32_t width, uint32_t height)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return 0);
+    if(!disp) return 0;
+
+    if(disp->render_mode == LV_DISPLAY_RENDER_MODE_FULL) {
+        width = lv_display_get_horizontal_resolution(disp);
+        height = lv_display_get_vertical_resolution(disp);
+    }
+
+    lv_color_format_t cf = lv_display_get_color_format(disp);
+    uint32_t stride = lv_draw_buf_width_to_stride(width, cf);
+    uint32_t buf_size = stride * height;
+
+    LV_ASSERT(disp->buf_1 == NULL || disp->buf_1->data_size >= buf_size);
+    LV_ASSERT(disp->buf_2 == NULL || disp->buf_2->data_size >= buf_size);
+    LV_ASSERT(disp->buf_3 == NULL || disp->buf_3->data_size >= buf_size);
+
+    return buf_size;
+}
+
+lv_obj_t * lv_screen_active(void)
+{
+    return lv_display_get_screen_active(lv_display_get_default());
+}
+
+lv_obj_t * lv_layer_top(void)
+{
+    return lv_display_get_layer_top(lv_display_get_default());
+}
+
+lv_obj_t * lv_layer_sys(void)
+{
+    return lv_display_get_layer_sys(lv_display_get_default());
+}
+
+lv_obj_t * lv_layer_bottom(void)
+{
+    return lv_display_get_layer_bottom(lv_display_get_default());
+}
+
+int32_t lv_dpx(int32_t n)
+{
+    return LV_DPX(n);
+}
+
+int32_t lv_display_dpx(const lv_display_t * disp, int32_t n)
+{
+    if(disp == NULL) {
+        LOG_NULL_DISPLAY_DEPRECATED_MESSAGE();
+        disp = lv_display_get_default();
+    }
+    LV_CHECK_ARG(disp != NULL, return LV_DPI_DEF);
+    return LV_DPX_CALC(lv_display_get_dpi(disp), n);
+}
+
+#if LV_USE_EXT_DATA
+void lv_display_set_external_data(lv_display_t * disp, void * data, void (* free_cb)(void * data))
+{
+    LV_CHECK_ARG(disp != NULL, return);
+
+    disp->ext_data.data = data;
+    disp->ext_data.free_cb = free_cb;
+}
+#endif
+
+/**********************
+ *   STATIC FUNCTIONS
+ **********************/
+
+static bool old_screen_deleted(lv_load_screen_result_t res)
+{
+    return res == LV_LOAD_SCREEN_RESULT_BOTH_SCREENS_DELETED || res == LV_LOAD_SCREEN_RESULT_OLD_SCREEN_DELETED;
+}
+static bool new_screen_deleted(lv_load_screen_result_t res)
+{
+    return res == LV_LOAD_SCREEN_RESULT_BOTH_SCREENS_DELETED || res == LV_LOAD_SCREEN_RESULT_NEW_SCREEN_DELETED;
+}
+
+static void update_resolution(lv_display_t * disp)
+{
+    LV_ASSERT(disp != NULL);
+    int32_t hor_res = lv_display_get_horizontal_resolution(disp);
+    int32_t ver_res = lv_display_get_vertical_resolution(disp);
+    LV_ASSERT(hor_res > 0);
+    LV_ASSERT(ver_res > 0);
+
+    lv_area_t prev_coords;
+    lv_obj_get_coords(disp->sys_layer, &prev_coords);
+    uint32_t i;
+    for(i = 0; i < disp->screen_cnt; i++) {
+        lv_area_set_width(&disp->screens[i]->coords, hor_res);
+        lv_area_set_height(&disp->screens[i]->coords, ver_res);
+        lv_obj_send_event(disp->screens[i], LV_EVENT_SIZE_CHANGED, &prev_coords);
+    }
+
+    lv_area_set_width(&disp->top_layer->coords, hor_res);
+    lv_area_set_height(&disp->top_layer->coords, ver_res);
+    lv_obj_send_event(disp->top_layer, LV_EVENT_SIZE_CHANGED, &prev_coords);
+
+    lv_area_set_width(&disp->sys_layer->coords, hor_res);
+    lv_area_set_height(&disp->sys_layer->coords, ver_res);
+    lv_obj_send_event(disp->sys_layer, LV_EVENT_SIZE_CHANGED, &prev_coords);
+
+    lv_area_set_width(&disp->bottom_layer->coords, hor_res);
+    lv_area_set_height(&disp->bottom_layer->coords, ver_res);
+    lv_obj_send_event(disp->bottom_layer, LV_EVENT_SIZE_CHANGED, &prev_coords);
+
+    lv_memzero(disp->inv_areas, sizeof(disp->inv_areas));
+    lv_memzero(disp->inv_area_joined, sizeof(disp->inv_area_joined));
+    disp->inv_p = 0;
+    lv_obj_invalidate(disp->sys_layer);
+
+    lv_obj_tree_walk(NULL, invalidate_layout_cb, NULL);
+
+    lv_display_send_event(disp, LV_EVENT_RESOLUTION_CHANGED, NULL);
+}
+
+static lv_obj_tree_walk_res_t invalidate_layout_cb(lv_obj_t * obj, void * user_data)
+{
+    LV_ASSERT(obj != NULL);
+    LV_UNUSED(user_data);
+    LV_ASSERT(obj != NULL);
+    lv_obj_mark_layout_as_dirty(obj);
+    return LV_OBJ_TREE_WALK_NEXT;
+}
+
+static void screen_event_delete_cb(lv_event_t * e)
+{
+    LV_ASSERT(e != NULL);
+    lv_obj_t ** screen_var = lv_event_get_user_data(e);
+    *screen_var = NULL;
+}
+
+/**
+ * Load a new screen and report the result.
+ *
+ * @param scr  the screen object to load; must not be NULL
+ * @return     a value of ::lv_load_screen_result_t indicating the outcome:
+ *             - LV_LOAD_SCREEN_RESULT_OK: the new screen was loaded successfully;
+ *               both the old and new screens remain valid.
+ *             - LV_LOAD_SCREEN_RESULT_OLD_SCREEN_DELETED: the old screen was
+ *               deleted while loading the new screen, but the new screen remains valid.
+ *             - LV_LOAD_SCREEN_RESULT_NEW_SCREEN_DELETED: the new screen was
+ *               deleted during loading/unloading events; the old screen remains valid.
+ *             - LV_LOAD_SCREEN_RESULT_BOTH_SCREENS_DELETED: both the old and new
+ *               screens were deleted during the operation.
+ *             - LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED: the display was deleted
+ *               while processing screen load/unload events.
+ */
+static lv_load_screen_result_t load_new_screen(lv_obj_t * scr)
+{
+    /*scr must not be NULL, but d->act_scr might be*/
+    LV_ASSERT_NULL(scr);
+
+    lv_display_t * d = lv_obj_get_display(scr);
+    LV_ASSERT(d != NULL);
+
+    lv_obj_t * old_scr = d->act_scr;
+    /* Attach an event delete cb to the screen so we know if the screen is deleted during an event*/
+    if(old_scr) {
+        lv_obj_add_event_cb(old_scr, screen_event_delete_cb, LV_EVENT_DELETE, &old_scr);
+    }
+    lv_obj_add_event_cb(scr, screen_event_delete_cb, LV_EVENT_DELETE, &scr);
+
+    if(old_scr) {
+        if(lv_display_send_event(d, LV_EVENT_SCREEN_UNLOAD_START, old_scr) == LV_RESULT_INVALID) {
+            return LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED;
+        }
+        if(old_scr && lv_obj_send_event(old_scr, LV_EVENT_SCREEN_UNLOAD_START, NULL) == LV_RESULT_INVALID) {
+            old_scr = NULL;
+        }
+    }
+
+    if(lv_display_send_event(d, LV_EVENT_SCREEN_LOAD_START, scr) == LV_RESULT_INVALID) {
+        return LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED;
+    }
+
+    if(scr && lv_obj_send_event(scr, LV_EVENT_SCREEN_LOAD_START, NULL) == LV_RESULT_INVALID) {
+        scr = NULL;
+    }
+
+    d->act_scr = scr;
+    d->scr_to_load = NULL;
+
+    if(scr && lv_display_send_event(d, LV_EVENT_SCREEN_LOADED, scr) == LV_RESULT_INVALID) {
+        return LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED;
+    }
+
+    if(scr && lv_obj_send_event(scr, LV_EVENT_SCREEN_LOADED, NULL) == LV_RESULT_INVALID) {
+        d->act_scr = NULL;
+        scr = NULL;
+    }
+
+    if(old_scr) {
+        if(lv_display_send_event(d, LV_EVENT_SCREEN_UNLOADED, old_scr) == LV_RESULT_INVALID) {
+            return LV_LOAD_SCREEN_RESULT_DISPLAY_DELETED;
+        }
+        if(old_scr && lv_obj_send_event(old_scr, LV_EVENT_SCREEN_UNLOADED, NULL) == LV_RESULT_INVALID) {
+            old_scr = NULL;
+        }
+    }
+
+    if(scr) {
+        lv_obj_invalidate(scr);
+        lv_obj_remove_event_cb(scr, screen_event_delete_cb);
+    }
+
+    if(!old_scr) {
+        return scr ? LV_LOAD_SCREEN_RESULT_OLD_SCREEN_DELETED : LV_LOAD_SCREEN_RESULT_BOTH_SCREENS_DELETED;
+    }
+    lv_obj_remove_event_cb(old_scr, screen_event_delete_cb);
+    return scr ? LV_LOAD_SCREEN_RESULT_OK : LV_LOAD_SCREEN_RESULT_NEW_SCREEN_DELETED;
+}
+
+static void scr_load_anim_start(lv_anim_t * a)
+{
+    LV_ASSERT(a != NULL);
+    lv_display_t * d = lv_obj_get_display(a->var);
+    LV_ASSERT(d != NULL);
+
+    d->prev_scr = d->act_scr;
+    d->act_scr = a->var;
+
+    lv_obj_send_event(d->act_scr, LV_EVENT_SCREEN_LOAD_START, NULL);
+}
+
+static void opa_scale_anim(void * obj, int32_t v)
+{
+    LV_ASSERT(obj != NULL);
+    lv_obj_set_style_opa(obj, v, 0);
+}
+
+static void set_x_anim(void * obj, int32_t v)
+{
+    LV_ASSERT(obj != NULL);
+    lv_obj_set_x(obj, v);
+}
+
+static void set_y_anim(void * obj, int32_t v)
+{
+    LV_ASSERT(obj != NULL);
+    lv_obj_set_y(obj, v);
+}
+
+static void scr_anim_completed(lv_anim_t * a)
+{
+    LV_ASSERT(a != NULL);
+    lv_display_t * d = lv_obj_get_display(a->var);
+    LV_ASSERT(d != NULL);
+
+    if(lv_obj_send_event(d->act_scr, LV_EVENT_SCREEN_LOADED, NULL) == LV_RESULT_INVALID) {
+        d->act_scr = NULL;
+    }
+
+    if(d->prev_scr && lv_obj_send_event(d->prev_scr, LV_EVENT_SCREEN_UNLOADED, NULL) != LV_RESULT_INVALID) {
+        if(d->del_prev) {
+            lv_obj_delete(d->prev_scr);
+        }
+    }
+    d->prev_scr = NULL;
+    d->draw_prev_over_act = false;
+    d->scr_to_load = NULL;
+    lv_obj_remove_local_style_prop(a->var, LV_STYLE_OPA, 0);
+    if(d->act_scr) {
+        lv_obj_invalidate(d->act_scr);
+    }
+}
+
+static bool is_out_anim(lv_screen_load_anim_t anim_type)
+{
+    return anim_type == LV_SCREEN_LOAD_ANIM_FADE_OUT  ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_LEFT  ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_RIGHT ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_TOP   ||
+           anim_type == LV_SCREEN_LOAD_ANIM_OUT_BOTTOM;
+}
+
+static void disp_event_cb(lv_event_t * e)
+{
+    LV_ASSERT(e != NULL);
+    lv_event_code_t code = lv_event_get_code(e);
+    LV_ASSERT(code == LV_EVENT_REFR_REQUEST);
+    LV_UNUSED(code);
+
+    lv_display_t * disp = lv_event_get_target(e);
+    LV_ASSERT(disp != NULL);
+
+    if(disp->refr_timer) {
+        lv_timer_resume(disp->refr_timer);
+    }
+}

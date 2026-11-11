@@ -9,7 +9,7 @@
 #define TFT_DC 3
 #define TFT_RST 2
 #define GFX_BL 1
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
 #define TFT_CS 17 // GFX_NOT_DEFINED for display without CS pin
 #define TFT_DC 27
 #define TFT_RST 26
@@ -19,6 +19,31 @@
 #define TFT_DC 27 // GFX_NOT_DEFINED for display without DC pin (9-bit SPI)
 #define TFT_RST 33
 #define GFX_BL 22
+#elif defined(ESP32) && ((CONFIG_IDF_TARGET_ESP32C2) || (CONFIG_IDF_TARGET_ESP32C3))
+#define TFT_CS 7 // GFX_NOT_DEFINED for display without CS pin
+#define TFT_DC 2
+#define TFT_RST 1
+#define GFX_BL 3
+#elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32C5)
+#define TFT_CS 23 // GFX_NOT_DEFINED for display without CS pin
+#define TFT_DC 24
+#define TFT_RST 25
+#define GFX_BL 26
+#elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32C6)
+#define TFT_CS 18 // GFX_NOT_DEFINED for display without CS pin
+#define TFT_DC 22
+#define TFT_RST 23
+#define GFX_BL 15
+#elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32H2)
+#define TFT_CS 0 // GFX_NOT_DEFINED for display without CS pin
+#define TFT_DC 12
+#define TFT_RST 8
+#define GFX_BL 22
+#elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32P4)
+#define TFT_CS 26 // GFX_NOT_DEFINED for display without CS pin
+#define TFT_DC 27
+#define TFT_RST 25
+#define GFX_BL 24
 #elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32S2)
 #define TFT_CS 34 // GFX_NOT_DEFINED for display without CS pin
 #define TFT_DC 38
@@ -29,11 +54,6 @@
 #define TFT_DC 41
 #define TFT_RST 42
 #define GFX_BL 48
-#elif defined(ESP32) && (CONFIG_IDF_TARGET_ESP32C3)
-#define TFT_CS 7 // GFX_NOT_DEFINED for display without CS pin
-#define TFT_DC 2
-#define TFT_RST 1
-#define GFX_BL 3
 #elif defined(ESP8266)
 #define TFT_CS 15 // GFX_NOT_DEFINED for display without CS pin
 #define TFT_DC 4

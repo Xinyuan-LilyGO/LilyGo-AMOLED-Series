@@ -26,7 +26,11 @@
  * Defalult pin list for non display dev kit:
  * Arduino Nano, Micro and more: CS:  9, DC:  8, RST:  7, BL:  6, SCK: 13, MOSI: 11, MISO: 12
  * ESP32 various dev board     : CS:  5, DC: 27, RST: 33, BL: 22, SCK: 18, MOSI: 23, MISO: nil
- * ESP32-C3 various dev board  : CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C2/3 various dev board: CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C5 various dev board  : CS: 23, DC: 24, RST: 25, BL: 26, SCK: 10, MOSI:  8, MISO: nil
+ * ESP32-C6 various dev board  : CS: 18, DC: 22, RST: 23, BL: 15, SCK: 21, MOSI: 19, MISO: nil
+ * ESP32-H2 various dev board  : CS:  0, DC: 12, RST:  8, BL: 22, SCK: 10, MOSI: 25, MISO: nil
+ * ESP32-P4 various dev board  : CS: 26, DC: 27, RST: 25, BL: 24, SCK: 36, MOSI: 32, MISO: nil
  * ESP32-S2 various dev board  : CS: 34, DC: 38, RST: 33, BL: 21, SCK: 36, MOSI: 35, MISO: nil
  * ESP32-S3 various dev board  : CS: 40, DC: 41, RST: 42, BL: 48, SCK: 36, MOSI: 35, MISO: nil
  * ESP8266 various dev board   : CS: 15, DC:  4, RST:  2, BL:  5, SCK: 14, MOSI: 13, MISO: 12
@@ -85,21 +89,21 @@ HttpClient http(client);
 
 void setup(void)
 {
+#ifdef DEV_DEVICE_INIT
+  DEV_DEVICE_INIT();
+#endif
+
   Serial.begin(115200);
   // while (!Serial);
   // Serial.setDebugOutput(true);
   Serial.println("Arduino_GFX U8g2 Font RSS Reader example");
-
-#ifdef GFX_EXTRA_PRE_INIT
-  GFX_EXTRA_PRE_INIT();
-#endif
 
   Serial.println("Init display");
   if (!gfx->begin())
   {
     Serial.println("gfx->begin() failed!");
   }
-  gfx->fillScreen(BLACK);
+  gfx->fillScreen(RGB565_BLACK);
   gfx->setUTF8Print(true); // enable UTF8 support for the Arduino print() function
 
 #ifdef GFX_BL
@@ -129,8 +133,8 @@ void setup(void)
 
   /* U8g2 font list: https://github.com/olikraus/u8g2/wiki/fntlistall */
   /* U8g2 Unifont list: https://github.com/olikraus/u8g2/wiki/fntgrpunifont */
-  gfx->setFont(u8g2_font_unifont_t_chinese4);
-  gfx->setTextColor(WHITE);
+  gfx->setFont(u8g2_font_unifont_h_chinese4);
+  gfx->setTextColor(RGB565_WHITE);
 }
 
 void loop()
@@ -193,11 +197,11 @@ void loop()
           String title = xml.substring(val_start_idx, val_end_idx);
           Serial.println(title);
 
-          gfx->fillScreen(BLACK);
+          gfx->fillScreen(RGB565_BLACK);
           gfx->setCursor(0, 16);
 
           // gfx->setTextSize(2);
-          gfx->setTextColor(GREEN);
+          gfx->setTextColor(RGB565_LIME);
           gfx->println(title);
           gfx->println();
 
@@ -210,7 +214,7 @@ void loop()
           Serial.println(description);
 
           // gfx->setTextSize(1);
-          gfx->setTextColor(WHITE);
+          gfx->setTextColor(RGB565_WHITE);
           val_start_idx = 0;
           while (val_start_idx < description.length())
           {

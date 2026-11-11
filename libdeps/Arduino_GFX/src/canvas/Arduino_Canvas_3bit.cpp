@@ -53,24 +53,30 @@ bool Arduino_Canvas_3bit::begin(int32_t speed)
 
 void Arduino_Canvas_3bit::writePixelPreclipped(int16_t x, int16_t y, uint16_t color)
 {
-  int32_t pos = x + (y * _width);
-  int32_t idx = pos >> 1;
-  uint8_t c = (((color & 0b1000000000000000) ? 0b100 : 0) |
-               ((color & 0b0000010000000000) ? 0b010 : 0) |
-               ((color & 0b0000000000010000) ? 0b001 : 0));
-  if (pos & 1)
+  if (_framebuffer)
   {
-    _framebuffer[idx] = (_framebuffer[idx] & 0b00111000) | c;
-  }
-  else
-  {
-    _framebuffer[idx] = (_framebuffer[idx] & 0b00000111) | (c << 3);
+    int32_t pos = x + (y * _width);
+    int32_t idx = pos >> 1;
+    uint8_t c = (((color & 0b1000000000000000) ? 0b100 : 0) |
+                 ((color & 0b0000010000000000) ? 0b010 : 0) |
+                 ((color & 0b0000000000010000) ? 0b001 : 0));
+    if (pos & 1)
+    {
+      _framebuffer[idx] = (_framebuffer[idx] & 0b00111000) | c;
+    }
+    else
+    {
+      _framebuffer[idx] = (_framebuffer[idx] & 0b00000111) | (c << 3);
+    }
   }
 }
 
-void Arduino_Canvas_3bit::flush()
+void Arduino_Canvas_3bit::flush(bool force_flush)
 {
-  _output->draw3bitRGBBitmap(_output_x, _output_y, _framebuffer, _width, _height);
+  if (_framebuffer && _output)
+  {
+    _output->draw3bitRGBBitmap(_output_x, _output_y, _framebuffer, _width, _height);
+  }
 }
 
 uint8_t *Arduino_Canvas_3bit::getFramebuffer()

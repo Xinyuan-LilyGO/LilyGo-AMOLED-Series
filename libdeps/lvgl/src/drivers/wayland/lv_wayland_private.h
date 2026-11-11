@@ -1,0 +1,256 @@
+/**
+ * @file lv_wayland_private.h
+ *
+ */
+
+#ifndef LV_WAYLAND_PRIVATE_H
+#define LV_WAYLAND_PRIVATE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*********************
+ *      INCLUDES
+ *********************/
+
+#include "../../lvgl_public.h"
+
+#if LV_USE_WAYLAND
+
+
+#include "lv_wayland_backend_private.h"
+#include <sys/poll.h>
+#include <wayland-client-protocol.h>
+#include <wayland_xdg_shell.h>
+#include <wayland_xdg_output.h>
+#include "lv_wayland_backend_private.h"
+
+/*********************
+ *      DEFINES
+ *********************/
+
+#define LV_WAYLAND_DEFAULT_CURSOR_NAME "left_ptr"
+
+#ifndef LV_WAYLAND_KEY_EVENT_MAX_COUNT
+#define LV_WAYLAND_KEY_EVENT_MAX_COUNT (64)
+#endif
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+
+struct _lv_wl_window_t;
+
+typedef struct {
+    struct wl_pointer * wl_pointer;
+    struct wl_surface * cursor_surface;
+    struct wl_cursor_theme * cursor_theme;
+
+    /* The surface the pointer currently hovers over, NULL if none */
+    struct wl_surface * focused_surface;
+
+    lv_point_t point;
+    lv_indev_state_t left_btn_state;
+    lv_indev_state_t right_btn_state;
+    lv_indev_state_t wheel_btn_state;
+    int16_t wheel_diff;
+} lv_wl_seat_pointer_t;
+
+typedef struct {
+    int32_t id;                  /* Wayland touch point ID */
+    struct wl_surface * surface; /* The surface this touch point belongs to */
+    lv_point_t point;            /* Last known coordinates */
+    lv_indev_state_t state;      /* PRESSED or RELEASED */
+} lv_wl_touch_point_t;
+
+typedef struct {
+    struct wl_touch * wl_touch;
+
+#if LV_USE_GESTURE_RECOGNITION
+    lv_indev_touch_data_t touches[10];
+    uint8_t event_cnt;
+    uint8_t primary_id;
+#else
+    /* Active touch points (lv_wl_touch_point_t), one per finger on screen */
+    lv_ll_t touch_point_ll;
+#endif /*LV_USE_GESTURE_RECOGNITION*/
+} lv_wl_seat_touch_t;
+
+typedef struct {
+    struct wl_keyboard * wl_keyboard;
+    struct xkb_context * xkb_context;
+    struct xkb_keymap * xkb_keymap;
+    struct xkb_state * xkb_state;
+    /* The surface that currently has keyboard focus, NULL if none */
+    struct wl_surface * focused_surface;
+
+    struct {
+        lv_key_t key;
+        lv_indev_state_t state;
+    } events[LV_WAYLAND_KEY_EVENT_MAX_COUNT];
+    uint8_t event_read_index;
+    uint8_t event_write_index;
+    uint8_t event_count;
+} lv_wl_seat_keyboard_t;
+
+
+typedef struct {
+    struct wl_seat * wl_seat;
+
+    lv_wl_seat_pointer_t * pointer;
+    lv_wl_seat_touch_t * touch;
+    lv_wl_seat_keyboard_t * keyboard;
+} lv_wl_seat_t;
+
+
+
+typedef struct {
+    struct wl_output * wl_output;
+    struct zxdg_output_v1 * xdg_output;
+
+    /* Connector name, e.g. "HDMI-A-1". Reported by wl_output since version 4,
+     * or by xdg-output on older compositors. Empty if neither is available */
+    char name[64];
+
+    /* Resolution of the current mode, in physical pixels */
+    int width;
+    int height;
+
+    /* Size in the compositor's global space, 0 if xdg-output is unavailable */
+    int logical_width;
+    int logical_height;
+
+    int refresh;
+    int scale;
+    int flags;
+} lv_wl_output_info_t;
+
+typedef struct {
+    struct wl_display * wl_display;
+    struct wl_registry * wl_registry;
+    struct wl_compositor * wl_compositor;
+    struct wl_shm * wl_shm;
+    lv_wl_seat_t seat;
+
+    void * backend_data;
+    lv_wl_output_info_t ** physical_outputs;
+    uint8_t wl_output_count;
+
+    struct xdg_wm_base * xdg_wm;
+    struct zxdg_output_manager_v1 * xdg_output_mgr;
+
+    lv_ll_t window_ll;
+    lv_timer_t * read_compositor_events_timer;
+} lv_wl_ctx_t;
+
+typedef struct {
+    struct xdg_surface * xdg_surface;
+    uint32_t serial;
+    int32_t width;
+    int32_t height;
+    bool requested;
+    bool pending;
+} lv_wl_resize_event_t;
+
+typedef struct {
+    struct xdg_surface * xdg_surface;
+    struct xdg_toplevel * xdg_toplevel;
+    bool configured;
+} lv_wl_window_xdg_t;
+
+
+typedef struct _lv_wl_window_t {
+    lv_display_t * lv_disp;
+    lv_indev_t * lv_indev_pointer;
+    lv_indev_t * lv_indev_pointeraxis;
+    lv_indev_t * lv_indev_touch;
+    lv_indev_t * lv_indev_keyboard;
+    lv_wayland_backend_display_data_t backend_ddata;
+    lv_wayland_display_close_cb_t close_cb;
+    lv_wl_window_xdg_t xdg;
+
+    /* The current physical assigned output */
+    struct wl_output * physical_output;
+
+    /* The current body surface */
+    struct wl_surface * body;
+
+    lv_wl_resize_event_t resize_event;
+
+    bool maximized;
+    bool fullscreen;
+
+} lv_wl_window_t;
+
+
+/**********************
+ * GLOBAL PROTOTYPES
+ **********************/
+
+/**********************
+ *      MACROS
+ **********************/
+
+extern lv_wl_ctx_t lv_wl_ctx;
+
+/**********************
+ *      Driver
+ **********************/
+
+lv_result_t lv_wayland_init(void);
+void lv_wayland_deinit(void);
+
+void lv_wayland_flush(void);
+
+/**********************
+ *      Window
+ **********************/
+
+int32_t lv_wayland_window_get_width(lv_wl_window_t * window);
+int32_t lv_wayland_window_get_height(lv_wl_window_t * window);
+
+void lv_wayland_window_delete(lv_wl_window_t * window);
+
+const struct xdg_wm_base_listener * lv_wayland_xdg_get_wm_base_listener(void);
+
+void lv_wayland_xdg_set_maximized(lv_wl_window_xdg_t * xdg, bool maximized);
+void lv_wayland_xdg_set_minimized(lv_wl_window_xdg_t * xdg);
+void lv_wayland_xdg_set_fullscreen(lv_wl_window_xdg_t * xdg, bool fullscreen,
+                                   struct wl_output * output);
+lv_result_t lv_wl_xdg_create_window(struct xdg_wm_base * xdg_wm, lv_wl_window_t * window,
+                                    const char * title);
+bool lv_wayland_xdg_is_resize_pending(lv_wl_window_t * window);
+void lv_wayland_xdg_configure_surface(lv_wl_window_t * window);
+void lv_wayland_xdg_resize(lv_wl_window_t * window);
+void lv_wayland_xdg_delete_window(lv_wl_window_xdg_t * xdg);
+void lv_wayland_xdg_deinit(void);
+
+/**********************
+ *      Input
+ **********************/
+
+void lv_wayland_seat_init(lv_wl_seat_t * seat, struct wl_registry * registry, uint32_t name, uint32_t version);
+void lv_wayland_seat_deinit(lv_wl_seat_t * seat);
+
+lv_wl_seat_pointer_t * lv_wayland_seat_pointer_create(struct wl_seat * seat, struct wl_surface * surface);
+void lv_wayland_seat_pointer_delete(lv_wl_seat_pointer_t * seat_pointer);
+
+lv_wl_seat_touch_t * lv_wayland_seat_touch_create(struct wl_seat * seat);
+void lv_wayland_seat_touch_delete(lv_wl_seat_touch_t * seat_touch);
+
+lv_wl_seat_keyboard_t * lv_wayland_seat_keyboard_create(struct wl_seat * seat);
+void lv_wayland_seat_keyboard_delete(lv_wl_seat_keyboard_t * seat_keyboard);
+
+/* Updates indev's driver data with the given 'read_cb' to 'new_driver_data' */
+void lv_wayland_update_indevs(lv_indev_read_cb_t read_cb, void * new_driver_data);
+
+void lv_wayland_indevs_ready(lv_indev_read_cb_t read_cb);
+
+#endif /* LV_USE_WAYLAND */
+
+#ifdef __cplusplus
+} /*extern "C"*/
+#endif
+
+#endif /*LV_WAYLAND_PRIVATE_H*/

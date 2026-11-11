@@ -1,0 +1,19 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "chmod +x /workspace/lvgl_app/lvgl/.devcontainer/setup.sh; /workspace/lvgl_app/lvgl/.devcontainer/setup.sh",
+  "postStartCommand": ". /usr/local/emsdk/emsdk_env.sh;",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "analytic-signal.preview-html"
+      ]
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/lvgl_app/lvgl,type=bind",
+  "workspaceFolder": "/workspace/lvgl_app"
+}

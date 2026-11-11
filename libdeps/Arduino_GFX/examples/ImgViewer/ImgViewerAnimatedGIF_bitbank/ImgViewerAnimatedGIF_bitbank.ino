@@ -31,7 +31,7 @@
 /* Wio Terminal */
 #if defined(ARDUINO_ARCH_SAMD) && defined(SEEED_GROVE_UI_WIRELESS)
 #define GIF_FILENAME "/ezgif.com-optimize.gif"
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
 #define GIF_FILENAME "/ezgif.com-optimize.gif"
 #elif defined(ESP32)
 #define GIF_FILENAME "/ezgif.com-optimize.gif"
@@ -47,7 +47,11 @@
  * Defalult pin list for non display dev kit:
  * Arduino Nano, Micro and more: CS:  9, DC:  8, RST:  7, BL:  6, SCK: 13, MOSI: 11, MISO: 12
  * ESP32 various dev board     : CS:  5, DC: 27, RST: 33, BL: 22, SCK: 18, MOSI: 23, MISO: nil
- * ESP32-C3 various dev board  : CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C2/3 various dev board: CS:  7, DC:  2, RST:  1, BL:  3, SCK:  4, MOSI:  6, MISO: nil
+ * ESP32-C5 various dev board  : CS: 23, DC: 24, RST: 25, BL: 26, SCK: 10, MOSI:  8, MISO: nil
+ * ESP32-C6 various dev board  : CS: 18, DC: 22, RST: 23, BL: 15, SCK: 21, MOSI: 19, MISO: nil
+ * ESP32-H2 various dev board  : CS:  0, DC: 12, RST:  8, BL: 22, SCK: 10, MOSI: 25, MISO: nil
+ * ESP32-P4 various dev board  : CS: 26, DC: 27, RST: 25, BL: 24, SCK: 36, MOSI: 32, MISO: nil
  * ESP32-S2 various dev board  : CS: 34, DC: 38, RST: 33, BL: 21, SCK: 36, MOSI: 35, MISO: nil
  * ESP32-S3 various dev board  : CS: 40, DC: 41, RST: 42, BL: 48, SCK: 36, MOSI: 35, MISO: nil
  * ESP8266 various dev board   : CS: 15, DC:  4, RST:  2, BL:  5, SCK: 14, MOSI: 13, MISO: 12
@@ -83,7 +87,7 @@ Arduino_GFX *gfx = new Arduino_ILI9341(bus, DF_GFX_RST, 3 /* rotation */, false 
 #if defined(ARDUINO_ARCH_SAMD) && defined(SEEED_GROVE_UI_WIRELESS)
 #include <Seeed_FS.h>
 #include <SD/Seeed_SD.h>
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
 #include <LittleFS.h>
 #include <SD.h>
 #elif defined(ESP32)
@@ -109,7 +113,7 @@ void *GIFOpenFile(const char *fname, int32_t *pSize)
   /* Wio Terminal */
 #if defined(ARDUINO_ARCH_SAMD) && defined(SEEED_GROVE_UI_WIRELESS)
   f = SD.open(fname, "r");
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
   f = LittleFS.open(fname, "r");
   // f = SD.open(fname, "r");
 #elif defined(ESP32)
@@ -225,7 +229,7 @@ void GIFDraw(GIFDRAW *pDraw)
           *d++ = usPalette[c];
           iCount++;
         }
-      }           // while looking for opaque pixels
+      } // while looking for opaque pixels
       if (iCount) // any opaque pixels?
       {
         gfx->draw16bitBeRGBBitmap(pDraw->iX + x, y, usTemp, iCount, 1);
@@ -267,21 +271,21 @@ void GIFDraw(GIFDRAW *pDraw)
 
 void setup()
 {
+#ifdef DEV_DEVICE_INIT
+  DEV_DEVICE_INIT();
+#endif
+
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
   // while(!Serial);
   Serial.println("Arduino_GFX Animated GIF Image Viewer example");
-
-#ifdef GFX_EXTRA_PRE_INIT
-  GFX_EXTRA_PRE_INIT();
-#endif
 
   // Init Display
   if (!gfx->begin())
   {
     Serial.println("gfx->begin() failed!");
   }
-  gfx->fillScreen(BLACK);
+  gfx->fillScreen(RGB565_BLACK);
 
 #ifdef GFX_BL
   pinMode(GFX_BL, OUTPUT);
@@ -294,7 +298,7 @@ void setup()
 /* Wio Terminal */
 #if defined(ARDUINO_ARCH_SAMD) && defined(SEEED_GROVE_UI_WIRELESS)
   if (!SD.begin(SDCARD_SS_PIN, SDCARD_SPI, 4000000UL))
-#elif defined(TARGET_RP2040)
+#elif defined(TARGET_RP2040) || defined(PICO_RP2350)
   if (!LittleFS.begin())
   // if (!SD.begin(SS))
 #elif defined(ESP32)

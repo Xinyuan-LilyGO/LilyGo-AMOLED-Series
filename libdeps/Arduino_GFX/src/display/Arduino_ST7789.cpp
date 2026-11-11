@@ -9,8 +9,10 @@
 Arduino_ST7789::Arduino_ST7789(
     Arduino_DataBus *bus, int8_t rst, uint8_t r,
     bool ips, int16_t w, int16_t h,
-    uint8_t col_offset1, uint8_t row_offset1, uint8_t col_offset2, uint8_t row_offset2)
-    : Arduino_TFT(bus, rst, r, ips, w, h, col_offset1, row_offset1, col_offset2, row_offset2)
+    uint8_t col_offset1, uint8_t row_offset1, uint8_t col_offset2, uint8_t row_offset2,
+    const uint8_t *init_operations, size_t init_operations_len)
+    : Arduino_TFT(bus, rst, r, ips, w, h, col_offset1, row_offset1, col_offset2, row_offset2),
+      _init_operations(init_operations), _init_operations_len(init_operations_len)
 {
 }
 
@@ -44,6 +46,18 @@ void Arduino_ST7789::setRotation(uint8_t r)
     break;
   case 3:
     r = ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
+    break;
+  case 4:
+    r = ST7789_MADCTL_MX | ST7789_MADCTL_RGB;
+    break;
+  case 5:
+  r = ST7789_MADCTL_MX | ST7789_MADCTL_MY | ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
+    break;
+  case 6:
+    r = ST7789_MADCTL_MY | ST7789_MADCTL_RGB;
+    break;
+  case 7:
+  r = ST7789_MADCTL_MV | ST7789_MADCTL_RGB;
     break;
   default: // case 0:
     r = ST7789_MADCTL_RGB;
@@ -113,7 +127,7 @@ void Arduino_ST7789::tftInit()
   delay(ST7789_RST_DELAY);
   // }
 
-  _bus->batchOperation(st7789_init_operations, sizeof(st7789_init_operations));
+  _bus->batchOperation(_init_operations, _init_operations_len);
 
   invertDisplay(false);
 }
