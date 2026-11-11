@@ -43,7 +43,7 @@ using namespace ace_button;
 AceButton button;
 
 // Mouse pointer image
-LV_IMG_DECLARE(image_emoji);
+LV_IMAGE_DECLARE(image_emoji);
 
 LilyGo_Class amoled;
 
@@ -132,14 +132,14 @@ void setup()
     setupUSB(inputParams.queue);    // Initialize USB Host
 
     // Creating an Input Box
-    lv_obj_t *radio_ta = lv_textarea_create(lv_scr_act());
+    lv_obj_t *radio_ta = lv_textarea_create(lv_screen_active());
     lv_obj_set_size(radio_ta, LV_PCT(80), LV_PCT(20));
     lv_textarea_set_text(radio_ta, "");
     lv_textarea_set_max_length(radio_ta, 1024);
     lv_obj_align(radio_ta, LV_ALIGN_TOP_MID, 0, 20);
 
 
-    lv_obj_t *label1 = lv_label_create(lv_scr_act());
+    lv_obj_t *label1 = lv_label_create(lv_screen_active());
     lv_label_set_long_mode(label1, LV_LABEL_LONG_WRAP);     /*Break the long lines*/
     lv_label_set_recolor(label1, true);                      /*Enable re-coloring by commands in the text*/
     lv_label_set_text(label1, "#0000ff Re-color# #ff00ff words# #ff0000 of a# label, align the lines to the center "
@@ -148,7 +148,7 @@ void setup()
     lv_obj_set_style_text_align(label1, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
 
-    lv_obj_t *label2 = lv_label_create(lv_scr_act());
+    lv_obj_t *label2 = lv_label_create(lv_screen_active());
     lv_label_set_long_mode(label2, LV_LABEL_LONG_SCROLL_CIRCULAR);     /*Circular scroll*/
     lv_obj_set_width(label2, 150);
     lv_label_set_text(label2, "It is a circularly scrolling text. ");
@@ -156,13 +156,13 @@ void setup()
 
 
 
-    lv_obj_t *btn1 = lv_btn_create(lv_scr_act());
+    lv_obj_t *btn1 = lv_button_create(lv_screen_active());
     lv_obj_align(btn1, LV_ALIGN_BOTTOM_MID, -80, -40);
     lv_obj_t *label = lv_label_create(btn1);
     lv_label_set_text(label, "Button");
     lv_obj_center(label);
 
-    lv_obj_t *btn2 = lv_btn_create(lv_scr_act());
+    lv_obj_t *btn2 = lv_button_create(lv_screen_active());
     lv_obj_align(btn2, LV_ALIGN_BOTTOM_MID, 80, -40);
     lv_obj_add_flag(btn2, LV_OBJ_FLAG_CHECKABLE);
     lv_obj_set_height(btn2, LV_SIZE_CONTENT);
@@ -177,7 +177,7 @@ void loop()
 {
 
     button.check();
-    lv_task_handler();
+    lv_timer_handler();
     delay(2);
 }
 

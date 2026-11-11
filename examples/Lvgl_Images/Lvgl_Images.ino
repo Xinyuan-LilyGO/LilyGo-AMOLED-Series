@@ -26,29 +26,29 @@ static int16_t x, y;
 #define USE_AMOLED_241    //2.41 inches 450x600
 
 #if defined(USE_AMOLED_147)
-LV_IMG_DECLARE(image_1_368x194);
-LV_IMG_DECLARE(image_2_368x194);
-LV_IMG_DECLARE(image_3_368x194);
-LV_IMG_DECLARE(image_4_368x194);
-LV_IMG_DECLARE(image_5_368x194);
-LV_IMG_DECLARE(image_6_368x194);
-LV_IMG_DECLARE(image_7_368x194);
+LV_IMAGE_DECLARE(image_1_368x194);
+LV_IMAGE_DECLARE(image_2_368x194);
+LV_IMAGE_DECLARE(image_3_368x194);
+LV_IMAGE_DECLARE(image_4_368x194);
+LV_IMAGE_DECLARE(image_5_368x194);
+LV_IMAGE_DECLARE(image_6_368x194);
+LV_IMAGE_DECLARE(image_7_368x194);
 #elif defined(USE_AMOLED_241)
-LV_IMG_DECLARE(image_1_600x450);
-LV_IMG_DECLARE(image_2_600x450);
-LV_IMG_DECLARE(image_3_600x450);
-LV_IMG_DECLARE(image_4_600x450);
-LV_IMG_DECLARE(image_5_600x450);
-LV_IMG_DECLARE(image_6_600x450);
-LV_IMG_DECLARE(image_7_600x450);
+LV_IMAGE_DECLARE(image_1_600x450);
+LV_IMAGE_DECLARE(image_2_600x450);
+LV_IMAGE_DECLARE(image_3_600x450);
+LV_IMAGE_DECLARE(image_4_600x450);
+LV_IMAGE_DECLARE(image_5_600x450);
+LV_IMAGE_DECLARE(image_6_600x450);
+LV_IMAGE_DECLARE(image_7_600x450);
 #elif defined(USE_AMOLED_191)
-LV_IMG_DECLARE(image_1_536x240);
-LV_IMG_DECLARE(image_2_536x240);
-LV_IMG_DECLARE(image_3_536x240);
-LV_IMG_DECLARE(image_4_536x240);
-LV_IMG_DECLARE(image_5_536x240);
-LV_IMG_DECLARE(image_6_536x240);
-LV_IMG_DECLARE(image_7_536x240);
+LV_IMAGE_DECLARE(image_1_536x240);
+LV_IMAGE_DECLARE(image_2_536x240);
+LV_IMAGE_DECLARE(image_3_536x240);
+LV_IMAGE_DECLARE(image_4_536x240);
+LV_IMAGE_DECLARE(image_5_536x240);
+LV_IMAGE_DECLARE(image_6_536x240);
+LV_IMAGE_DECLARE(image_7_536x240);
 #else
 #error "Image resources need to define the screen size"
 #endif
@@ -87,7 +87,7 @@ const void *images[] = {
 
 void updateImages()
 {
-    lv_img_set_src(img1, images[image_index]);
+    lv_image_set_src(img1, images[image_index]);
     image_index++;
     image_index %= sizeof(images) / sizeof(images[0]);
 }
@@ -108,7 +108,7 @@ void images_event_cb(lv_event_t *e)
 {
     static uint8_t image_index = 1;
     if (lv_event_get_code(e) != LV_EVENT_CLICKED)return;
-    lv_img_set_src(lv_event_get_target(e), images[image_index]);
+    lv_image_set_src(static_cast<lv_obj_t *>(lv_event_get_target(e)), images[image_index]);
     image_index++;
     image_index %= sizeof(images) / sizeof(images[0]);
 }
@@ -142,8 +142,8 @@ void setup()
     beginLvglHelper(amoled);
 
 
-    img1 = lv_img_create(lv_scr_act());
-    lv_img_set_src(img1, images[0]);
+    img1 = lv_image_create(lv_screen_active());
+    lv_image_set_src(img1, images[0]);
     lv_obj_center(img1);
     lv_obj_add_event_cb(img1, images_event_cb, LV_EVENT_CLICKED, NULL);
 
@@ -170,6 +170,6 @@ void setup()
 void loop()
 {
     amoled.getPoint(&x, &y);
-    lv_task_handler();
+    lv_timer_handler();
     button.check();
 }
