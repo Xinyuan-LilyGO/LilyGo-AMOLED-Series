@@ -1,6 +1,9 @@
 /*
  * FactoryV2 AMOLED Plus Shield: standalone IR transmitter test.
  *
+ * Only the T-Display-S3 AMOLED Plus with the matching Shield is supported.
+ * Other AMOLED Series boards do not have the required IR transmit path.
+ *
  * The sketch sends one valid 32-bit NEC frame every second and reports each
  * frame on the serial monitor at 115200.
  */

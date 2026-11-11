@@ -1,6 +1,9 @@
 /*
  * FactoryV2 AMOLED Plus Shield: standalone IR receiver test.
  *
+ * Only the T-Display-S3 AMOLED Plus with the matching Shield is supported.
+ * Other AMOLED Series boards do not have the required IR receive path.
+ *
  * The receiver listens continuously and prints every decoded frame. A valid
  * FactoryV2 test frame is NEC 0x20DF10EF.
  */

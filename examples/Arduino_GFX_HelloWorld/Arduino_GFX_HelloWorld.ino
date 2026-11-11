@@ -63,12 +63,12 @@ void setup()
 
     gfx2 = new Arduino_Canvas(240, 536, gfx, 0, 0); // for Sprites
     gfx2->begin(GFX_SKIP_OUTPUT_BEGIN); // Added the GFX_SKIP_OUTPUT_BEGIN so the Canvas class doesn’t try and initialise the display
-    gfx2->fillScreen(BLACK);
+    gfx2->fillScreen(RGB565_BLACK);
     gfx2->setCursor(80, 268);
-    gfx2->setTextColor(RED);
+    gfx2->setTextColor(RGB565_RED);
     gfx2->setTextSize(2 /* x scale */, 2 /* y scale */, 1 /* pixel_margin */);
     gfx2->println("Hello World!");
-    gfx2->fillCircle(130, 130, 40, GREEN);
+    gfx2->fillCircle(130, 130, 40, RGB565_GREEN);
     gfx2->flush();
 
     //Test brightness

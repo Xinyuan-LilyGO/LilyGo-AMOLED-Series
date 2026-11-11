@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "icons/FactoryIcons.h"
-#include "icons/FactoryIconsExtra.h"
+#include "FactoryIcons.h"
+#include "FactoryIconsExtra.h"
 
 namespace {
 const lv_color_t kBackground = lv_color_make(8, 13, 22);

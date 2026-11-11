@@ -93,7 +93,7 @@ Icons use LVGL's `LV_SYMBOL_*` Font Awesome glyphs. They are the open-source
 symbol assets shipped in LVGL for extension metadata. The feature selector uses
 the colorful SVG artwork from GitHub's `icons8/flat-color-icons` repository
 ([source](https://github.com/icons8/flat-color-icons)), converted to 40x40
-RGB565A8 constants in `icons/FactoryIcons.c`.
+RGB565A8 constants in `FactoryIcons.c`.
 
 The launcher exposes display color cycle, SD, RGB, touch, power,
 microphone, LoRa TX/RX, IR TX/RX, sensor, telemetry, and extension entries as

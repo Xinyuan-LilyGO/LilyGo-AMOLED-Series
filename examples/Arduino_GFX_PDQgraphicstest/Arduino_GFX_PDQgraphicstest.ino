@@ -12,6 +12,26 @@
 
 #include <Arduino_GFX_Library.h>
 
+// Arduino_GFX 1.6.x names its predefined colors with an RGB565_ prefix.
+constexpr uint16_t BLACK = RGB565_BLACK;
+constexpr uint16_t RED = RGB565_RED;
+constexpr uint16_t GREEN = RGB565_GREEN;
+constexpr uint16_t BLUE = RGB565_BLUE;
+constexpr uint16_t WHITE = RGB565_WHITE;
+constexpr uint16_t YELLOW = RGB565_YELLOW;
+constexpr uint16_t CYAN = RGB565_CYAN;
+constexpr uint16_t MAGENTA = RGB565_MAGENTA;
+constexpr uint16_t NAVY = RGB565_NAVY;
+constexpr uint16_t DARKGREEN = RGB565_DARKGREEN;
+constexpr uint16_t DARKCYAN = RGB565_DARKCYAN;
+constexpr uint16_t MAROON = RGB565_MAROON;
+constexpr uint16_t PURPLE = RGB565_PURPLE;
+constexpr uint16_t OLIVE = RGB565_OLIVE;
+constexpr uint16_t DARKGREY = RGB565_DARKGREY;
+constexpr uint16_t ORANGE = RGB565_ORANGE;
+constexpr uint16_t GREENYELLOW = RGB565_GREENYELLOW;
+constexpr uint16_t PINK = RGB565_PINK;
+
 #define GFX_DEV_DEVICE LILYGO_T_DISPLAY_S3_AMOLED
 Arduino_DataBus *bus = new Arduino_ESP32QSPI(
     6 /* cs */, 47 /* sck */, 18 /* d0 */, 7 /* d1 */, 48 /* d2 */, 5 /* d3 */);

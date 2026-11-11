@@ -1,3 +1,10 @@
+/*
+ * Standalone MP3 playback test for the T-Display-S3 AMOLED Plus Shield.
+ *
+ * Only the T-Display-S3 AMOLED Plus with the matching Shield is supported.
+ * Other AMOLED Series boards do not have the required ES8311 audio path.
+ */
+
 #include <LilyGo_AMOLED.h>
 
 #include <AudioBoard.h>
