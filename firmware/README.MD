@@ -1,21 +1,27 @@
 
 ## News
 
-* The firmware supports any one in the list below. The firmware used in the list below is the same and there is no need to distinguish it.
+The images in this directory are merged ESP32-S3 binaries. They include the
+bootloader, partition table, boot application and application, and must be
+flashed at address `0x0`.
+
+- **Factory** is the standard production test for every supported AMOLED board.
+- **FactoryV2** is the extended test application. Its Shield-only functions are
+  available only on T-Display-S3 AMOLED Plus with the matching Shield.
 
 ## 1️⃣Support Product
 
-| Product(PinMap)               | Release                   |
-| ----------------------------- | ------------------------- |
-| [T-Display-AMOLED-Lite][1]    | [firmware](./firmware.bin) |
-| [T-Display-S3 AMOLED][2]      | [firmware](./firmware.bin) |
-| [T4-S3][3]                    | [firmware](./firmware.bin) |
-| [T-Display-S3 AMOLED Plus][4] | [firmware](./firmware.bin) |
+| Product (PinMap)              | Factory | FactoryV2 |
+| ----------------------------- | ------- | --------- |
+| [T-Display-AMOLED-Lite][1]    | [Download](./esp32s3-t-display-amoled-factory-20261111_0x0.bin) | [Download](./esp32s3-t-display-amoled-factory-v2-20261111_0x0.bin) |
+| [T-Display-S3 AMOLED][2]      | [Download](./esp32s3-t-display-amoled-factory-20261111_0x0.bin) | [Download](./esp32s3-t-display-amoled-factory-v2-20261111_0x0.bin) |
+| [T4-S3][3]                    | [Download](./esp32s3-t-display-amoled-factory-20261111_0x0.bin) | [Download](./esp32s3-t-display-amoled-factory-v2-20261111_0x0.bin) |
+| [T-Display-S3 AMOLED Plus][4] | [Download](./esp32s3-t-display-amoled-factory-20261111_0x0.bin) | [Download](./esp32s3-t-display-amoled-factory-v2-20261111_0x0.bin) |
 
 [1]: https://www.lilygo.cc/products/t-display-amoled-lite
 [2]: https://www.lilygo.cc/products/t-display-s3-amoled
 [3]: https://www.lilygo.cc/products/t4-s3
-[4]: https://www.lilygo.cc/products/t-display-s3-amoled
+[4]: https://www.lilygo.cc/products/t-display-s3-amoled-plus
 
 
 ## 2️⃣How to Flash ?
@@ -69,11 +75,14 @@ python3 -m esptool
 For ESP32-S3 use the following command to write
 
 ```
-esptool --chip esp32s3  --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m 0x0 firmware.bin
+esptool --chip esp32s3 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 80m 0x0 esp32s3-t-display-amoled-factory-20261111_0x0.bin
 
 ```
 
-# 2️⃣FAQ
+To flash FactoryV2, replace the file name with
+`esp32s3-t-display-amoled-factory-v2-20261111_0x0.bin`.
+
+# 3️⃣FAQ
 
 - Can't upload any sketch，Please enter the upload mode manually.
    1. Connect the board via the USB cable
@@ -87,6 +96,6 @@ esptool --chip esp32s3  --baud 921600 --before default_reset --after hard_reset 
 - How do I prove to LilyGo that the board is damaged?
   1. You need to shoot a video to prove that the board is damaged. Follow the steps below to shoot a video to prove that the board is damaged.
   2. Follow the first step of the FAQ on this page to put the board into download mode
-  3. Select a burning tool, download **debug.bin** and upload the firmware to the board through the burning tool
+  3. Select a flashing tool, download one of the merged firmware images above and flash it to address `0x0`.
   4. After waiting for the burning to complete, press the RST button, or disconnect the USB and then reinsert it.
   5. Any of the above steps must be included in the video content for clarification
