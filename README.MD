@@ -9,9 +9,9 @@
 
 ## News
 
-- `LilyGo-AMOLED-Series` is currently compatible with lvgl9, but there is only one `lvgl 9.x.x` example, and the rest of the examples are still based on `lvgl 8.x.x`. Please confirm the lvgl version before using the examples. How to change the lvgl version please see the following description
+- `LilyGo-AMOLED-Series` has been updated to use LVGL 9 as a dependency for its examples.
+- All examples are tested with Arduino-ESP32 `v3.3.11`. Arduino-ESP32 2.x is not supported, and later core versions have not been validated.
 - `LilyGo-AMOLED-Series` esp-idf version example, please jump to this [LilyGo-Display-IDF](https://github.com/Xinyuan-LilyGO/LilyGo-Display-IDF)
-- `T4-S3` **GPIO18** has been assigned to the display TE Pin, please do not use this Pin
 
 ## 1️⃣Support Product
 
@@ -172,55 +172,50 @@ The ESP32-S3 GPIO numbers below are also the Arduino pin numbers.
 
 ```txt
 examples/
-├── Factory                             # Factory example
 ├── AdjustBrightness                    # Adjust brightness example
+├── Arduino_GFX_HelloWorld              # Arduino_GFX example for the 1.91-inch board
+├── Arduino_GFX_PDQgraphicstest         # Arduino_GFX graphics test for the 1.91-inch board
+├── CameraShield                        # External camera shield example for the 1.91-inch board
 ├── DS18x20_Temperature                 # OneWire example
-├── LumenMeter                          # 1.47-inch AMOLED Built-in Ambient Light Sensor Example
+├── Factory                             # Factory example
+├── FactoryV2                           # Modular factory test; Shield apps require AMOLED Plus + Shield
+├── IR_RX_Test                          # IR receiver; AMOLED Plus + Shield only
+├── IR_TX_Test                          # IR transmitter; AMOLED Plus + Shield only
+├── LVGL_Rotation                       # Screen rotation for the 1.91/2.41-inch boards
 ├── LVGL_SD_Images                      # Display pictures saved in SD card
-├── Lvgl_Images                         # Screen color test
-├── PMU_ADC                             # PMU Voltage detection example , only support 1.47-inch AMOLED
-├── PMU_Interrupt                       # PMU interrupt example , only support 1.47-inch AMOLED
-├── PPM_Example_for_T4S3                # Power chip example, only used for T4-S3
+├── LumenMeter                          # Built-in ambient light sensor on the 1.47-inch board
+├── Lvgl_Images                         # LVGL image display example
+├── PMU_ADC                             # PMU ADC example for the 1.47-inch board
+├── PMU_Interrupt                       # PMU interrupt example for the 1.47-inch board
 ├── PPM_Example_for_191Plus             # Power chip example, only used for AMOLED 1.91 Plus
-├── CameraShield                        # Extern camera shield example, only supports 1.91 inches
-├── SPI_SDCard                          # External SD card example, SPI communication
-├── QWIIC_GPS_Shield                    # Extern GPS Shield example,use Serial communication
-├── QWIIC_HP303BSensor                  # Extern Temperature Pressure Sensor example,use Wire communication
-├── QWIIC_MAX3010X                      # External heart rate module,use Wire communication
+├── PPM_Example_for_T4S3                # Power chip example, only used for T4-S3
+├── PlayMP3FromPROGMEM                  # MP3 playback; AMOLED Plus + Shield only
+├── QWIIC_GPS_Shield                    # External GPS shield using Serial
+├── QWIIC_HP303BSensor                  # External temperature/pressure sensor using I2C
+├── QWIIC_I2C_Scan                      # QWIIC I2C scanner
+├── QWIIC_MAX3010X                      # External heart-rate sensor using I2C
+├── SPI_SDCard                          # External SD card using SPI
 ├── TFT_eSPI_Sprite                     # Use TFT_eSPI Sprite example
 ├── TFT_eSPI_Sprite_ArcFill             # Use TFT_eSPI Sprite example
 ├── TFT_eSPI_Sprite_graphicstest_small  # Use TFT_eSPI Sprite example
 ├── TFT_eSPI_Sprite_RLE_Font            # Use TFT_eSPI Sprite example
 ├── TFT_eSPI_Sprite_Rotation            # Screen rotation, only available for 1.91, 2.41 inches
-├── LVGL_Rotation                       # Screen rotation, only available for 1.91, 2.41 inches
-├── Touchpad                            # Touchpad example
 ├── TouchPaint                          # TouchPaint example
+├── Touchpad                            # Touchpad example
+├── TWAI_SelfTest                       # TWAI self-test example
 ├── USB_Host_Keyboard_Mouse             # USB host example
-├── lvgl_version_9                      # Lvgl version 9 example
-└── lvgl                                # LVGL examples
-    ├── event
-    ├── get_started
-    ├── layouts
-    │   ├── flex
-    │   └── grid
-    ├── scroll
-    ├── style
-    ├── third_party
-    │   ├── ImageDecoder
-    │   └── gif
-    └── widgets
-        └── ...
+└── lvgl_version_9                      # Lvgl version 9 example
 ```
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
 
 1. Install [Visual Studio Code](https://code.visualstudio.com/) and [Python](https://www.python.org/)
-2. Search for the `PlatformIO` plugin in the `VisualStudioCode` extension and install it.
+2. Search for the `pioarduino IDE` plugin in the `VisualStudioCode` extension and install it.
 3. After the installation is complete, you need to restart `VisualStudioCode`
 4. After restarting `VisualStudioCode`, select `File` in the upper left corner of `VisualStudioCode` -> `Open Folder` -> select the `LilyGO AMOLED Series` directory
 5. Wait for the installation of third-party dependent libraries to complete
 6. Click on the `platformio.ini` file, and in the `platformio` column
-7. Uncomment one of the lines `src_dir = xxxx` to make sure only one line works
+7. Select one `src_dir = examples/...` line and make sure every other `src_dir` line is commented out
 8. Click the (✔) symbol in the lower left corner to compile
 9. Connect the board to the computer USB
 10. Click (→) to upload firmware
@@ -235,12 +230,16 @@ examples/
 >
 > SensorLib -> v0.5.1
 >
+> `Install ALL` installs the library's core dependencies only. For examples that
+> use optional libraries, install the exact versions listed in **Tested
+> dependencies** below, or use the copies archived in `libdeps`.
+>
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V2.0.16 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
+2. Install [Arduino ESP32 V3.3.11](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. `Sketch` -> `Include Library` -> `Manage Libraries`
 4. `Library Search` -> `LilyGO AMOLED Series` -> `Install` -> `Install ALL`
-5. `Library Search` -> `lvgl` -> `v8.4.0` -> `Install` , How to use `lvgl 9.x.x`, please see the lvgl upgrade settings below
+5. `Library Search` -> `lvgl` -> `v9.6.0` -> `Install`
 6. `Library Search` -> `SensorLib` -> `v0.5.1` -> `Install`
 7. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 8. `Tools` , Look at the picture to choose
@@ -289,7 +288,7 @@ examples/
 ## 5️⃣ Arduino IDE Manual installation (not recommended)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32 V2.0.16 or later or latest](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
+2. Install [Arduino ESP32 V3.3.11](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
 3. Download `LilyGO AMOLED Series` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 4. Copy all folders in [libdeps folder](./libdeps/) to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE ,`Tools` , Make your selection according to the table below
@@ -314,6 +313,7 @@ examples/
    | USB Mode                             | **CDC and JTAG**                  |
 
    - The options in bold are required, others are selected according to actual conditions.
+   - `USB_Host_Keyboard_Mouse` must use `USB CDC On Boot: Disable`; the other examples use `Enable`.
 
 6. `File` -> `Examples` -> `LilyGO AMOLED Series` -> `Any Examples`
 7. Select `Port` ，Port keeps flashing? Please see the following tips
@@ -396,20 +396,27 @@ examples/
 - [ESP32S3-R8](https://www.espressif.com.cn/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 - [SY6970](./datasheet/SY6970%20Datasheet.pdf)
 - [AMOLED Driver datasheet](./datasheet/RM690B0%20DataSheet_V0.2.pdf)
-- [CST226 datasheet](<[./libdeps/SensorLib/](https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf)>)
+- [CST226 datasheet](<https://github.com/lewisxhe/SensorLib/blob/master/datasheet/%E6%B5%B7%E6%A0%8E%E5%88%9B%E8%A7%A6%E6%91%B8%E8%8A%AF%E7%89%87%E7%A7%BB%E6%A4%8D%E6%89%8B%E5%86%8C-v3.5-20220701(1).pdf>)
 
-# 8️⃣ Depends on required libraries
+# 8️⃣ Tested dependencies
 
-- [SensorLib v0.5.1](https://github.com/lewisxhe/SensorLib) (includes PMIC and touch drivers)
-- [lvgl v8.x or v9.x](https://github.com/lvgl/lvgl)
-- [AceButton v1.10.1](https://github.com/bxparks/AceButton)
-- [Adafruit_NeoPixel v1.11.0](https://github.com/adafruit/Adafruit_NeoPixel)
-- [TinyGPSPlus v1.0.3](https://github.com/mikalhart/TinyGPSPlusl)
+The exact tested copies are archived in [`libdeps`](./libdeps/) for Arduino IDE and CI builds.
 
-# 9️⃣. lvgl 9 Upgrade Guide
+| Library | Tested version | Used by |
+| ------- | -------------- | ------- |
+| [LVGL](https://github.com/lvgl/lvgl) | 9.6.0 | Core display and GUI examples |
+| [SensorLib](https://github.com/lewisxhe/SensorLib) | 0.5.1 | Touch, PMIC, RTC and sensors |
+| [AceButton](https://github.com/bxparks/AceButton) | 1.10.1 | Button-driven examples |
+| [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) | 1.15.5 | Factory and FactoryV2 |
+| [RadioLib](https://github.com/jgromes/RadioLib) | 7.8.1 | FactoryV2 LoRa Shield tests |
+| [ESP8266Audio](https://github.com/earlephilhower/ESP8266Audio) | 2.4.1 | FactoryV2 and MP3 playback |
+| [arduino-audio-driver](https://github.com/pschatzmann/arduino-audio-driver) | 0.2.0 | AMOLED Plus Shield codec |
+| [IRremoteESP8266](https://github.com/tonhuisman/IRremoteESP8266/tree/feature/C%2B%2B20-compatibility) | 2.8.6 C++20 branch | Standalone Shield IR tests |
+| [Arduino_GFX](https://github.com/moononournation/Arduino_GFX) | 1.6.9 | Arduino_GFX examples |
+| [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI) | 2.5.43 | TFT_eSPI examples |
+| [TinyGPSPlus](https://github.com/mikalhart/TinyGPSPlus) | 1.0.3 | QWIIC GPS example |
+| [SparkFun MAX3010x](https://github.com/sparkfun/SparkFun_MAX3010x_Sensor_Library) | 1.1.2 | QWIIC MAX3010X example |
+| [OneWire](https://github.com/PaulStoffregen/OneWire) | 2.3.8 | DS18x20 example |
 
-1. Find `LilyGo-AMOLED-Series` in the library installation directory and enter the `src` directory
-2. Rename `lv_conf.h` to `lv_conf.h.v8`
-3. Rename `lv_conf.h.v9` to `lv_conf.h`
-4. Open `Arduino IDE` -> `File` -> `examples`- > `lvgl_version_9`
-5. Currently there is only one example, `lvgl_version_9`, and other examples are based on `lvgl 8`, please note.
+> [!NOTE]
+> `IR_TX_Test`, `IR_RX_Test`, and `PlayMP3FromPROGMEM` only support the T-Display-S3 AMOLED Plus with the matching Shield. Other AMOLED Series boards do not provide the required Shield hardware connections.
