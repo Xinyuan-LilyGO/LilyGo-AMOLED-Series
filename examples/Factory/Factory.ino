@@ -255,8 +255,12 @@ void setup()
     }
 
 
-    // Register lvgl helper
+    Serial.println("[boot] LVGL init: begin");
     beginLvglHelper(amoled);
+    // Factory uses touch navigation only. A default focus group causes the
+    // first focusable widget (the brightness slider) to pull its tile onscreen.
+    lv_group_set_default(NULL);
+    Serial.println("[boot] LVGL init: done");
 
     const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
 
@@ -264,15 +268,21 @@ void setup()
     if (boards->buttonNum) {
 
         ButtonConfig *buttonConfig;
+        Serial.printf("[boot] button init: count=%u\n", boards->buttonNum);
         button = new AceButton [boards->buttonNum];
+        Serial.println("[boot] button init: storage allocated");
         for (int i = 0; i < boards->buttonNum; ++i) {
             Serial.print("init button : "); Serial.println(i);
+            Serial.printf("[boot] button %u: pinMode GPIO %d begin\n", i, boards->pButtons[i]);
             pinMode(boards->pButtons[i], INPUT_PULLUP);
+            Serial.printf("[boot] button %u: pinMode done; AceButton init begin\n", i);
             button[i].init(boards->pButtons[i], HIGH, i);
+            Serial.printf("[boot] button %u: AceButton init done; config begin\n", i);
             buttonConfig = button[i].getButtonConfig();
             buttonConfig->setFeature(ButtonConfig::kFeatureClick);
             buttonConfig->setFeature(ButtonConfig::kFeatureLongPress);
             buttonConfig->setEventHandler(buttonHandleEvent);
+            Serial.printf("[boot] button init: %u done (GPIO %d)\n", i, boards->pButtons[i]);
         }
 
         if (boards->pixelsPins != -1) {
@@ -290,13 +300,19 @@ void setup()
     }
 
     // Show certificate image
+    Serial.println("[boot] certification: begin");
     showCertification(3000);
+    Serial.println("[boot] certification: done");
 
     // Draw Factory GUI
+    Serial.println("[boot] factory GUI: begin");
     factoryGUI();
+    Serial.println("[boot] factory GUI: done");
 
 
+    Serial.println("[boot] Wi-Fi STA mode: begin");
     WiFi.mode(WIFI_STA);
+    Serial.println("[boot] Wi-Fi STA mode: done");
 
     // Connect to the Internet after initializing the UI.
 

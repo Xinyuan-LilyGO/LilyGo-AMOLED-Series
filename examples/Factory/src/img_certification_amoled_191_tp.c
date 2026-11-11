@@ -997,11 +997,10 @@ const LV_ATTRIBUTE_MEM_ALIGN LV_ATTRIBUTE_LARGE_CONST LV_ATTRIBUTE_IMG_IMG_CERTI
 };
 
 const lv_img_dsc_t img_certification_amoled_191_tp = {
-  .header.cf = LV_IMG_CF_TRUE_COLOR,
-  .header.always_zero = 0,
-  .header.reserved = 0,
+  .header.magic = LV_IMAGE_HEADER_MAGIC,
+  .header.cf = LV_COLOR_FORMAT_RGB565,
   .header.w = 536,
   .header.h = 240,
-  .data_size = 128640 * LV_COLOR_SIZE / 8,
+  .data_size = 128640 * 16 / 8,
   .data = img_certification_amoled_191_tp_map,
 };

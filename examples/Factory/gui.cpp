@@ -12,6 +12,33 @@
 #include <Adafruit_NeoPixel.h>
 #include <SD.h>
 #include <WiFi.h>
+#include <esp_mac.h>
+
+static FactoryMessageSubscription factoryMessageSubscriptions[24];
+static uint8_t factoryMessageSubscriptionCount = 0;
+
+lv_event_code_t factoryMessageEventCode()
+{
+    static lv_event_code_t code = (lv_event_code_t)lv_event_register_id();
+    return code;
+}
+
+void lv_msg_subsribe_obj(uint32_t id, lv_obj_t *obj, void *)
+{
+    if (factoryMessageSubscriptionCount < 24) {
+        factoryMessageSubscriptions[factoryMessageSubscriptionCount++] = {id, obj};
+    }
+}
+
+void lv_msg_send(uint32_t id, void *payload)
+{
+    lv_msg_t msg = {payload};
+    for (uint8_t i = 0; i < factoryMessageSubscriptionCount; ++i) {
+        if (factoryMessageSubscriptions[i].id == id && lv_obj_is_valid(factoryMessageSubscriptions[i].obj)) {
+            lv_obj_send_event(factoryMessageSubscriptions[i].obj, LV_EVENT_MSG_RECEIVED, &msg);
+        }
+    }
+}
 
 extern LilyGo_Class amoled;
 
@@ -136,7 +163,7 @@ void createDisplayBadPixelsTest(lv_obj_t *parent)
         lv_obj_set_user_data(btn1, colors_obj);
 
         lv_obj_add_event_cb(btn1, [](lv_event_t *e) {
-            lv_obj_t *bg = (lv_obj_t *)lv_obj_get_user_data(lv_event_get_target(e));
+            lv_obj_t *bg = (lv_obj_t *)lv_obj_get_user_data((lv_obj_t *)lv_event_get_target(e));
             lv_color_t *color = (lv_color_t *)lv_event_get_user_data(e);
             lv_obj_set_style_bg_color(bg, *color, LV_PART_MAIN);
         }, LV_EVENT_CLICKED, (void *)&test_color[i]);
@@ -157,7 +184,7 @@ void createTimeUI(lv_obj_t *parent)
     lv_obj_set_scroll_dir(time_cont, LV_DIR_NONE);
 
     time_label = lv_label_create(time_cont);
-    lv_label_set_recolor(time_label, 1);
+    lv_label_set_recolor(time_label, true);
     lv_label_set_text(time_label, "12:34");
     lv_obj_set_style_text_color(time_label, lv_color_black(), 0);
     lv_obj_set_style_text_font(time_label, &font_ali_70, 0);
@@ -235,7 +262,7 @@ void createTimeUI(lv_obj_t *parent)
             lv_obj_t *label = (lv_obj_t *)lv_event_get_target(e);
             lv_msg_t *msg = lv_event_get_msg(e);
             const CoinMarketCapApiDataStream *val = (CoinMarketCapApiDataStream *)lv_msg_get_payload(msg);
-            const CoinMarketCapApiSubsribe *target = (CoinMarketCapApiSubsribe *)(e->user_data);
+            const CoinMarketCapApiSubsribe *target = (CoinMarketCapApiSubsribe *)lv_event_get_user_data(e);
             Serial.print("RECV ID:"); Serial.print(val->id);
             Serial.print("  TARGET ID:"); Serial.println(target->id);
             if (target->id == val->id) {
@@ -252,7 +279,7 @@ void createTimeUI(lv_obj_t *parent)
 
 static void slider_event_cb(lv_event_t *e)
 {
-    lv_obj_t *slider = lv_event_get_target(e);
+    lv_obj_t *slider = (lv_obj_t *)lv_event_get_target(e);
     lv_obj_t *slider_label =  (lv_obj_t *)lv_event_get_user_data(e);
     uint8_t level = (uint8_t)lv_slider_get_value(slider);
     int percentage = map(level, 100, 255, 0, 100);
@@ -276,7 +303,11 @@ void createBrightnessUI(lv_obj_t *parent)
 
     // MAC
     label = lv_label_create(cont);
-    lv_label_set_text_fmt(label, "MAC:%s", WiFi.macAddress().c_str());
+    uint8_t stationMac[6] = {};
+    esp_read_mac(stationMac, ESP_MAC_WIFI_STA);
+    lv_label_set_text_fmt(label, "MAC:%02X:%02X:%02X:%02X:%02X:%02X",
+                          stationMac[0], stationMac[1], stationMac[2],
+                          stationMac[3], stationMac[4], stationMac[5]);
     lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
 
     // IPADDRESS
@@ -292,7 +323,7 @@ void createBrightnessUI(lv_obj_t *parent)
     // }, LV_EVENT_MSG_RECEIVED, NULL);
 
     lv_timer_create([](lv_timer_t *t) {
-        lv_obj_t *label = (lv_obj_t *)t->user_data;
+        lv_obj_t *label = (lv_obj_t *)lv_timer_get_user_data(t);
         if (WiFi.isConnected()) {
             lv_label_set_text_fmt(label, "IP:%s RSSI:%d",  (WiFi.localIP().toString().c_str()), WiFi.RSSI());
         } else {
@@ -353,9 +384,9 @@ void createBrightnessUI(lv_obj_t *parent)
         lv_obj_t *btn_charge = lv_btn_create(parent);
         label = lv_label_create(btn_charge);
         lv_label_set_text(label, "ChargeOFF");
-        lv_obj_add_flag(btn_charge, LV_OBJ_FLAG_CHECKABLE);
+        lv_obj_set_checkable(btn_charge, true);
         lv_obj_add_event_cb(btn_charge, [](lv_event_t *e) {
-            lv_obj_t *btn = lv_event_get_target(e);
+            lv_obj_t *btn = (lv_obj_t *)lv_event_get_target(e);
             lv_obj_t *label = (lv_obj_t *)lv_event_get_user_data(e);
             lv_state_t  state =  lv_obj_get_state(btn);
             switch (state) {
@@ -383,7 +414,7 @@ void createBrightnessUI(lv_obj_t *parent)
 
 static void pixels_event_handler(lv_event_t *e)
 {
-    lv_obj_t *target = lv_event_get_target(e);
+    lv_obj_t *target = (lv_obj_t *)lv_event_get_target(e);
     lv_event_code_t code = lv_event_get_code(e);
     uint8_t *index = (uint8_t *)lv_obj_get_user_data(target);
     if (!index || !pixels)return;
@@ -399,9 +430,7 @@ static void pixels_event_handler(lv_event_t *e)
             pixels->setPixelColor(0, pixels->Color(0, 0, 255)); pixels->show();
             break;
         case 3: {
-            lv_obj_t *cw =  (lv_obj_t *)lv_event_get_user_data(e);
-            lv_color_t c =  lv_colorwheel_get_rgb(cw);
-            pixels->setPixelColor(0, pixels->Color(c.ch.red, (c.ch.green_h << 3) | c.ch.green_l, c.ch.blue)); pixels->show();
+            pixels->setPixelColor(0, pixels->Color(255, 128, 0)); pixels->show();
         }
         break;
         case 4: {
@@ -478,11 +507,11 @@ void createPixelsUI(lv_obj_t *parent)
     lv_obj_set_style_text_font(label, &alibaba_font_18, 0);
     lv_obj_add_event_cb(btn1, pixels_event_handler, LV_EVENT_CLICKED, NULL);
 
-    lv_obj_t *cw = lv_colorwheel_create(cont_col, true);
-    lv_obj_set_user_data(cw, &index[3]);
-    lv_obj_set_size(cw, 100, 100);
-    lv_obj_add_event_cb(cw, pixels_event_handler, LV_EVENT_CLICKED, cw);
-    lv_obj_align(cw, LV_ALIGN_LEFT_MID, 30, 0);
+    lv_obj_t *custom = lv_btn_create(cont_col);
+    lv_obj_set_user_data(custom, &index[3]);
+    lv_obj_set_size(custom, 100, 100);
+    lv_obj_set_style_bg_color(custom, lv_color_make(255, 128, 0), 0);
+    lv_obj_add_event_cb(custom, pixels_event_handler, LV_EVENT_CLICKED, NULL);
 
     /*Create a slider and add the style*/
     lv_obj_t *slider = lv_slider_create(cont_col);
@@ -499,7 +528,7 @@ void createPixelsUI(lv_obj_t *parent)
     lv_obj_align_to(slider_label, slider, LV_ALIGN_CENTER, 0, 0);
 
 
-    lv_obj_align_to(slider, cw, LV_ALIGN_OUT_RIGHT_MID, 20, 0);
+    lv_obj_align_to(slider, custom, LV_ALIGN_OUT_RIGHT_MID, 20, 0);
 }
 
 void createDeviceInfoUI(lv_obj_t *parent)
@@ -605,7 +634,7 @@ void createDeviceInfoUI(lv_obj_t *parent)
 
     lv_timer_create([](lv_timer_t *t) {
 
-        lv_obj_t **p = (lv_obj_t **)t->user_data;
+        lv_obj_t **p = (lv_obj_t **)lv_timer_get_user_data(t);
         uint16_t vol =   amoled.getBattVoltage();
         lv_label_set_text_fmt(p[0], "%u mV", vol);
 
@@ -817,7 +846,7 @@ static void wifi_config_event_handler(lv_event_t *e)
         lv_obj_add_state(btn, LV_STATE_CHECKED);
 
         wifi_timer =  lv_timer_create([](lv_timer_t *t) {
-            lv_obj_t *btn = (lv_obj_t *)t->user_data;
+            lv_obj_t *btn = (lv_obj_t *)lv_timer_get_user_data(t);
             lv_obj_t *label = lv_obj_get_child(btn, 0);
             bool destory = false;
             wifi_timer_counter++;
@@ -887,7 +916,10 @@ void createWiFiConfigUI(lv_obj_t *parent)
     lv_color_t fg_color = lv_palette_darken(LV_PALETTE_NONE, 4);
 
     lv_coord_t size = 120;
-    lv_obj_t *android_rq_code = lv_qrcode_create(cont, size, fg_color, bg_color);
+    lv_obj_t *android_rq_code = lv_qrcode_create(cont);
+    lv_qrcode_set_size(android_rq_code, size);
+    lv_qrcode_set_dark_color(android_rq_code, fg_color);
+    lv_qrcode_set_light_color(android_rq_code, bg_color);
     lv_qrcode_update(android_rq_code, android_url, strlen(android_url));
     lv_obj_align_to(android_rq_code, tips_label, LV_ALIGN_OUT_BOTTOM_LEFT, 30, 5);
     /*Add a border with bg_color*/
@@ -898,7 +930,10 @@ void createWiFiConfigUI(lv_obj_t *parent)
     lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
     lv_obj_align_to(label, android_rq_code, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
 
-    lv_obj_t *ios_rq_code = lv_qrcode_create(cont, size, fg_color, bg_color);
+    lv_obj_t *ios_rq_code = lv_qrcode_create(cont);
+    lv_qrcode_set_size(ios_rq_code, size);
+    lv_qrcode_set_dark_color(ios_rq_code, fg_color);
+    lv_qrcode_set_light_color(ios_rq_code, bg_color);
     lv_qrcode_update(ios_rq_code, ios_url, strlen(ios_url));
     lv_obj_align_to(ios_rq_code, android_rq_code, LV_ALIGN_OUT_RIGHT_MID, 40, -5);
 
@@ -934,47 +969,54 @@ void createWiFiConfigUI(lv_obj_t *parent)
 
 void tileview_change_cb(lv_event_t *e)
 {
-    lv_obj_t *tileview = lv_event_get_target(e);
+    lv_obj_t *tileview = (lv_obj_t *)lv_event_get_target(e);
     pageId = lv_obj_get_index(lv_tileview_get_tile_act(tileview));
-    lv_event_code_t c = lv_event_get_code(e);
-    Serial.print("Code : ");
-    Serial.print(c);
-    uint32_t count =  lv_obj_get_child_cnt(tileview);
-    Serial.print(" Count:");
-    Serial.print(count);
-    Serial.print(" pageId:");
-    Serial.println(pageId);
-
 }
 
 
 void showCertification(uint32_t delay_ms)
 {
     uint8_t board = amoled.getBoardID();
+    Serial.printf("[boot] certification: board=%u touch=%u\n", board, amoled.hasTouch());
 
     lv_obj_t *img =  lv_img_create(lv_scr_act());
+    Serial.println("[boot] certification: image object created");
 
     if (board == LILYGO_AMOLED_191 && amoled.hasTouch()) {
+        Serial.println("[boot] certification: set 1.91-inch image source");
         lv_img_set_src(img, &img_certification_amoled_191_tp);
     } else if (board == LILYGO_AMOLED_241) {
+        Serial.println("[boot] certification: set 2.41-inch image source");
         lv_img_set_src(img, &img_certification_t4_s3_241_tp);
     } else {
+        Serial.println("[boot] certification: no image for this board");
         lv_obj_del(img); return;
     }
+    Serial.println("[boot] certification: image source set");
     lv_obj_center(img);
+    Serial.println("[boot] certification: image centered; timer loop begin");
 
     uint32_t start_ms = millis();
+    uint32_t last_log_ms = start_ms;
     while ((millis() - start_ms) < delay_ms) {
         lv_timer_handler();
+        if (millis() - last_log_ms >= 500) {
+            Serial.printf("[boot] certification: timer alive (%lu ms)\n",
+                          static_cast<unsigned long>(millis() - start_ms));
+            last_log_ms = millis();
+        }
         delay(2);
     }
+    Serial.println("[boot] certification: timer loop done; deleting image");
     lv_obj_del(img);
+    Serial.println("[boot] certification: image deleted");
 }
 
 uint16_t max_item_num = 6;
 
 void factoryGUI(void)
 {
+    Serial.println("[boot] GUI: initialize styles/tileview");
     static lv_style_t bgStyle;
     lv_style_init(&bgStyle);
     lv_style_set_bg_color(&bgStyle, lv_color_black());
@@ -985,44 +1027,55 @@ void factoryGUI(void)
     lv_obj_add_event_cb(tileview, tileview_change_cb, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_set_scrollbar_mode(tileview, LV_SCROLLBAR_MODE_OFF);
 
-    lv_obj_t *t1 = lv_tileview_add_tile(tileview, 0, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t2 = lv_tileview_add_tile(tileview, 1, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t3 = lv_tileview_add_tile(tileview, 2, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t4 = lv_tileview_add_tile(tileview, 3, 0,  LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t5 = lv_tileview_add_tile(tileview, 4, 0,  LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t6 = lv_tileview_add_tile(tileview, 5, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
-    lv_obj_t *t7 = lv_tileview_add_tile(tileview, 6, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
+    lv_obj_t *t1 = lv_tileview_add_tile(tileview, 0, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t2 = lv_tileview_add_tile(tileview, 1, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t3 = lv_tileview_add_tile(tileview, 2, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t4 = lv_tileview_add_tile(tileview, 3, 0,  (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t5 = lv_tileview_add_tile(tileview, 4, 0,  (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t6 = lv_tileview_add_tile(tileview, 5, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+    lv_obj_t *t7 = lv_tileview_add_tile(tileview, 6, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
 
+    Serial.println("[boot] GUI: create time page");
     createTimeUI(t1);
+    Serial.println("[boot] GUI: create weather page");
     createWeatherUI(t2);
+    Serial.println("[boot] GUI: create device page");
     createDeviceInfoUI(t3);
+    Serial.println("[boot] GUI: create brightness page");
     createBrightnessUI(t4);
+    Serial.println("[boot] GUI: core pages done");
 
     const  BoardsConfigure_t *boards = amoled.getBoardsConfigure();
     if (boards->pixelsPins != -1) {
+        Serial.println("[boot] GUI: create pixels page");
         createPixelsUI(t5);
+        Serial.println("[boot] GUI: create Wi-Fi page");
         createWiFiConfigUI(t6);
         createDisplayBadPixelsTest(t7);
-        lv_obj_t *t8 = lv_tileview_add_tile(tileview, 7, 0, LV_DIR_HOR | LV_DIR_BOTTOM);
+        lv_obj_t *t8 = lv_tileview_add_tile(tileview, 7, 0, (lv_dir_t)(LV_DIR_HOR | LV_DIR_BOTTOM));
+        Serial.println("[boot] GUI: create paint page");
         createPaintUI(t8);
         max_item_num = 8;
     } else {
+        Serial.println("[boot] GUI: create Wi-Fi page");
         createWiFiConfigUI(t5);
         createDisplayBadPixelsTest(t6);
+        Serial.println("[boot] GUI: create paint page");
         createPaintUI(t7);
         max_item_num = 7;
         // lv_obj_del(t7);
     }
+    pageId = 0;
+    lv_obj_set_tile_id(tileview, 0, 0, LV_ANIM_OFF);
+    Serial.println("[boot] GUI: all pages created");
 
 }
 
 
 void selectNextItem()
 {
-    static int id = 0;
-    id++;
-    id %= max_item_num;
-    lv_obj_set_tile_id(tileview, id, 0, LV_ANIM_ON);
+    const uint8_t nextPage = (pageId + 1) % max_item_num;
+    lv_obj_set_tile_id(tileview, nextPage, 0, LV_ANIM_ON);
 }
 
 
@@ -1042,7 +1095,6 @@ struct {
     lv_obj_t *brushColorButton;
     lv_obj_t *brushButton;
     lv_obj_t *refreshButton;
-    lv_obj_t *brushColorwheel;
     lv_obj_t *brushWidthSlider;
     lv_obj_t *canvas;
     lv_draw_line_dsc_t brush;
@@ -1053,7 +1105,7 @@ struct {
 void onCanvasEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *obj = lv_event_get_target(e);
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
     static lv_coord_t last_x, last_y = -32768;
 
     if (code == LV_EVENT_PRESSING) {
@@ -1073,7 +1125,19 @@ void onCanvasEvent(lv_event_t *e)
             points[1].y = point.y;
             last_x = point.x;
             last_y = point.y;
-            lv_canvas_draw_line(obj, points, 2, &ui.brush);
+            int32_t dx = abs(points[1].x - points[0].x);
+            int32_t sx = points[0].x < points[1].x ? 1 : -1;
+            int32_t dy = -abs(points[1].y - points[0].y);
+            int32_t sy = points[0].y < points[1].y ? 1 : -1;
+            int32_t error = dx + dy;
+            int32_t x = points[0].x, y = points[0].y;
+            for (;;) {
+                lv_canvas_set_px(obj, x, y, ui.brush.color, ui.brush.opa);
+                if (x == points[1].x && y == points[1].y) break;
+                int32_t twice = 2 * error;
+                if (twice >= dy) { error += dy; x += sx; }
+                if (twice <= dx) { error += dx; y += sy; }
+            }
         }
     } else if (code == LV_EVENT_RELEASED) {
         last_x = -32768;
@@ -1087,9 +1151,10 @@ void onBrushColorLabelEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
-        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(ui.brushWidthSlider, true);
+        ui.brush.color = lv_color_make(255, 128, 0);
         lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
+        lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
     }
 }
 
@@ -1098,8 +1163,7 @@ void onBrushLabelEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(ui.brushWidthSlider, false);
         lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
     }
 }
@@ -1108,9 +1172,9 @@ void onBrushLabelEvent(lv_event_t *e)
 void onBrushWidthSliderEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *slider = lv_event_get_target(e);
+    lv_obj_t *slider = (lv_obj_t *)lv_event_get_target(e);
     if (code == LV_EVENT_DEFOCUSED) {
-        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(ui.brushWidthSlider, true);
         lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
     } else if (code == LV_EVENT_VALUE_CHANGED) {
         ui.brush.width = (lv_coord_t)lv_slider_get_value(slider);
@@ -1119,26 +1183,13 @@ void onBrushWidthSliderEvent(lv_event_t *e)
 
 
 
-void onBrushColorwheelEvent(lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *colorwheel = lv_event_get_target(e);
-    if (code == LV_EVENT_DEFOCUSED) {
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
-    } else if (code == LV_EVENT_VALUE_CHANGED) {
-        ui.brush.color = lv_colorwheel_get_rgb(colorwheel);
-    }
-}
-
-
 void onRefreshLabelEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
 
-        lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_hidden(ui.brushWidthSlider, true);
+
 
         lv_canvas_fill_bg(
             ui.canvas,
@@ -1158,7 +1209,7 @@ void createPaintUI(lv_obj_t *parent)
     lv_obj_set_flex_grow(ui.toolbarDiv, 1);
     lv_obj_set_flex_flow(ui.toolbarDiv, LV_FLEX_FLOW_ROW);
     lv_obj_set_size(ui.toolbarDiv, LV_PCT(60), LV_PCT(20));
-    lv_obj_add_flag(ui.toolbarDiv, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(ui.toolbarDiv, true);
     lv_obj_set_style_bg_opa(ui.toolbarDiv, LV_OPA_TRANSP, LV_PART_MAIN);
 
     ui.brushColorButton  =  lv_btn_create(ui.toolbarDiv);
@@ -1167,7 +1218,7 @@ void createPaintUI(lv_obj_t *parent)
     lv_label_set_text(label, "Pen");
     lv_obj_center(label);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_add_flag(ui.brushColorButton, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(ui.brushColorButton, true);
 
     ui.brushButton =  lv_btn_create(ui.toolbarDiv);
     lv_obj_set_size(ui.brushButton, lv_pct(30), lv_pct(100));
@@ -1175,7 +1226,7 @@ void createPaintUI(lv_obj_t *parent)
     lv_label_set_text(label, "Size");
     lv_obj_center(label);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_add_flag(ui.brushButton, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(ui.brushButton, true);
 
     ui.refreshButton =  lv_btn_create(ui.toolbarDiv);
     lv_obj_set_size(ui.refreshButton, lv_pct(30), lv_pct(100));
@@ -1183,27 +1234,23 @@ void createPaintUI(lv_obj_t *parent)
     lv_label_set_text(label, "Clear");
     lv_obj_center(label);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_add_flag(ui.refreshButton, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(ui.refreshButton, true);
 
-    ui.brushColorwheel = lv_colorwheel_create(ui.root, true);
-    lv_obj_set_size(ui.brushColorwheel,  150, 150);
-    lv_obj_align_to(ui.brushColorwheel, ui.toolbarDiv, LV_ALIGN_OUT_BOTTOM_MID, 0, 30);
-    lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
 
     ui.brushWidthSlider = lv_slider_create(ui.root);
     lv_slider_set_value(ui.brushWidthSlider, 10, LV_ANIM_OFF);
     lv_obj_center(ui.brushWidthSlider);
-    lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_hidden(ui.brushWidthSlider, true);
     lv_slider_set_range(ui.brushWidthSlider, 2, 20);
 
     ui.canvas = lv_canvas_create(ui.root);
     uint16_t w = amoled.width();
     uint16_t h = amoled.height();
     lv_color_t *buf = (lv_color_t *)ps_malloc(w * h * sizeof(lv_color_t));
-    lv_canvas_set_buffer(ui.canvas, buf, w, h, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_set_buffer(ui.canvas, buf, w, h, LV_COLOR_FORMAT_RGB565);
     lv_canvas_fill_bg(ui.canvas, lv_palette_lighten(LV_PALETTE_GREY, 3), LV_OPA_COVER);
     lv_obj_move_background(ui.canvas);
-    lv_obj_add_flag(ui.canvas, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_clickable(ui.canvas, true);
 
     lv_draw_line_dsc_init(&ui.brush);
     ui.brush.width = 8;
@@ -1216,7 +1263,6 @@ void createPaintUI(lv_obj_t *parent)
     lv_obj_add_event_cb(ui.brushColorButton, onBrushColorLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.brushButton, onBrushLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.brushWidthSlider, onBrushWidthSliderEvent, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui.brushColorwheel, onBrushColorwheelEvent, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui.refreshButton, onRefreshLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
 }
