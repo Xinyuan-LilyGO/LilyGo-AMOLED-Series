@@ -27,11 +27,9 @@ void setRotation()
 {
     amoled.setRotation(rotation++);
     rotation %= 4;
-    lv_disp_drv_t *drv = lv_disp_get_default()->driver;
-    drv->hor_res = amoled.width();
-    drv->ver_res = amoled.height();
+    lv_display_t *display = lv_display_get_default();
+    lv_display_set_resolution(display, amoled.width(), amoled.height());
     Serial.printf("setRotation %d Width : %d Height : %d\n", amoled.getRotation(), amoled.width(), amoled.height());
-    lv_disp_drv_update(lv_disp_get_default(), drv);
     // Update label
     lv_label_set_text_fmt(label1, format_string, 0,  amoled.width(), 0, amoled.height(), amoled.getRotation(), amoled.getName());
 }
@@ -93,7 +91,7 @@ void setup(void)
                            LV_ALIGN_RIGHT_MID
                           };
     for (int i = 0; i < sizeof(align) / sizeof(*align); ++i) {
-        lv_obj_t *btn = lv_btn_create(lv_scr_act());
+        lv_obj_t *btn = lv_button_create(lv_screen_active());
         lv_obj_t *label = lv_label_create(btn);
         lv_label_set_text_fmt(label, "%d", i);
         lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
@@ -102,7 +100,7 @@ void setup(void)
     }
 
 
-    label1 = lv_label_create(lv_scr_act());
+    label1 = lv_label_create(lv_screen_active());
     lv_label_set_long_mode(label1, LV_LABEL_LONG_WRAP);     /*Break the long lines*/
     lv_label_set_recolor(label1, true);                      /*Enable re-coloring by commands in the text*/
     lv_label_set_text_fmt(label1, format_string, 0,  amoled.width(), 0, amoled.height(), amoled.getRotation(), amoled.getName());
@@ -111,7 +109,7 @@ void setup(void)
     lv_obj_align(label1, LV_ALIGN_CENTER, 0, -40);
 
 
-    label2 = lv_label_create(lv_scr_act());
+    label2 = lv_label_create(lv_screen_active());
     lv_label_set_long_mode(label2, LV_LABEL_LONG_SCROLL_CIRCULAR); /*Circular scroll*/
     lv_obj_set_width(label2, 150);
     lv_label_set_text(label2, "Press the yellow touch button on the screen to trigger");
@@ -133,7 +131,7 @@ void setup(void)
         }, NULL);
     }
 
-    lv_obj_t *btn = lv_btn_create(lv_scr_act());
+    lv_obj_t *btn = lv_button_create(lv_screen_active());
     lv_obj_t *label_str = lv_label_create(btn);
     lv_label_set_text(label_str, "setRotation");
     lv_obj_align(btn, LV_ALIGN_CENTER, 0, 80);
@@ -149,12 +147,12 @@ void loop()
     lv_indev_t *indev = lv_indev_get_next(NULL);
     if (indev) {
         lv_point_t  point;
-        if ( indev->proc.state == LV_INDEV_STATE_PRESSED ) {
+        if (lv_indev_get_state(indev) == LV_INDEV_STATE_PRESSED) {
             lv_indev_get_point(indev, &point);
             lv_label_set_text_fmt(label1, format_string, point.x, amoled.width(), point.y, amoled.height(), amoled.getRotation(), amoled.getName());
         }
     }
-    lv_task_handler();
+    lv_timer_handler();
     button.check();
 }
 

@@ -27,7 +27,7 @@ struct {
     lv_obj_t *brushColorButton;
     lv_obj_t *brushButton;
     lv_obj_t *refreshButton;
-    lv_obj_t *brushColorwheel;
+    lv_obj_t *brushHueSlider;
     lv_obj_t *brushWidthSlider;
     lv_obj_t *canvas;
     lv_draw_line_dsc_t brush;
@@ -68,7 +68,7 @@ void setup(void)
 
 void loop()
 {
-    lv_task_handler();
+    lv_timer_handler();
     delay(5);
 }
 
@@ -78,7 +78,7 @@ void loop()
 void onCanvasEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *obj = lv_event_get_target(e);
+    lv_obj_t *obj = static_cast<lv_obj_t *>(lv_event_get_target(e));
     static lv_coord_t last_x, last_y = -32768;
 
     if (code == LV_EVENT_PRESSING) {
@@ -87,18 +87,20 @@ void onCanvasEvent(lv_event_t *e)
 
         lv_point_t point;
         lv_indev_get_point(indev, &point);
-        lv_point_t points[2];
         if ((last_x == -32768) || (last_y == -32768)) {
             last_x = point.x;
             last_y = point.y;
         } else {
-            points[0].x = last_x;
-            points[0].y = last_y;
-            points[1].x = point.x;
-            points[1].y = point.y;
+            lv_layer_t layer;
+            lv_canvas_init_layer(obj, &layer);
+            ui.brush.p1.x = last_x;
+            ui.brush.p1.y = last_y;
+            ui.brush.p2.x = point.x;
+            ui.brush.p2.y = point.y;
             last_x = point.x;
             last_y = point.y;
-            lv_canvas_draw_line(obj, points, 2, &ui.brush);
+            lv_draw_line(&layer, &ui.brush);
+            lv_canvas_finish_layer(obj, &layer);
         }
     } else if (code == LV_EVENT_RELEASED) {
         last_x = -32768;
@@ -113,7 +115,7 @@ void onBrushColorLabelEvent(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
         lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui.brushHueSlider, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
     }
 }
@@ -123,8 +125,8 @@ void onBrushLabelEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code == LV_EVENT_CLICKED) {
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui.brushHueSlider, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_event_cb(ui.canvas, onCanvasEvent);
     }
 }
@@ -133,7 +135,7 @@ void onBrushLabelEvent(lv_event_t *e)
 void onBrushWidthSliderEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *slider = lv_event_get_target(e);
+    lv_obj_t *slider = static_cast<lv_obj_t *>(lv_event_get_target(e));
     if (code == LV_EVENT_DEFOCUSED) {
         lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
@@ -144,15 +146,17 @@ void onBrushWidthSliderEvent(lv_event_t *e)
 
 
 
-void onBrushColorwheelEvent(lv_event_t *e)
+void onBrushHueSliderEvent(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *colorwheel = lv_event_get_target(e);
+    lv_obj_t *slider = static_cast<lv_obj_t *>(lv_event_get_target(e));
     if (code == LV_EVENT_DEFOCUSED) {
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui.brushHueSlider, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
     } else if (code == LV_EVENT_VALUE_CHANGED) {
-        ui.brush.color = lv_colorwheel_get_rgb(colorwheel);
+        const uint16_t hue = lv_slider_get_value(slider);
+        ui.brush.color = lv_color_hsv_to_rgb(hue, 100, 100);
+        lv_obj_set_style_bg_color(slider, ui.brush.color, LV_PART_KNOB);
     }
 }
 
@@ -163,7 +167,7 @@ void onRefreshLabelEvent(lv_event_t *e)
     if (code == LV_EVENT_CLICKED) {
 
         lv_obj_add_flag(ui.brushWidthSlider, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(ui.brushHueSlider, LV_OBJ_FLAG_HIDDEN);
 
         lv_canvas_fill_bg(
             ui.canvas,
@@ -186,7 +190,7 @@ void initPaint()
     lv_obj_add_flag(ui.toolbarDiv, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_bg_opa(ui.toolbarDiv, LV_OPA_TRANSP, LV_PART_MAIN);
 
-    ui.brushColorButton  =  lv_btn_create(ui.toolbarDiv);
+    ui.brushColorButton  =  lv_button_create(ui.toolbarDiv);
     lv_obj_set_size(ui.brushColorButton, lv_pct(30), lv_pct(100));
     lv_obj_t *label = lv_label_create(ui.brushColorButton);
     lv_label_set_text(label, "Pen");
@@ -194,7 +198,7 @@ void initPaint()
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_add_flag(ui.brushColorButton, LV_OBJ_FLAG_CLICKABLE);
 
-    ui.brushButton =  lv_btn_create(ui.toolbarDiv);
+    ui.brushButton =  lv_button_create(ui.toolbarDiv);
     lv_obj_set_size(ui.brushButton, lv_pct(30), lv_pct(100));
     label = lv_label_create(ui.brushButton);
     lv_label_set_text(label, "Size");
@@ -202,7 +206,7 @@ void initPaint()
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_add_flag(ui.brushButton, LV_OBJ_FLAG_CLICKABLE);
 
-    ui.refreshButton =  lv_btn_create(ui.toolbarDiv);
+    ui.refreshButton =  lv_button_create(ui.toolbarDiv);
     lv_obj_set_size(ui.refreshButton, lv_pct(30), lv_pct(100));
     label = lv_label_create(ui.refreshButton);
     lv_label_set_text(label, "Clear");
@@ -210,10 +214,13 @@ void initPaint()
     lv_obj_set_style_text_font(label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_add_flag(ui.refreshButton, LV_OBJ_FLAG_CLICKABLE);
 
-    ui.brushColorwheel = lv_colorwheel_create(ui.root, true);
-    lv_obj_set_size(ui.brushColorwheel,  150, 150);
-    lv_obj_align_to(ui.brushColorwheel, ui.toolbarDiv, LV_ALIGN_OUT_BOTTOM_MID, 0, 30);
-    lv_obj_add_flag(ui.brushColorwheel, LV_OBJ_FLAG_HIDDEN);
+    ui.brushHueSlider = lv_slider_create(ui.root);
+    lv_slider_set_range(ui.brushHueSlider, 0, 359);
+    lv_slider_set_value(ui.brushHueSlider, 0, LV_ANIM_OFF);
+    lv_obj_set_size(ui.brushHueSlider, LV_PCT(70), 20);
+    lv_obj_align_to(ui.brushHueSlider, ui.toolbarDiv, LV_ALIGN_OUT_BOTTOM_MID, 0, 40);
+    lv_obj_set_style_bg_color(ui.brushHueSlider, lv_color_make(255, 0, 0), LV_PART_KNOB);
+    lv_obj_add_flag(ui.brushHueSlider, LV_OBJ_FLAG_HIDDEN);
 
     ui.brushWidthSlider = lv_slider_create(ui.root);
     lv_slider_set_value(ui.brushWidthSlider, 10, LV_ANIM_OFF);
@@ -225,7 +232,7 @@ void initPaint()
     uint16_t w = amoled.width();
     uint16_t h = amoled.height();
     lv_color_t *buf = (lv_color_t *)ps_malloc(w * h * sizeof(lv_color_t));
-    lv_canvas_set_buffer(ui.canvas, buf, w, h, LV_IMG_CF_TRUE_COLOR);
+    lv_canvas_set_buffer(ui.canvas, buf, w, h, LV_COLOR_FORMAT_RGB565);
     lv_canvas_fill_bg(ui.canvas, lv_palette_lighten(LV_PALETTE_GREY, 3), LV_OPA_COVER);
     lv_obj_move_background(ui.canvas);
     lv_obj_add_flag(ui.canvas, LV_OBJ_FLAG_CLICKABLE);
@@ -237,12 +244,12 @@ void initPaint()
     ui.brush.color = lv_color_make(255, 0, 0);
     ui.brush.opa = LV_OPA_COVER;
 
-    lv_disp_load_scr(ui.root);
+    lv_screen_load(ui.root);
 
     lv_obj_add_event_cb(ui.brushColorButton, onBrushColorLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.brushButton, onBrushLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.brushWidthSlider, onBrushWidthSliderEvent, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui.brushColorwheel, onBrushColorwheelEvent, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui.brushHueSlider, onBrushHueSliderEvent, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui.refreshButton, onRefreshLabelEvent, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(ui.canvas, onCanvasEvent, LV_EVENT_ALL, NULL);
 }

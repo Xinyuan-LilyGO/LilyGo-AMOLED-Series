@@ -102,17 +102,17 @@ void setup(void)
 
     HP303BPressureSensor.begin(slaveAddress);
 
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), 0);
 
-    label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_28, 0);
+    label = lv_label_create(lv_screen_active());
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(label, lv_color_white(), 0);
     lv_timer_create(timer_event_handler, 1000, NULL);
 }
 
 void loop()
 {
-    lv_task_handler();
+    lv_timer_handler();
     delay(5);
 
 }

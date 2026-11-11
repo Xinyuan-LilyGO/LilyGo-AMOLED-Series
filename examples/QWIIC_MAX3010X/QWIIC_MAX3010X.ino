@@ -56,9 +56,9 @@ void setup(void)
 
     particleSensor.setup(); //Configure sensor. Use 6.4mA for LED drive
 
-    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
-    label = lv_label_create(lv_scr_act());
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_28, 0);
+    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), 0);
+    label = lv_label_create(lv_screen_active());
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
     lv_obj_set_style_text_color(label, lv_color_white(), 0);
     lv_obj_center(label);
 }
@@ -79,7 +79,7 @@ void loop()
         lv_label_set_text_fmt(label, "IR : %u\nRed : %u \nTemperature:%.2f", irValue, redValue, temperature);
         checkInterVal += 100;
     }
-    lv_task_handler();
+    lv_timer_handler();
     delay(5);
 }
 
